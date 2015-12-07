@@ -1,0 +1,44 @@
+{
+   <g_type_register_static>
+   Memcheck:Leak
+   ...
+   fun:g_type_register_static
+}
+{
+   <g_type_register_static>
+   Memcheck:Leak
+   ...
+   fun:g_type_register_fundamental
+}
+{
+   <g_type_register_static>
+   Memcheck:Leak
+   ...
+   fun:g_malloc0
+}
+{
+    <g_param_type_register_static>
+    Memcheck:Leak
+    ...
+    fun:g_param_type_register_static
+}
+{
+    <g_variant_type_info_get>
+    Memcheck:Leak
+    ...
+    fun:g_variant_type_info_get
+}
+{
+   <_dl_init>
+   Memcheck:Leak
+   ...
+   fun:call_init
+   fun:_dl_init
+}
+{
+   <_dl_init>
+   Memcheck:Leak
+   ...
+   fun:call_init.part.0
+   fun:_dl_init
+}

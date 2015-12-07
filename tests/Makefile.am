@@ -1,0 +1,60 @@
+#
+# Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+#
+# This file is part of the T+A Streaming Board software stack ("StrBoWare").
+#
+# StrBoWare is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License, version 3 as
+# published by the Free Software Foundation.
+#
+# StrBoWare is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with StrBoWare.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+if WITH_CUTTER
+TESTS = run_test.sh
+
+if WITH_VALGRIND
+TESTS += valgrind.sh
+endif
+
+AM_TESTS_ENVIRONMENT = CUTTER="$(CUTTER)" XSLTPROC="$(XSLTPROC)" VALGRIND="$(VALGRIND)"
+
+AM_LDFLAGS = -module -rpath $(libdir) -avoid-version -no-undefined
+
+AM_CPPFLAGS = $(CPPCUTTER_CFLAGS)
+AM_CPPFLAGS += -I$(top_srcdir)/src
+
+AM_CFLAGS = $(CWARNINGS)
+
+AM_CXXFLAGS = $(CXXWARNINGS)
+
+LIBS += $(CPPCUTTER_LIBS)
+
+check_LTLIBRARIES = test_inifile.la
+
+test_inifile_la_SOURCES = \
+    test_inifile.cc \
+    mock_os.hh mock_os.cc \
+    mock_messages.hh mock_messages.cc \
+    mock_expectation.hh
+test_inifile_la_LIBADD = $(top_builddir)/src/libinifile.la
+test_inifile_la_CFLAGS = $(AM_CFLAGS)
+test_inifile_la_CXXFLAGS = $(AM_CXXFLAGS)
+
+CLEANFILES = test_report.xml test_report_junit.xml valgrind.xml
+
+EXTRA_DIST = cutter2junit.xslt
+EXTRA_DIST += cutter-1_2_4.supp
+
+check-local: check-TESTS
+	@if $(GREP) -w cutter $(TEST_LOGS); then \
+	    echo "Unit tests failed (check log)"; \
+	    exit 1; \
+	fi
+endif

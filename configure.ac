@@ -1,0 +1,100 @@
+#
+# Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+#
+# This file is part of the T+A Streaming Board software stack ("StrBoWare").
+#
+# StrBoWare is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License, version 3 as
+# published by the Free Software Foundation.
+#
+# StrBoWare is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with StrBoWare.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+AC_PREREQ([2.69])
+AC_INIT([StrBo Common Code (StrBoWare)], [1.0], [r.tiemann@ta-hifi.com])
+AC_CONFIG_AUX_DIR([config])
+AM_INIT_AUTOMAKE([1.11 -Wall -Werror foreign])
+AM_SILENT_RULES([yes])
+AC_CONFIG_SRCDIR([src/inifile.c])
+AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4])
+
+AC_USE_SYSTEM_EXTENSIONS()
+
+AC_ARG_VAR([CWARNINGS], [strict set of C compiler warnings])
+AC_ARG_VAR([CXXWARNINGS], [strict set of C++ compiler warnings])
+
+AC_ARG_ENABLE([valgrind],
+              [AS_HELP_STRING([--disable-valgrind],
+                              [disable an extra run of unit tests with Valgrind on ``make check''])],
+              [],
+              [enable_valgrind=yes])
+
+# Checks for programs.
+AC_PROG_CXX
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AM_PROG_AR
+AC_PROG_LIBTOOL
+AC_CHECK_PROGS([XSLTPROC], [xsltproc])
+AC_CHECK_PROGS([VALGRIND], [valgrind])
+
+m4_ifdef([AC_CHECK_CUTTER],
+[
+AC_CHECK_CUTTER
+AC_CHECK_CPPCUTTER
+AC_CHECK_GCUTTER
+AC_CHECK_COVERAGE
+],
+[ac_cv_use_cutter=no])
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_CHECK_HEADERS([fcntl.h inttypes.h stdlib.h string.h syslog.h unistd.h])
+
+m4_ifdef([AC_CHECK_CUTTER],
+[
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$pkg_cv_CUTTER_CFLAGS"
+AC_CHECK_HEADER([cutter.h], [], [ac_cv_use_cutter=no])
+CPPFLAGS="$save_CPPFLAGS"
+
+AC_LANG_PUSH([C++])
+save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$pkg_cv_CPPCUTTER_CFLAGS"
+AC_CHECK_HEADER([cppcutter.h], [], [ac_cv_use_cutter=no])
+CPPFLAGS="$save_CPPFLAGS"
+AC_LANG_POP([C++])
+])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_HEADER_STDBOOL
+AC_C_INLINE
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UINT8_T
+
+# Checks for library functions.
+AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
+AC_FUNC_MALLOC
+AC_FUNC_MMAP
+AC_CHECK_FUNCS([clock_gettime memset mkdir munmap realpath rmdir strdup strerror])
+
+AM_CONDITIONAL([WITH_CUTTER], [test "x$ac_cv_use_cutter" = "xyes"])
+AM_CONDITIONAL([WITH_VALGRIND], [test "x$enable_valgrind" = "xyes"])
+
+AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile])
+AC_CONFIG_FILES([tests/run_test.sh], [chmod +x tests/run_test.sh])
+AC_CONFIG_FILES([tests/valgrind.sh], [chmod +x tests/valgrind.sh])
+AC_OUTPUT

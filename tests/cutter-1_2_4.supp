@@ -56299,3 +56299,19 @@
    fun:g_signal_emit_by_name
    fun:g_closure_invoke
 }
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:memalign
+   fun:tls_get_addr_tail
+   fun:__cxa_get_globals
+   fun:__cxa_throw
+   ...
+   obj:/usr/lib/libcutter.so.0.1.0
+   obj:/usr/lib/libcutter.so.0.1.0
+   obj:/usr/lib/libcutter.so.0.1.0
+   obj:/usr/lib/libcutter.so.0.1.0
+   obj:/usr/lib/libcutter.so.0.1.0
+   obj:/usr/lib/libcutter.so.0.1.0
+}

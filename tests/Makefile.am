@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of the T+A Streaming Board software stack ("StrBoWare").
 #
@@ -36,7 +36,7 @@ AM_CXXFLAGS = $(CXXWARNINGS)
 
 LIBS += $(CPPCUTTER_LIBS)
 
-check_LTLIBRARIES = test_inifile.la
+check_LTLIBRARIES = test_inifile.la test_stream_id.la
 
 test_inifile_la_SOURCES = \
     test_inifile.cc \
@@ -46,6 +46,13 @@ test_inifile_la_SOURCES = \
 test_inifile_la_LIBADD = $(top_builddir)/src/libinifile.la
 test_inifile_la_CFLAGS = $(AM_CFLAGS)
 test_inifile_la_CXXFLAGS = $(AM_CXXFLAGS)
+
+test_stream_id_la_SOURCES = \
+    test_stream_id.cc \
+    ../src/stream_id.h ../src/stream_id.hh \
+    mock_expectation.hh
+test_stream_id_la_CFLAGS = $(AM_CFLAGS)
+test_stream_id_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 CLEANFILES = test_report.xml test_report_junit.xml valgrind.xml
 

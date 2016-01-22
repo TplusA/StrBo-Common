@@ -20,5 +20,7 @@ ACLOCAL_AMFLAGS = -I ../m4
 
 noinst_LTLIBRARIES = libinifile.la
 
-libinifile_la_SOURCES = inifile.c inifile.h
+libinifile_la_SOURCES = inifile.c inifile.h messages.h os.h
 libinifile_la_CFLAGS = $(AM_CFLAGS)
+
+EXTRA_DIST = messages.c os.c

@@ -53,16 +53,6 @@ class Stream
         id_(raw_id)
     {}
 
-    /*
-    constexpr explicit Stream(stream_id_t source) throw():
-        id_((source & STREAM_ID_SOURCE_MASK) | STREAM_ID_COOKIE_MIN)
-    {}
-
-    constexpr explicit Stream(stream_id_t source, stream_id_t cookie) throw():
-        id_((source & STREAM_ID_SOURCE_MASK) | cookie)
-    {}
-    */
-
   public:
     constexpr static inline Stream make_complete(stream_id_t source,
                                                  stream_id_t cookie) throw()

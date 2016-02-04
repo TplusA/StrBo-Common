@@ -43,11 +43,11 @@ class MockOs
     void expect_os_write_from_buffer(int ret, bool expect_null_pointer, size_t count, int fd);
     void expect_os_write_from_buffer_callback(os_write_from_buffer_callback_t fn);
 
-    typedef int (*os_try_read_to_buffer_callback_t)(void *dest, size_t count, size_t *add_bytes_read, int fd);
+    typedef int (*os_try_read_to_buffer_callback_t)(void *dest, size_t count, size_t *add_bytes_read, int fd, bool suppress_error_on_eagain);
     void expect_os_try_read_to_buffer(int ret, void *dest, size_t count,
-                                      size_t *add_bytes_read, int fd);
+                                      size_t *add_bytes_read, int fd, bool suppress);
     void expect_os_try_read_to_buffer(int ret, bool expect_null_pointer, size_t count,
-                                      size_t *add_bytes_read, int fd);
+                                      size_t *add_bytes_read, int fd, bool suppress);
     void expect_os_try_read_to_buffer_callback(os_try_read_to_buffer_callback_t fn);
 
     void expect_os_abort(void);

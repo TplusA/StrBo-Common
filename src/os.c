@@ -61,7 +61,8 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
     return 0;
 }
 
-int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd)
+int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,
+                          bool suppress_error_on_eagain)
 {
     uint8_t *dest_ptr = dest;
 
@@ -80,7 +81,10 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd)
         if(len < 0)
         {
             retval = (errno == EAGAIN) ? 0 : -1;
-            msg_error(errno, LOG_ERR, "Failed reading from fd %d", fd);
+
+            if(errno != EAGAIN || !suppress_error_on_eagain)
+                msg_error(errno, LOG_ERR, "Failed reading from fd %d", fd);
+
             break;
         }
 

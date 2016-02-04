@@ -255,11 +255,12 @@ class MockOs::Expectation
     }
 
     explicit Expectation(int ret, void *dest, size_t count,
-                         size_t *add_bytes_read, int fd):
+                         size_t *add_bytes_read, int fd, bool suppress):
         d(OsFn::try_read_to_buffer)
     {
         data_.ret_int_ = ret;
         data_.arg_fd_ = fd;
+        data_.arg_bool_ = suppress;
         data_.arg_dest_pointer_ = dest;
         data_.arg_pointer_expect_concrete_value_ = true;
         data_.arg_pointer_shall_be_null_ = (dest == nullptr);
@@ -268,11 +269,12 @@ class MockOs::Expectation
     }
 
     explicit Expectation(int ret, bool expect_null_pointer, size_t count,
-                         size_t *add_bytes_read, int fd):
+                         size_t *add_bytes_read, int fd, bool suppress):
         d(OsFn::try_read_to_buffer)
     {
         data_.ret_int_ = ret;
         data_.arg_fd_ = fd;
+        data_.arg_bool_ = suppress;
         data_.arg_pointer_shall_be_null_ = expect_null_pointer;
         data_.arg_count_ = count;
         data_.arg_add_bytes_read_pointer_ = add_bytes_read;
@@ -430,18 +432,18 @@ void MockOs::expect_os_write_from_buffer_callback(MockOs::os_write_from_buffer_c
     expectations_->add(Expectation(fn));
 }
 
-void MockOs::expect_os_try_read_to_buffer(int ret, void *dest, size_t count, size_t *add_bytes_read, int fd)
+void MockOs::expect_os_try_read_to_buffer(int ret, void *dest, size_t count, size_t *add_bytes_read, int fd, bool suppress)
 {
-    expectations_->add(Expectation(ret, dest, count, add_bytes_read, fd));
+    expectations_->add(Expectation(ret, dest, count, add_bytes_read, fd, suppress));
 }
 
 void MockOs::expect_os_try_read_to_buffer(int ret, bool expect_null_pointer, size_t count,
-                                          size_t *add_bytes_read, int fd)
+                                          size_t *add_bytes_read, int fd, bool suppress)
 {
     if(expect_null_pointer)
-        expectations_->add(Expectation(ret, nullptr, count, add_bytes_read, fd));
+        expectations_->add(Expectation(ret, nullptr, count, add_bytes_read, fd, suppress));
     else
-        expectations_->add(Expectation(ret, false, count, add_bytes_read, fd));
+        expectations_->add(Expectation(ret, false, count, add_bytes_read, fd, suppress));
 }
 
 void MockOs::expect_os_try_read_to_buffer_callback(MockOs::os_try_read_to_buffer_callback_t fn)
@@ -604,14 +606,14 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
     return expect.d.ret_int_;
 }
 
-int os_try_read_to_buffer(void *dest, size_t count, size_t *add_bytes_read, int fd)
+int os_try_read_to_buffer(void *dest, size_t count, size_t *add_bytes_read, int fd, bool suppress_error_on_eagain)
 {
     const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::try_read_to_buffer);
 
     if(expect.d.os_try_read_to_buffer_callback_ != nullptr)
-        return expect.d.os_try_read_to_buffer_callback_(dest, count, add_bytes_read, fd);
+        return expect.d.os_try_read_to_buffer_callback_(dest, count, add_bytes_read, fd, suppress_error_on_eagain);
 
     if(expect.d.arg_pointer_expect_concrete_value_)
         cppcut_assert_equal(expect.d.arg_dest_pointer_, dest);
@@ -623,6 +625,8 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *add_bytes_read, int 
     cppcut_assert_equal(expect.d.arg_count_, count);
     cppcut_assert_equal(expect.d.arg_add_bytes_read_pointer_, add_bytes_read);
     cppcut_assert_equal(expect.d.arg_fd_, fd);
+    cppcut_assert_equal(expect.d.arg_bool_, suppress_error_on_eagain);
+
     return expect.d.ret_int_;
 }
 

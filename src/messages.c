@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -42,11 +42,33 @@ static void show_message(int error_code, int priority,
     size_t len = vsnprintf(buffer, sizeof(buffer), format_string, va);
 
     if(error_code != 0 && len < sizeof(buffer))
-        snprintf(buffer + len, sizeof(buffer) - len,
-                 " (%s)", strerror(error_code));
+        len += snprintf(buffer + len, sizeof(buffer) - len,
+                        " (%s)", strerror(error_code));
+
+    if(len > sizeof(buffer))
+        len = sizeof(buffer);
 
     if(use_syslog)
-        syslog(priority, "%s", buffer);
+    {
+        if(len <= 256)
+            syslog(priority, "%s", buffer);
+        else
+        {
+            int part = 1;
+            size_t i = 0;
+
+            syslog(priority, "[split long message]");
+
+            while(i < len)
+            {
+                syslog(priority, "[part %d] %.256s", part, &buffer[i]);
+                ++part;
+                i += 256;
+            }
+
+            syslog(priority, "[end of long message]");
+        }
+    }
     else
     {
         if(error_code == 0)

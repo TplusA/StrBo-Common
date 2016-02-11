@@ -38,7 +38,7 @@ void msg_enable_syslog(bool enable_syslog)
 static void show_message(int error_code, int priority,
                          const char *format_string, va_list va)
 {
-    char buffer[512];
+    char buffer[1024];
     size_t len = vsnprintf(buffer, sizeof(buffer), format_string, va);
 
     if(error_code != 0 && len < sizeof(buffer))

@@ -31,6 +31,8 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/ioctl.h>
+#include <linux/fs.h>
 
 #include "os.h"
 #include "messages.h"
@@ -356,6 +358,16 @@ int os_map_file_to_memory(struct os_mapped_file_data *mapped,
     }
 
     mapped->length = buf.st_size;
+
+    if(mapped->length == 0 && S_ISBLK(buf.st_mode))
+    {
+        uint64_t device_size;
+        if(ioctl(mapped->fd, BLKGETSIZE64, &device_size) == 0 &&
+           device_size <= SIZE_MAX)
+        {
+            mapped->length = (size_t)device_size;
+        }
+    }
 
     if(mapped->length == 0)
     {

@@ -89,7 +89,7 @@ typedef uint16_t stream_id_t;
 #define STREAM_ID_MAKE_SOURCE(ID) \
     STREAM_ID_TYPE_CAST((ID) << STREAM_ID_SOURCE_SHIFT)
 
-/*! Stream source: The invalid sourcel. */
+/*! Stream source: The invalid source. */
 #define STREAM_ID_SOURCE_INVALID        STREAM_ID_MAKE_SOURCE(0)
 
 /*! Stream source: Main user interface, i.e., remote control. */

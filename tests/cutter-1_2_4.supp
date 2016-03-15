@@ -56302,6 +56302,7 @@
    Memcheck:Leak
    match-leak-kinds: reachable
    fun:memalign
+   ...
    fun:tls_get_addr_tail
    fun:__cxa_get_globals
    fun:__cxa_throw

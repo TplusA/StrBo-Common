@@ -33,6 +33,7 @@
 /*!@{*/
 
 static constexpr const stream_id_t our_source = STREAM_ID_MAKE_SOURCE(123);
+static constexpr const stream_id_t other_source = STREAM_ID_MAKE_SOURCE(42);
 
 namespace generic_stream_id_tests
 {
@@ -171,6 +172,7 @@ void test_id_contains_source_id()
     auto id(ID::SourcedStream<our_source>::make());
 
     cut_assert_true(id.get().is_valid());
+    cut_assert_true(ID::SourcedStream<our_source>::compatible_with(id.get()));
     cppcut_assert_equal(our_source, id.get().get_source());
     cppcut_assert_equal(STREAM_ID_COOKIE_MIN, id.get().get_cookie());
 }
@@ -189,6 +191,8 @@ void test_invalid_id_contains_source_id()
     auto id(ID::SourcedStream<our_source>::make_invalid());
 
     cut_assert_false(id.get().is_valid());
+    cut_assert_true(ID::SourcedStream<our_source>::compatible_with(id.get()));
+    cut_assert_false(ID::SourcedStream<our_source>::compatible_with(ID::Stream::make_invalid()));
     cppcut_assert_equal(our_source, id.get().get_source());
     cppcut_assert_equal(STREAM_ID_COOKIE_INVALID, id.get().get_cookie());
 }
@@ -234,6 +238,24 @@ void test_conversion_from_generic_invalid_id_replaces_source_id()
     cut_assert_false(our_b.get().is_valid());
     cppcut_assert_equal(our_source, our_b.get().get_source());
     cppcut_assert_equal(STREAM_ID_COOKIE_INVALID, our_b.get().get_cookie());
+}
+
+void test_id_from_different_sources_are_incompatible()
+{
+    auto our_id_a(ID::Stream::make_complete(our_source, 80));
+    auto our_id_b(ID::Stream::make_complete(our_source, 81));
+    auto other_id_a(ID::Stream::make_complete(other_source, 90));
+    auto other_id_b(ID::Stream::make_complete(other_source, 91));
+
+    cut_assert_true(ID::SourcedStream<our_source>::compatible_with(our_id_a));
+    cut_assert_true(ID::SourcedStream<our_source>::compatible_with(our_id_b));
+    cut_assert_false(ID::SourcedStream<our_source>::compatible_with(other_id_a));
+    cut_assert_false(ID::SourcedStream<our_source>::compatible_with(other_id_b));
+
+    cut_assert_false(ID::SourcedStream<other_source>::compatible_with(our_id_a));
+    cut_assert_false(ID::SourcedStream<other_source>::compatible_with(our_id_b));
+    cut_assert_true(ID::SourcedStream<other_source>::compatible_with(other_id_a));
+    cut_assert_true(ID::SourcedStream<other_source>::compatible_with(other_id_b));
 }
 
 }

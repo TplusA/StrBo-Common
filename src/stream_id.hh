@@ -177,9 +177,23 @@ class SourcedStream
 
     constexpr static inline SourcedStream make_from_generic_id(Stream id) throw()
     {
-        return (id.get_source() == Source)
+        return SourcedStream::compatible_with(id)
             ? SourcedStream(Stream::make_from_raw_id(id.get_raw_id()))
             : SourcedStream::make_invalid();
+    }
+
+    /*!
+     * Check if source of generic ID equals the source handled by this class.
+     *
+     * Use this function only if you need nothing else than checking ID
+     * compatibility. Prefer #ID::SourcedStream::make_from_generic_id() if you
+     * actually are going to use the converted ID; i.e., do not check
+     * compatibility and only convert on success, but always convert and then
+     * check validity where necessary. This is going to result in cleaner code.
+     */
+    static inline bool compatible_with(Stream id) throw()
+    {
+        return (id.get_source() == Source);
     }
 
     constexpr const Stream &get() const throw() { return id_; }

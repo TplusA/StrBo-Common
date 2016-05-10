@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <time.h>
+#include <poll.h>
 
 /*!
  * Data for keeping track of memory-mapped files.
@@ -47,6 +48,7 @@ extern "C" {
 
 extern ssize_t (*os_read)(int fd, void *dest, size_t count);
 extern ssize_t (*os_write)(int fd, const void *buf, size_t count);
+extern int (*os_poll)(struct pollfd *fds, nfds_t nfds, int timeout);
 
 int os_write_from_buffer(const void *src, size_t count, int fd);
 int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,

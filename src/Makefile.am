@@ -27,4 +27,5 @@ EXTRA_DIST = \
     messages.c \
     messages_glib.c messages_glib.h \
     os.c \
-    hexdump.c hexdump.h
+    hexdump.c hexdump.h \
+    actor_id.h

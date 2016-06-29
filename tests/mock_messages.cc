@@ -33,11 +33,10 @@
 
 class MockMessages::Expectation
 {
-  private:
-    Expectation(const Expectation &);
-    Expectation &operator=(const Expectation &);
-
   public:
+    Expectation(const Expectation &) = delete;
+    Expectation &operator=(const Expectation &) = delete;
+
     const int error_code_;
     const int priority_;
 

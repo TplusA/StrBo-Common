@@ -24,11 +24,10 @@
 
 class MockMessages
 {
-  private:
-    MockMessages(const MockMessages &);
-    MockMessages &operator=(const MockMessages &);
-
   public:
+    MockMessages(const MockMessages &) = delete;
+    MockMessages &operator=(const MockMessages &) = delete;
+
     class Expectation;
     typedef MockExpectationsTemplate<Expectation> MockExpectations;
     MockExpectations *expectations_;

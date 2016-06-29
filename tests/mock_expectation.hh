@@ -26,13 +26,14 @@ template <typename E>
 class MockExpectationsTemplate
 {
   private:
-    MockExpectationsTemplate(const MockExpectationsTemplate &);
-    MockExpectationsTemplate &operator=(const MockExpectationsTemplate &);
 
     std::vector<E> expectations_;
     size_t next_checked_expectation_;
 
   public:
+    MockExpectationsTemplate(const MockExpectationsTemplate &) = delete;
+    MockExpectationsTemplate &operator=(const MockExpectationsTemplate &) = delete;
+
     explicit MockExpectationsTemplate() {}
 
     void init()

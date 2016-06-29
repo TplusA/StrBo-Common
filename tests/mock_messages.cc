@@ -35,6 +35,7 @@ class MockMessages::Expectation
 {
   public:
     Expectation(const Expectation &) = delete;
+    Expectation(Expectation &&) = default;
     Expectation &operator=(const Expectation &) = delete;
 
     const int error_code_;
@@ -64,8 +65,6 @@ class MockMessages::Expectation
         string_(prefix),
         suffix_(suffix)
     {}
-
-    Expectation(Expectation &&) = default;
 };
 
 

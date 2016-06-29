@@ -32,6 +32,7 @@ class MockExpectationsTemplate
 
   public:
     MockExpectationsTemplate(const MockExpectationsTemplate &) = delete;
+    MockExpectationsTemplate(MockExpectationsTemplate &&) = default;
     MockExpectationsTemplate &operator=(const MockExpectationsTemplate &) = delete;
 
     explicit MockExpectationsTemplate() {}
@@ -55,7 +56,7 @@ class MockExpectationsTemplate
 
     void add(E &&expectation)
     {
-        expectations_.push_back(std::move(expectation));
+        expectations_.emplace_back(std::move(expectation));
     }
 
     const E &get_next_expectation(const char *string)

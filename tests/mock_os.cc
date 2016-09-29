@@ -342,21 +342,31 @@ class MockOs::Expectation
         data_.arg_string_ = filename;
     }
 
-    explicit Expectation(const struct os_mapped_file_data *mapped,
-                         const char *filename):
-        d(OsFn::map_file_to_memory)
-    {
-        data_.ret_int_ = (mapped != nullptr && mapped->fd >= 0 && mapped->ptr != NULL) ? 0 : -1;
-        data_.arg_mapped_template_ = mapped;
-        data_.arg_string_ = filename;
-    }
-
     explicit Expectation(int ret, bool expect_null_pointer,
                          const char *filename):
         d(OsFn::map_file_to_memory)
     {
         data_.ret_int_ = ret;
         data_.arg_pointer_shall_be_null_ = expect_null_pointer;
+        data_.arg_string_ = filename;
+    }
+
+    explicit Expectation(int ret,
+                         const struct os_mapped_file_data *mapped,
+                         const char *filename):
+        d(OsFn::map_file_to_memory)
+    {
+        data_.ret_int_ = ret;
+        data_.arg_mapped_template_ = mapped;
+        data_.arg_string_ = filename;
+    }
+
+    explicit Expectation(const struct os_mapped_file_data *mapped,
+                         const char *filename):
+        d(OsFn::map_file_to_memory)
+    {
+        data_.ret_int_ = (mapped != nullptr && mapped->fd >= 0 && mapped->ptr != NULL) ? 0 : -1;
+        data_.arg_mapped_template_ = mapped;
         data_.arg_string_ = filename;
     }
 
@@ -539,9 +549,16 @@ void MockOs::expect_os_map_file_to_memory(int ret, bool expect_null_pointer,
                                           const char *filename)
 {
     if(expect_null_pointer)
-        expectations_->add(Expectation(ret, nullptr, filename));
+        expectations_->add(Expectation(ret, static_cast<struct os_mapped_file_data *>(nullptr), filename));
     else
         expectations_->add(Expectation(ret, false, filename));
+}
+
+void MockOs::expect_os_map_file_to_memory(int ret,
+                                          const struct os_mapped_file_data *mapped,
+                                          const char *filename)
+{
+    expectations_->add(Expectation(ret, mapped, filename));
 }
 
 void MockOs::expect_os_map_file_to_memory(const struct os_mapped_file_data *mapped,

@@ -169,6 +169,7 @@ class MockOs::Expectation
         size_t *arg_add_bytes_read_pointer_;
         os_write_from_buffer_callback_t os_write_from_buffer_callback_;
         os_try_read_to_buffer_callback_t os_try_read_to_buffer_callback_;
+        std::function<void()> generic_callback_;
         clockid_t arg_clk_id_;
         struct timespec timespec_;
         os_clock_gettime_callback_t os_clock_gettime_callback_;
@@ -310,6 +311,13 @@ class MockOs::Expectation
         d(fn)
     {
         data_.arg_string_ = filename;
+    }
+
+    explicit Expectation(OsFn fn, const char *filename, const std::function<void()> &cb):
+        d(fn)
+    {
+        data_.arg_string_ = filename;
+        data_.generic_callback_ = cb;
     }
 
     explicit Expectation(OsFn fn, int fd):
@@ -514,6 +522,11 @@ void MockOs::expect_os_file_delete(const char *filename)
 void MockOs::expect_os_sync_dir(const char *path)
 {
     expectations_->add(Expectation(OsFn::sync_dir, path));
+}
+
+void MockOs::expect_os_sync_dir_callback(const char *path, const std::function<void()> &callback)
+{
+    expectations_->add(Expectation(OsFn::sync_dir, path, callback));
 }
 
 void MockOs::expect_os_map_file_to_memory(int ret, struct os_mapped_file_data *mapped,
@@ -762,6 +775,9 @@ void os_sync_dir(const char *path)
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::sync_dir);
     cppcut_assert_equal(expect.d.arg_string_, std::string(path));
+
+    if(expect.d.generic_callback_ != nullptr)
+        expect.d.generic_callback_();
 }
 
 int os_map_file_to_memory(struct os_mapped_file_data *mapped,

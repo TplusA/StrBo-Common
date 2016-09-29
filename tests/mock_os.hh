@@ -19,6 +19,8 @@
 #ifndef MOCK_OS_HH
 #define MOCK_OS_HH
 
+#include <functional>
+
 #include "os.h"
 #include "mock_expectation.hh"
 
@@ -64,6 +66,7 @@ class MockOs
     void expect_os_file_close(int fd);
     void expect_os_file_delete(const char *filename);
     void expect_os_sync_dir(const char *path);
+    void expect_os_sync_dir_callback(const char *path, const std::function<void()> &callback);
     void expect_os_map_file_to_memory(int ret, struct os_mapped_file_data *mapped,
                                       const char *filename);
     void expect_os_map_file_to_memory(const struct os_mapped_file_data *mapped,

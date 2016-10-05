@@ -494,6 +494,11 @@ void MockOs::expect_os_foreach_in_path(bool retval, const char *path)
     expectations_->add(Expectation(OsFn::foreach_in_path, retval, path));
 }
 
+void MockOs::expect_os_path_get_type(enum os_path_type retval, const char *path)
+{
+    expectations_->add(Expectation(OsFn::path_get_type, retval, path));
+}
+
 void MockOs::expect_os_resolve_symlink(const char *retval, const char *link)
 {
     expectations_->add(Expectation(retval, link));

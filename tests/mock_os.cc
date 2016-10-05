@@ -173,6 +173,7 @@ class MockOs::Expectation
         clockid_t arg_clk_id_;
         struct timespec timespec_;
         ClockGettimeCallback os_clock_gettime_callback_;
+        const std::vector<ForeachItemData> *foreach_item_data_;
 
         explicit Data(OsFn fn):
             function_id_(fn),
@@ -192,7 +193,8 @@ class MockOs::Expectation
             os_try_read_to_buffer_callback_(nullptr),
             arg_clk_id_(CLOCK_REALTIME_COARSE),
             timespec_({0}),
-            os_clock_gettime_callback_(nullptr)
+            os_clock_gettime_callback_(nullptr),
+            foreach_item_data_(nullptr)
         {}
     };
 
@@ -233,6 +235,15 @@ class MockOs::Expectation
         data_.ret_bool_ = ret_bool;
         data_.arg_string_ = arg_string;
         data_.arg_bool_ = arg_bool;
+    }
+
+    explicit Expectation(OsFn fn, bool ret_bool, const char *arg_string,
+                         const std::vector<ForeachItemData> &items):
+        d(fn)
+    {
+        data_.ret_bool_ = ret_bool;
+        data_.arg_string_ = arg_string;
+        data_.foreach_item_data_ = &items;
     }
 
     explicit Expectation(int ret, const void *src, size_t count, int fd):
@@ -494,6 +505,12 @@ void MockOs::expect_os_foreach_in_path(bool retval, const char *path)
     expectations_->add(Expectation(OsFn::foreach_in_path, retval, path));
 }
 
+void MockOs::expect_os_foreach_in_path(bool retval, const char *path,
+                                       const std::vector<ForeachItemData> &items)
+{
+    expectations_->add(Expectation(OsFn::foreach_in_path, retval, path, items));
+}
+
 void MockOs::expect_os_path_get_type(enum os_path_type retval, const char *path)
 {
     expectations_->add(Expectation(OsFn::path_get_type, retval, path));
@@ -708,6 +725,12 @@ bool os_foreach_in_path(const char *path,
     cppcut_assert_equal(expect.d.function_id_, OsFn::foreach_in_path);
     cppcut_assert_equal(expect.d.arg_string_.c_str(), path);
     cppcut_assert_not_null(reinterpret_cast<void *>(callback));
+
+    if(expect.d.foreach_item_data_ != NULL)
+    {
+        for(const auto &item : *expect.d.foreach_item_data_)
+            callback(item.item_name_.c_str(), user_data);
+    }
 
     return expect.d.ret_bool_;
 }

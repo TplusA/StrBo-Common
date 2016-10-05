@@ -27,6 +27,22 @@
 class MockOs
 {
   public:
+    class ForeachItemData
+    {
+      public:
+        const std::string item_name_;
+        const bool is_directory_;
+
+        ForeachItemData(const ForeachItemData &) = delete;
+        ForeachItemData(ForeachItemData &&) = default;
+        ForeachItemData &operator=(const ForeachItemData &) = delete;
+
+        explicit ForeachItemData(std::string &&item_name, bool is_directory = false):
+            item_name_(item_name),
+            is_directory_(is_directory)
+        {}
+    };
+
     MockOs(const MockOs &) = delete;
     MockOs &operator=(const MockOs &) = delete;
 
@@ -59,6 +75,8 @@ class MockOs
     void expect_os_system_formatted(int retval, const char *string);
     void expect_os_system_formatted_formatted(int retval, const char *string);
     void expect_os_foreach_in_path(bool retval, const char *path);
+    void expect_os_foreach_in_path(bool retval, const char *path,
+                                   const std::vector<ForeachItemData> &items);
     void expect_os_path_get_type(enum os_path_type retval, const char *path);
     void expect_os_resolve_symlink(const char *retval, const char *link);
     void expect_os_mkdir_hierarchy(bool retval, const char *path, bool must_not_exist);

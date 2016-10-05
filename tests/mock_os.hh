@@ -40,17 +40,19 @@ class MockOs
     void init();
     void check() const;
 
-    typedef int (*os_write_from_buffer_callback_t)(const void *src, size_t count, int fd);
+    using WriteFromBufferCallback = std::function<int(const void *src, size_t count, int fd)>;
     void expect_os_write_from_buffer(int ret, const void *src, size_t count, int fd);
     void expect_os_write_from_buffer(int ret, bool expect_null_pointer, size_t count, int fd);
-    void expect_os_write_from_buffer_callback(os_write_from_buffer_callback_t fn);
+    void expect_os_write_from_buffer_callback(const WriteFromBufferCallback &fn);
 
-    typedef int (*os_try_read_to_buffer_callback_t)(void *dest, size_t count, size_t *add_bytes_read, int fd, bool suppress_error_on_eagain);
+    using TryReadToBufferCallback =
+        std::function<int(void *dest, size_t count, size_t *add_bytes_read, int fd,
+                          bool suppress_error_on_eagain)>;
     void expect_os_try_read_to_buffer(int ret, void *dest, size_t count,
                                       size_t *add_bytes_read, int fd, bool suppress);
     void expect_os_try_read_to_buffer(int ret, bool expect_null_pointer, size_t count,
                                       size_t *add_bytes_read, int fd, bool suppress);
-    void expect_os_try_read_to_buffer_callback(os_try_read_to_buffer_callback_t fn);
+    void expect_os_try_read_to_buffer_callback(const TryReadToBufferCallback &fn);
 
     void expect_os_abort(void);
     void expect_os_system(int retval, const char *command);
@@ -79,9 +81,9 @@ class MockOs
     void expect_os_unmap_file(const struct os_mapped_file_data *mapped);
     void expect_os_unmap_file(bool expect_null_pointer);
 
-    typedef int (*os_clock_gettime_callback_t)(clockid_t clk_id, struct timespec *tp);
+    using ClockGettimeCallback = std::function<int(clockid_t clk_id, struct timespec *tp)>;
     void expect_os_clock_gettime(int ret, clockid_t clk_id, const struct timespec &ret_tp);
-    void expect_os_clock_gettime_callback(os_clock_gettime_callback_t fn);
+    void expect_os_clock_gettime_callback(const ClockGettimeCallback &fn);
 
     void expect_os_nanosleep(const struct timespec *tp);
     void expect_os_nanosleep(long milliseconds);

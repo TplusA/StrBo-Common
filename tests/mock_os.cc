@@ -167,12 +167,12 @@ class MockOs::Expectation
         bool arg_pointer_shall_be_null_;
         size_t arg_count_;
         size_t *arg_add_bytes_read_pointer_;
-        os_write_from_buffer_callback_t os_write_from_buffer_callback_;
-        os_try_read_to_buffer_callback_t os_try_read_to_buffer_callback_;
+        WriteFromBufferCallback os_write_from_buffer_callback_;
+        TryReadToBufferCallback os_try_read_to_buffer_callback_;
         std::function<void()> generic_callback_;
         clockid_t arg_clk_id_;
         struct timespec timespec_;
-        os_clock_gettime_callback_t os_clock_gettime_callback_;
+        ClockGettimeCallback os_clock_gettime_callback_;
 
         explicit Data(OsFn fn):
             function_id_(fn),
@@ -281,13 +281,13 @@ class MockOs::Expectation
         data_.arg_add_bytes_read_pointer_ = add_bytes_read;
     }
 
-    explicit Expectation(os_write_from_buffer_callback_t fn):
+    explicit Expectation(const WriteFromBufferCallback &fn):
         d(OsFn::write_from_buffer)
     {
         data_.os_write_from_buffer_callback_ = fn;
     }
 
-    explicit Expectation(os_try_read_to_buffer_callback_t fn):
+    explicit Expectation(const TryReadToBufferCallback &fn):
         d(OsFn::try_read_to_buffer)
     {
         data_.os_try_read_to_buffer_callback_ = fn;
@@ -391,7 +391,7 @@ class MockOs::Expectation
         data_.timespec_ = ret_tp;
     }
 
-    explicit Expectation(os_clock_gettime_callback_t fn):
+    explicit Expectation(const ClockGettimeCallback &fn):
         d(OsFn::os_clock_gettime_fn)
     {
         data_.os_clock_gettime_callback_ = fn;
@@ -445,7 +445,7 @@ void MockOs::expect_os_write_from_buffer(int ret, bool expect_null_pointer, size
         expectations_->add(Expectation(ret, false, count, fd));
 }
 
-void MockOs::expect_os_write_from_buffer_callback(MockOs::os_write_from_buffer_callback_t fn)
+void MockOs::expect_os_write_from_buffer_callback(const WriteFromBufferCallback &fn)
 {
     expectations_->add(Expectation(fn));
 }
@@ -464,7 +464,7 @@ void MockOs::expect_os_try_read_to_buffer(int ret, bool expect_null_pointer, siz
         expectations_->add(Expectation(ret, false, count, add_bytes_read, fd, suppress));
 }
 
-void MockOs::expect_os_try_read_to_buffer_callback(MockOs::os_try_read_to_buffer_callback_t fn)
+void MockOs::expect_os_try_read_to_buffer_callback(const TryReadToBufferCallback &fn)
 {
     expectations_->add(Expectation(fn));
 }
@@ -596,7 +596,7 @@ void MockOs::expect_os_clock_gettime(int ret, clockid_t clk_id,
     expectations_->add(Expectation(ret, clk_id, ret_tp));
 }
 
-void MockOs::expect_os_clock_gettime_callback(os_clock_gettime_callback_t fn)
+void MockOs::expect_os_clock_gettime_callback(const ClockGettimeCallback &fn)
 {
     expectations_->add(Expectation(fn));
 }

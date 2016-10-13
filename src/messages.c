@@ -31,6 +31,24 @@
 static bool use_syslog;
 static enum MessageVerboseLevel current_verbosity;
 
+/*!
+ * All verbosity levels as strings.
+ *
+ * \attention
+ *     This array must match the values listed in the #MessageVerboseLevel
+ *     enumeration.
+ */
+static const char *verbosity_level_names[] =
+{
+    "quiet",
+    "important",
+    "normal",
+    "diag",
+    "debug",
+    "trace",
+    NULL
+};
+
 void msg_enable_syslog(bool enable_syslog)
 {
     use_syslog = enable_syslog;
@@ -40,6 +58,27 @@ void msg_set_verbose_level(enum MessageVerboseLevel level)
 {
     if(level >= MESSAGE_LEVEL_MIN && level <= MESSAGE_LEVEL_MAX)
         current_verbosity = level;
+}
+
+enum MessageVerboseLevel msg_verbose_level_name_to_level(const char *name)
+{
+    enum MessageVerboseLevel level = MESSAGE_LEVEL_MIN;
+    const char *const *names = verbosity_level_names;
+
+    for(const char *n = *names; n != NULL; n = *++names)
+    {
+        if(strcmp(name, n) == 0)
+            return level;
+        else
+            ++level;
+    }
+
+    return MESSAGE_LEVEL_IMPOSSIBLE;
+}
+
+const char *const *msg_get_verbose_level_names(void)
+{
+    return verbosity_level_names;
 }
 
 static void show_message(enum MessageVerboseLevel level, int error_code,

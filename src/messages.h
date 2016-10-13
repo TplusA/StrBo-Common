@@ -28,6 +28,9 @@
 extern "C" {
 #endif
 
+/*!
+ * Verbosity levels as passed to #msg_vinfo() and #msg_set_verbose_level().
+ */
 enum MessageVerboseLevel
 {
     /* message levels for filtering messages by importance */
@@ -57,6 +60,24 @@ void msg_enable_syslog(bool enable_syslog);
  * How much logging should be done.
  */
 void msg_set_verbose_level(enum MessageVerboseLevel level);
+
+/*!
+ * Map verbosity level name to enumeration value.
+ *
+ * \returns
+ *     A valid verbosity level between #MESSAGE_LEVEL_MIN and
+ *     #MESSAGE_LEVEL_MAX (including boundaries), or #MESSAGE_LEVEL_IMPOSSIBLE
+ *     in case the passed name is unknown.
+ */
+enum MessageVerboseLevel msg_verbose_level_name_to_level(const char *name);
+
+/*!
+ * Return list of supported verbosity level names.
+ *
+ * The list is sorted by increasing order of verbosity. It is terminated by a
+ * \c NULL pointer.
+ */
+const char *const *msg_get_verbose_level_names(void);
 
 /*!
  * Emit error to stderr and syslog.

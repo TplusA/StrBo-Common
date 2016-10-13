@@ -38,6 +38,7 @@ class MockMessages::Expectation
     Expectation(Expectation &&) = default;
     Expectation &operator=(const Expectation &) = delete;
 
+    enum MessageVerboseLevel level_;
     const int error_code_;
     const int priority_;
 
@@ -46,8 +47,10 @@ class MockMessages::Expectation
     const std::string string_;
     const std::string suffix_;
 
-    explicit Expectation(int error_code, int priority,
+    explicit Expectation(enum MessageVerboseLevel level,
+                         int error_code, int priority,
                          const char *string, bool is_format_string):
+        level_(level),
         error_code_(error_code),
         priority_(priority),
         is_format_string_(is_format_string),
@@ -55,9 +58,11 @@ class MockMessages::Expectation
         string_(string)
     {}
 
-    explicit Expectation(int error_code, int priority,
+    explicit Expectation(enum MessageVerboseLevel level,
+                         int error_code, int priority,
                          const char *prefix, const char *suffix,
                          bool is_format_string):
+        level_(level),
         error_code_(error_code),
         priority_(priority),
         is_format_string_(is_format_string),
@@ -91,34 +96,74 @@ void MockMessages::check() const
     expectations_->check();
 }
 
+static enum MessageVerboseLevel map_syslog_prio_to_verbose_level(int priority)
+{
+    switch(priority)
+    {
+      case LOG_EMERG:
+      case LOG_ALERT:
+      case LOG_CRIT:
+        return MESSAGE_LEVEL_QUIET;
+
+      case LOG_ERR:
+      case LOG_WARNING:
+        return MESSAGE_LEVEL_IMPORTANT;
+
+      case LOG_NOTICE:
+        return MESSAGE_LEVEL_NORMAL;
+
+      case LOG_INFO:
+        return MESSAGE_LEVEL_DIAG;
+
+      case LOG_DEBUG:
+        return MESSAGE_LEVEL_DEBUG;
+    }
+
+    return MESSAGE_LEVEL_IMPOSSIBLE;
+}
+
 void MockMessages::expect_msg_error_formatted(int error_code, int priority,
                                               const char *string)
 {
-    expectations_->add(Expectation(error_code, priority, string, false));
+    expectations_->add(Expectation(map_syslog_prio_to_verbose_level(priority),
+                                   error_code, priority, string, false));
 }
 
 void MockMessages::expect_msg_error_formatted(int error_code, int priority,
                                               const char *prefix, const char *suffix)
 {
-    expectations_->add(Expectation(error_code, priority, prefix, suffix, false));
+    expectations_->add(Expectation(map_syslog_prio_to_verbose_level(priority),
+                                   error_code, priority, prefix, suffix, false));
 }
 
 void MockMessages::expect_msg_error(int error_code, int priority,
                                     const char *string)
 {
-    expectations_->add(Expectation(error_code, priority, string, true));
+    expectations_->add(Expectation(map_syslog_prio_to_verbose_level(priority),
+                                   error_code, priority, string, true));
 }
 
 void MockMessages::expect_msg_info_formatted(const char *string)
 {
-    expectations_->add(Expectation(0, LOG_INFO, string, false));
+    expectations_->add(Expectation(MESSAGE_LEVEL_NORMAL, 0, LOG_INFO, string, false));
 }
 
 void MockMessages::expect_msg_info(const char *string)
 {
-    expectations_->add(Expectation(0, LOG_INFO, string, true));
+    expectations_->add(Expectation(MESSAGE_LEVEL_NORMAL, 0, LOG_INFO, string, true));
 }
 
+void MockMessages::expect_msg_vinfo_formatted(enum MessageVerboseLevel level,
+                                              const char *string)
+{
+    expectations_->add(Expectation(level, 0, LOG_INFO, string, false));
+}
+
+void MockMessages::expect_msg_vinfo(enum MessageVerboseLevel level,
+                                    const char *string)
+{
+    expectations_->add(Expectation(level, 0, LOG_INFO, string, true));
+}
 
 MockMessages *mock_messages_singleton = nullptr;
 
@@ -134,7 +179,8 @@ static void check_prefix_and_suffix(const std::string &expected_prefix,
                                                      expected_suffix.length()));
 }
 
-static void check_message_expectation(int error_code, int priority,
+static void check_message_expectation(enum MessageVerboseLevel level,
+                                      int error_code, int priority,
                                       const char *format_string, va_list va)
 {
     const auto &expect(mock_messages_singleton->expectations_->get_next_expectation(format_string, va));
@@ -161,7 +207,8 @@ static void check_message_expectation(int error_code, int priority,
             check_prefix_and_suffix(expect.string_, expect.suffix_, buffer);
     }
 
-    if(expect.error_code_ != error_code || expect.priority_ != priority)
+    if(expect.level_ != level || expect.error_code_ != error_code ||
+       expect.priority_ != priority)
     {
         /* the seemingly useless/redundant check above works around a bug in
          * Cutter that causes a memory read from a free'd location in the
@@ -169,6 +216,8 @@ static void check_message_expectation(int error_code, int priority,
         static const char error_prefix[] = "For expected message \"";
         static const char error_suffix[] = "\":";
 
+        cppcut_assert_equal(expect.level_, level,
+                            cppcut_message() << error_prefix << expect.string_.c_str() << error_suffix);
         cppcut_assert_equal(expect.error_code_, error_code,
                             cppcut_message() << error_prefix << expect.string_.c_str() << error_suffix);
         cppcut_assert_equal(expect.priority_, priority,
@@ -178,6 +227,12 @@ static void check_message_expectation(int error_code, int priority,
 
 void msg_enable_syslog(bool enable_syslog) {}
 
+void msg_set_verbose_level(enum MessageVerboseLevel level)
+{
+    cppcut_assert_operator(static_cast<int>(MESSAGE_LEVEL_MIN), <=, static_cast<int>(level));
+    cppcut_assert_operator(static_cast<int>(MESSAGE_LEVEL_MAX), >=, static_cast<int>(level));
+}
+
 void msg_error(int error_code, int priority, const char *error_format, ...)
 {
     if(mock_messages_singleton->ignore_all_)
@@ -186,7 +241,8 @@ void msg_error(int error_code, int priority, const char *error_format, ...)
     va_list va;
 
     va_start(va, error_format);
-    check_message_expectation(error_code, priority, error_format, va);
+    check_message_expectation(map_syslog_prio_to_verbose_level(priority),
+                              error_code, priority, error_format, va);
     va_end(va);
 }
 
@@ -198,7 +254,19 @@ void msg_info(const char *format_string, ...)
     va_list va;
 
     va_start(va, format_string);
-    check_message_expectation(0, LOG_INFO, format_string, va);
+    check_message_expectation(MESSAGE_LEVEL_NORMAL, 0, LOG_INFO, format_string, va);
+    va_end(va);
+}
+
+void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
+{
+    if(mock_messages_singleton->ignore_all_)
+        return;
+
+    va_list va;
+
+    va_start(va, format_string);
+    check_message_expectation(level, 0, LOG_INFO, format_string, va);
     va_end(va);
 }
 

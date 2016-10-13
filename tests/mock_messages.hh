@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -45,6 +45,8 @@ class MockMessages
     void expect_msg_error(int error_code, int priority, const char *string);
     void expect_msg_info_formatted(const char *string);
     void expect_msg_info(const char *string);
+    void expect_msg_vinfo_formatted(enum MessageVerboseLevel level, const char *string);
+    void expect_msg_vinfo(enum MessageVerboseLevel level, const char *string);
 };
 
 /*!

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -139,30 +139,41 @@ static void check_message_expectation(int error_code, int priority,
 {
     const auto &expect(mock_messages_singleton->expectations_->get_next_expectation(format_string, va));
 
-    cppcut_assert_equal(expect.error_code_, error_code);
-    cppcut_assert_equal(expect.priority_, priority);
-
     if(expect.is_format_string_)
     {
         if(expect.is_complete_string_)
             cppcut_assert_equal(expect.string_, std::string(format_string));
         else
             check_prefix_and_suffix(expect.string_, expect.suffix_, format_string);
+    }
+    else
+    {
+        char buffer[512];
+        size_t len = vsnprintf(buffer, sizeof(buffer), format_string, va);
 
-        return;
+        if(error_code != 0 && len < sizeof(buffer))
+            snprintf(buffer + len, sizeof(buffer) - len,
+                     " (%s)", strerror(error_code));
+
+        if(expect.is_complete_string_)
+            cppcut_assert_equal(expect.string_, std::string(buffer));
+        else
+            check_prefix_and_suffix(expect.string_, expect.suffix_, buffer);
     }
 
-    char buffer[512];
-    size_t len = vsnprintf(buffer, sizeof(buffer), format_string, va);
+    if(expect.error_code_ != error_code || expect.priority_ != priority)
+    {
+        /* the seemingly useless/redundant check above works around a bug in
+         * Cutter that causes a memory read from a free'd location in the
+         * checks below, even in case of success */
+        static const char error_prefix[] = "For expected message \"";
+        static const char error_suffix[] = "\":";
 
-    if(error_code != 0 && len < sizeof(buffer))
-        snprintf(buffer + len, sizeof(buffer) - len,
-                 " (%s)", strerror(error_code));
-
-    if(expect.is_complete_string_)
-        cppcut_assert_equal(expect.string_, std::string(buffer));
-    else
-        check_prefix_and_suffix(expect.string_, expect.suffix_, buffer);
+        cppcut_assert_equal(expect.error_code_, error_code,
+                            cppcut_message() << error_prefix << expect.string_.c_str() << error_suffix);
+        cppcut_assert_equal(expect.priority_, priority,
+                            cppcut_message() << error_prefix << expect.string_.c_str() << error_suffix);
+    }
 }
 
 void msg_enable_syslog(bool enable_syslog) {}

@@ -74,6 +74,7 @@ class MockMessages::Expectation
 
 
 MockMessages::MockMessages():
+    ignore_message_level_(MESSAGE_LEVEL_IMPOSSIBLE),
     ignore_all_(false)
 {
     expectations_ = new MockExpectations();
@@ -94,6 +95,25 @@ void MockMessages::check() const
 {
     cppcut_assert_not_null(expectations_);
     expectations_->check();
+}
+
+void MockMessages::ignore_messages_above(enum MessageVerboseLevel level)
+{
+    if(level >= MESSAGE_LEVEL_MAX)
+        ignore_message_level_ = MESSAGE_LEVEL_IMPORTANT;
+    else
+        ignore_message_level_ = static_cast<enum MessageVerboseLevel>(level + 1);
+}
+
+void MockMessages::ignore_messages_with_level_or_above(enum MessageVerboseLevel level)
+{
+    ignore_message_level_ = level;
+}
+
+bool MockMessages::is_level_ignored(enum MessageVerboseLevel level) const
+{
+    return ignore_message_level_ != MESSAGE_LEVEL_IMPOSSIBLE &&
+           level >= ignore_message_level_;
 }
 
 static enum MessageVerboseLevel map_syslog_prio_to_verbose_level(int priority)
@@ -238,6 +258,12 @@ void msg_error(int error_code, int priority, const char *error_format, ...)
     if(mock_messages_singleton->ignore_all_)
         return;
 
+    const enum MessageVerboseLevel level =
+        map_syslog_prio_to_verbose_level(priority);
+
+    if(mock_messages_singleton->is_level_ignored(level))
+        return;
+
     va_list va;
 
     va_start(va, error_format);
@@ -251,6 +277,9 @@ void msg_info(const char *format_string, ...)
     if(mock_messages_singleton->ignore_all_)
         return;
 
+    if(mock_messages_singleton->is_level_ignored(MESSAGE_LEVEL_NORMAL))
+        return;
+
     va_list va;
 
     va_start(va, format_string);
@@ -261,6 +290,9 @@ void msg_info(const char *format_string, ...)
 void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
 {
     if(mock_messages_singleton->ignore_all_)
+        return;
+
+    if(mock_messages_singleton->is_level_ignored(level))
         return;
 
     va_list va;

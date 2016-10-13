@@ -24,6 +24,9 @@
 
 class MockMessages
 {
+  private:
+    enum MessageVerboseLevel ignore_message_level_;
+
   public:
     MockMessages(const MockMessages &) = delete;
     MockMessages &operator=(const MockMessages &) = delete;
@@ -39,6 +42,10 @@ class MockMessages
 
     void init();
     void check() const;
+
+    void ignore_messages_above(enum MessageVerboseLevel level);
+    void ignore_messages_with_level_or_above(enum MessageVerboseLevel level);
+    bool is_level_ignored(enum MessageVerboseLevel level) const;
 
     void expect_msg_error_formatted(int error_code, int priority, const char *string);
     void expect_msg_error_formatted(int error_code, int priority, const char *prefix, const char *suffix);

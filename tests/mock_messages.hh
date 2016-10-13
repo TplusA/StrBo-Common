@@ -47,6 +47,7 @@ class MockMessages
     void ignore_messages_with_level_or_above(enum MessageVerboseLevel level);
     bool is_level_ignored(enum MessageVerboseLevel level) const;
 
+    void expect_msg_is_verbose(bool retval, enum MessageVerboseLevel level);
     void expect_msg_error_formatted(int error_code, int priority, const char *string);
     void expect_msg_error_formatted(int error_code, int priority, const char *prefix, const char *suffix);
     void expect_msg_error(int error_code, int priority, const char *string);

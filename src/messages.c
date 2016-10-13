@@ -60,6 +60,11 @@ void msg_set_verbose_level(enum MessageVerboseLevel level)
         current_verbosity = level;
 }
 
+bool msg_is_verbose(enum MessageVerboseLevel level)
+{
+    return level <= current_verbosity;
+}
+
 enum MessageVerboseLevel msg_verbose_level_name_to_level(const char *name)
 {
     enum MessageVerboseLevel level = MESSAGE_LEVEL_MIN;

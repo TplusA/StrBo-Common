@@ -42,10 +42,12 @@ class MockMessages::Expectation
     const int error_code_;
     const int priority_;
 
+    const bool is_message_function_;
     const bool is_format_string_;
     const bool is_complete_string_;
     const std::string string_;
     const std::string suffix_;
+    const int ret_bool_;
 
     explicit Expectation(enum MessageVerboseLevel level,
                          int error_code, int priority,
@@ -53,9 +55,11 @@ class MockMessages::Expectation
         level_(level),
         error_code_(error_code),
         priority_(priority),
+        is_message_function_(true),
         is_format_string_(is_format_string),
         is_complete_string_(true),
-        string_(string)
+        string_(string),
+        ret_bool_(false)
     {}
 
     explicit Expectation(enum MessageVerboseLevel level,
@@ -65,10 +69,22 @@ class MockMessages::Expectation
         level_(level),
         error_code_(error_code),
         priority_(priority),
+        is_message_function_(true),
         is_format_string_(is_format_string),
         is_complete_string_(false),
         string_(prefix),
-        suffix_(suffix)
+        suffix_(suffix),
+        ret_bool_(false)
+    {}
+
+    explicit Expectation(bool retval, enum MessageVerboseLevel level):
+        level_(level),
+        error_code_(-60),
+        priority_(123),
+        is_message_function_(false),
+        is_format_string_(false),
+        is_complete_string_(false),
+        ret_bool_(retval)
     {}
 };
 
@@ -142,6 +158,12 @@ static enum MessageVerboseLevel map_syslog_prio_to_verbose_level(int priority)
     return MESSAGE_LEVEL_IMPOSSIBLE;
 }
 
+void MockMessages::expect_msg_is_verbose(bool retval,
+                                         enum MessageVerboseLevel level)
+{
+    expectations_->add(Expectation(retval, level));
+}
+
 void MockMessages::expect_msg_error_formatted(int error_code, int priority,
                                               const char *string)
 {
@@ -205,6 +227,8 @@ static void check_message_expectation(enum MessageVerboseLevel level,
 {
     const auto &expect(mock_messages_singleton->expectations_->get_next_expectation(format_string, va));
 
+    cut_assert_true(expect.is_message_function_);
+
     if(expect.is_format_string_)
     {
         if(expect.is_complete_string_)
@@ -251,6 +275,16 @@ void msg_set_verbose_level(enum MessageVerboseLevel level)
 {
     cppcut_assert_operator(static_cast<int>(MESSAGE_LEVEL_MIN), <=, static_cast<int>(level));
     cppcut_assert_operator(static_cast<int>(MESSAGE_LEVEL_MAX), >=, static_cast<int>(level));
+}
+
+bool msg_is_verbose(enum MessageVerboseLevel level)
+{
+    const auto &expect(mock_messages_singleton->expectations_->get_next_expectation(__func__));
+
+    cut_assert_true(expect.is_message_function_);
+    cppcut_assert_equal(expect.level_, level);
+
+    return expect.ret_bool_;
 }
 
 void msg_error(int error_code, int priority, const char *error_format, ...)

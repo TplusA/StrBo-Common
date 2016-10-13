@@ -62,6 +62,19 @@ void msg_enable_syslog(bool enable_syslog);
 void msg_set_verbose_level(enum MessageVerboseLevel level);
 
 /*!
+ * Check whether or not the given level is currently verbose.
+ *
+ * Use this function to enable or disable execution of code paths depending on
+ * verbosity level.
+ *
+ * \returns
+ *     True if global verbosity level is high enough to allow the given level
+ *     to be verbose (debug code should be executed), false if the given level
+ *     is filtered (debug code should \e not be executed).
+ */
+bool msg_is_verbose(enum MessageVerboseLevel level);
+
+/*!
  * Map verbosity level name to enumeration value.
  *
  * \returns

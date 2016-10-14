@@ -207,6 +207,20 @@ void MockMessages::expect_msg_vinfo(enum MessageVerboseLevel level,
     expectations_->add(Expectation(level, 0, LOG_INFO, string, true));
 }
 
+void MockMessages::expect_msg_vinfo_formatted_if_not_ignored(enum MessageVerboseLevel level,
+                                                             const char *string)
+{
+    if(!is_level_ignored(level))
+        expect_msg_vinfo_formatted(level, string);
+}
+
+void MockMessages::expect_msg_vinfo_if_not_ignored(enum MessageVerboseLevel level,
+                                                   const char *string)
+{
+    if(!is_level_ignored(level))
+        expect_msg_vinfo(level, string);
+}
+
 MockMessages *mock_messages_singleton = nullptr;
 
 static void check_prefix_and_suffix(const std::string &expected_prefix,

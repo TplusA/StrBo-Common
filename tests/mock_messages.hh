@@ -55,6 +55,8 @@ class MockMessages
     void expect_msg_info(const char *string);
     void expect_msg_vinfo_formatted(enum MessageVerboseLevel level, const char *string);
     void expect_msg_vinfo(enum MessageVerboseLevel level, const char *string);
+    void expect_msg_vinfo_formatted_if_not_ignored(enum MessageVerboseLevel level, const char *string);
+    void expect_msg_vinfo_if_not_ignored(enum MessageVerboseLevel level, const char *string);
 };
 
 /*!

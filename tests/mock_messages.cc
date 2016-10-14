@@ -116,7 +116,7 @@ void MockMessages::check() const
 void MockMessages::ignore_messages_above(enum MessageVerboseLevel level)
 {
     if(level >= MESSAGE_LEVEL_MAX)
-        ignore_message_level_ = MESSAGE_LEVEL_IMPORTANT;
+        ignore_message_level_ = MESSAGE_LEVEL_IMPOSSIBLE;
     else
         ignore_message_level_ = static_cast<enum MessageVerboseLevel>(level + 1);
 }

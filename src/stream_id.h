@@ -24,7 +24,7 @@
 /*!
  * Type to use to represent a stream ID.
  *
- * This is the type used in D-Bus communiacation. It should be used instead of
+ * This is the type used in D-Bus communication. It should be used instead of
  * a raw integer type wherever a stream is referenced by ID.
  *
  * In C++, the #ID::Stream and #ID::SourcedStream classes should be used. These

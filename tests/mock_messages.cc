@@ -295,7 +295,7 @@ bool msg_is_verbose(enum MessageVerboseLevel level)
 {
     const auto &expect(mock_messages_singleton->expectations_->get_next_expectation(__func__));
 
-    cut_assert_true(expect.is_message_function_);
+    cut_assert_false(expect.is_message_function_);
     cppcut_assert_equal(expect.level_, level);
 
     return expect.ret_bool_;

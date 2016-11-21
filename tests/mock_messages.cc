@@ -21,6 +21,7 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <cppcutter.h>
+#include <algorithm>
 
 #include <vector>
 #include <string>
@@ -299,6 +300,36 @@ bool msg_is_verbose(enum MessageVerboseLevel level)
     cppcut_assert_equal(expect.level_, level);
 
     return expect.ret_bool_;
+}
+
+/* order of strings must match the values listed in the #MessageVerboseLevel
+ * enumeration */
+static constexpr std::array<const char *, MESSAGE_LEVEL_MAX - MESSAGE_LEVEL_MIN + 1>
+mock_messages_verbosity_level_names =
+{
+    "quiet",
+    "important",
+    "normal",
+    "diag",
+    "debug",
+    "trace",
+};
+
+enum MessageVerboseLevel msg_verbose_level_name_to_level(const char *name)
+{
+    const auto found(std::find_if(mock_messages_verbosity_level_names.cbegin(),
+                                  mock_messages_verbosity_level_names.cend(),
+                                  [name] (const char *level_name)
+                                  {
+                                      return strcmp(name, level_name) == 0;
+                                  }));
+    const auto idx(std::distance(mock_messages_verbosity_level_names.begin(),
+                                 found));
+
+    if(idx >= 0 && static_cast<size_t>(idx) < mock_messages_verbosity_level_names.size())
+        return static_cast<MessageVerboseLevel>(MESSAGE_LEVEL_MIN + idx);
+    else
+        return MESSAGE_LEVEL_IMPOSSIBLE;
 }
 
 void msg_error(int error_code, int priority, const char *error_format, ...)

@@ -62,6 +62,11 @@ void msg_enable_syslog(bool enable_syslog);
 void msg_set_verbose_level(enum MessageVerboseLevel level);
 
 /*!
+ * Read out verbositiy level directly.
+ */
+enum MessageVerboseLevel msg_get_verbose_level(void);
+
+/*!
  * Check whether or not the given level is currently verbose.
  *
  * Use this function to enable or disable execution of code paths depending on

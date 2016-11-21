@@ -106,6 +106,7 @@ void MockMessages::init()
 {
     cppcut_assert_not_null(expectations_);
     expectations_->init();
+    mock_level_ = MESSAGE_LEVEL_NORMAL;
 }
 
 void MockMessages::check() const
@@ -131,6 +132,19 @@ bool MockMessages::is_level_ignored(enum MessageVerboseLevel level) const
 {
     return ignore_message_level_ != MESSAGE_LEVEL_IMPOSSIBLE &&
            level >= ignore_message_level_;
+}
+
+void MockMessages::set_verbose_level(enum MessageVerboseLevel level)
+{
+    cppcut_assert_operator(static_cast<int>(MESSAGE_LEVEL_MIN), <=, static_cast<int>(level));
+    cppcut_assert_operator(static_cast<int>(MESSAGE_LEVEL_MAX), >=, static_cast<int>(level));
+
+    mock_level_ = level;
+}
+
+enum MessageVerboseLevel MockMessages::get_verbose_level() const
+{
+    return mock_level_;
 }
 
 static enum MessageVerboseLevel map_syslog_prio_to_verbose_level(int priority)
@@ -288,8 +302,12 @@ void msg_enable_syslog(bool enable_syslog) {}
 
 void msg_set_verbose_level(enum MessageVerboseLevel level)
 {
-    cppcut_assert_operator(static_cast<int>(MESSAGE_LEVEL_MIN), <=, static_cast<int>(level));
-    cppcut_assert_operator(static_cast<int>(MESSAGE_LEVEL_MAX), >=, static_cast<int>(level));
+    mock_messages_singleton->set_verbose_level(level);
+}
+
+enum MessageVerboseLevel msg_get_verbose_level(void)
+{
+    return mock_messages_singleton->get_verbose_level();
 }
 
 bool msg_is_verbose(enum MessageVerboseLevel level)

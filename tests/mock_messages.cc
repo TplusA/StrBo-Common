@@ -350,6 +350,14 @@ enum MessageVerboseLevel msg_verbose_level_name_to_level(const char *name)
         return MESSAGE_LEVEL_IMPOSSIBLE;
 }
 
+const char *msg_verbose_level_to_level_name(enum MessageVerboseLevel level)
+{
+    if(level >= MESSAGE_LEVEL_MIN && level <= MESSAGE_LEVEL_MAX)
+        return mock_messages_verbosity_level_names[level - MESSAGE_LEVEL_MIN];
+
+    return NULL;
+}
+
 void msg_error(int error_code, int priority, const char *error_format, ...)
 {
     if(mock_messages_singleton->ignore_all_)

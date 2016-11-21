@@ -90,6 +90,15 @@ bool msg_is_verbose(enum MessageVerboseLevel level);
 enum MessageVerboseLevel msg_verbose_level_name_to_level(const char *name);
 
 /*!
+ * Map verbosity level enumeration value to verbosity level name.
+ *
+ * \returns
+ *     A valid verbosity level name, or a \c NULL pointer in case the given
+ *     numeric level is invalid.
+ */
+const char *msg_verbose_level_to_level_name(enum MessageVerboseLevel level);
+
+/*!
  * Return list of supported verbosity level names.
  *
  * The list is sorted by increasing order of verbosity. It is terminated by a

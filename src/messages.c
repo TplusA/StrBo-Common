@@ -86,6 +86,14 @@ enum MessageVerboseLevel msg_verbose_level_name_to_level(const char *name)
     return MESSAGE_LEVEL_IMPOSSIBLE;
 }
 
+const char *msg_verbose_level_to_level_name(enum MessageVerboseLevel level)
+{
+    if(level >= MESSAGE_LEVEL_MIN && level <= MESSAGE_LEVEL_MAX)
+        return verbosity_level_names[level - MESSAGE_LEVEL_MIN];
+
+    return NULL;
+}
+
 const char *const *msg_get_verbose_level_names(void)
 {
     return verbosity_level_names;

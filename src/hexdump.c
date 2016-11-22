@@ -23,12 +23,15 @@
 #include <stdio.h>
 
 #include "hexdump.h"
-#include "messages.h"
 
-void hexdump_to_log(const uint8_t *const buffer, size_t buffer_length,
+void hexdump_to_log(enum MessageVerboseLevel level,
+                    const uint8_t *const buffer, size_t buffer_length,
                     const char *what)
 {
-    msg_info("%s (%zu bytes):", what, buffer_length);
+    if(!msg_is_verbose(level))
+        return;
+
+    msg_vinfo(level, "%s (%zu bytes):", what, buffer_length);
 
     if(buffer == NULL || buffer_length == 0)
         return;
@@ -46,11 +49,11 @@ void hexdump_to_log(const uint8_t *const buffer, size_t buffer_length,
 
         if((i % num_of_columns) == num_of_columns - 1)
         {
-            msg_info("%s", log_buffer);
+            msg_vinfo(level, "%s", log_buffer);
             out_pos = 0;
         }
     }
 
     if(out_pos > 0)
-        msg_info("%s", log_buffer);
+        msg_vinfo(level, "%s", log_buffer);
 }

@@ -21,11 +21,14 @@
 
 #include <stdint.h>
 
+#include "messages.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void hexdump_to_log(const uint8_t *const buffer, size_t buffer_length,
+void hexdump_to_log(enum MessageVerboseLevel level,
+                    const uint8_t *const buffer, size_t buffer_length,
                     const char *what);
 
 #ifdef __cplusplus

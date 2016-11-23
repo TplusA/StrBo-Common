@@ -43,7 +43,8 @@ void hexdump_to_log(enum MessageVerboseLevel level,
     for(size_t i = 0; i < buffer_length; ++i)
     {
         if((i % num_of_columns) == 0)
-            out_pos += snprintf(log_buffer + out_pos, sizeof(log_buffer) - out_pos, "0x%04zx:", i);
+            out_pos += snprintf(log_buffer + out_pos, sizeof(log_buffer) - out_pos,
+                                "0x%04lx:", (unsigned long)i);
 
         out_pos += snprintf(log_buffer + out_pos, sizeof(log_buffer) - out_pos, " 0x%02x", buffer[i]);
 

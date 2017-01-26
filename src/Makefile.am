@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2015, 2016, 2017  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of the T+A Streaming Board software stack ("StrBoWare").
 #
@@ -18,10 +18,14 @@
 
 ACLOCAL_AMFLAGS = -I ../m4
 
-noinst_LTLIBRARIES = libinifile.la
+noinst_LTLIBRARIES = libinifile.la libmd5.la
 
 libinifile_la_SOURCES = inifile.c inifile.h messages.h os.h
 libinifile_la_CFLAGS = $(AM_CFLAGS)
+
+libmd5_la_SOURCES = md5.cc md5.hh
+libmd5_la_CFLAGS = $(AM_CFLAGS)
+libmd5_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 EXTRA_DIST = \
     messages.c \

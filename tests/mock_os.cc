@@ -235,13 +235,6 @@ class MockOs::Expectation
         data_.arg_string_ = arg_string;
     }
 
-    explicit Expectation(OsFn fn, bool ret_bool, const char *arg_string):
-        d(fn)
-    {
-        data_.ret_bool_ = ret_bool;
-        data_.arg_string_ = arg_string;
-    }
-
     explicit Expectation(OsFn fn, bool ret_bool, const char *arg_string, bool arg_bool):
         d(fn)
     {
@@ -250,11 +243,11 @@ class MockOs::Expectation
         data_.arg_bool_ = arg_bool;
     }
 
-    explicit Expectation(OsFn fn, bool ret_bool, const char *arg_string,
+    explicit Expectation(OsFn fn, int ret_int, const char *arg_string,
                          const std::vector<ForeachItemData> &items):
         d(fn)
     {
-        data_.ret_bool_ = ret_bool;
+        data_.ret_int_ = ret_int;
         data_.arg_string_ = arg_string;
         data_.foreach_item_data_ = &items;
     }
@@ -520,12 +513,12 @@ void MockOs::expect_os_system_formatted_formatted(int retval, const char *string
     expectations_->add(Expectation(OsFn::system_formatted, retval, string));
 }
 
-void MockOs::expect_os_foreach_in_path(bool retval, const char *path)
+void MockOs::expect_os_foreach_in_path(int retval, const char *path)
 {
     expectations_->add(Expectation(OsFn::foreach_in_path, retval, path));
 }
 
-void MockOs::expect_os_foreach_in_path(bool retval, const char *path,
+void MockOs::expect_os_foreach_in_path(int retval, const char *path,
                                        const std::vector<ForeachItemData> &items)
 {
     expectations_->add(Expectation(OsFn::foreach_in_path, retval, path, items));
@@ -763,9 +756,9 @@ int os_system_formatted(const char *format_string, ...)
     return expect.d.ret_int_;
 }
 
-bool os_foreach_in_path(const char *path,
-                        void (*callback)(const char *path, void *user_data),
-                        void *user_data)
+int os_foreach_in_path(const char *path,
+                       int (*callback)(const char *path, void *user_data),
+                       void *user_data)
 {
     const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
 
@@ -775,13 +768,25 @@ bool os_foreach_in_path(const char *path,
 
     if(expect.d.foreach_item_data_ != NULL)
     {
+        int ret = 0;
+        errno = ESRCH;
+
         for(const auto &item : *expect.d.foreach_item_data_)
-            callback(item.item_name_.c_str(), user_data);
+        {
+            if((ret = callback(item.item_name_.c_str(), user_data)) != 0)
+            {
+                errno = EINTR;
+                break;
+            }
+        }
+
+        cppcut_assert_equal(expect.d.ret_errno_, errno);
+        cppcut_assert_equal(expect.d.ret_int_, ret);
     }
 
     errno = expect.d.ret_errno_;
 
-    return expect.d.ret_bool_;
+    return expect.d.ret_int_;
 }
 
 char *os_resolve_symlink(const char *link)

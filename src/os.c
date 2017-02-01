@@ -172,9 +172,9 @@ static bool is_valid_directory_name(const char *path)
         return path[1] != '\0';
 }
 
-bool os_foreach_in_path(const char *path,
-                        void (*callback)(const char *path, void *user_data),
-                        void *user_data)
+int os_foreach_in_path(const char *path,
+                       int (*callback)(const char *path, void *user_data),
+                       void *user_data)
 {
     log_assert(path != NULL);
     log_assert(callback != NULL);
@@ -188,10 +188,10 @@ bool os_foreach_in_path(const char *path,
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed opening directory \"%s\"", path);
         RESTORE_ERRNO(temp);
-        return false;
+        return -1;
     }
 
-    bool retval = true;
+    int retval = 0;
 
     while(true)
     {
@@ -200,14 +200,18 @@ bool os_foreach_in_path(const char *path,
 
         if(result != NULL)
         {
-            if(is_valid_directory_name(result->d_name))
-                callback(result->d_name, user_data);
+            if(is_valid_directory_name(result->d_name) &&
+               (retval = callback(result->d_name, user_data)) != 0)
+            {
+                errno = EINTR;
+                break;
+            }
         }
         else
         {
-            retval = (errno == 0);
+            retval = (errno == 0) ? 0 : -2;
 
-            if(!retval)
+            if(retval < 0)
             {
                 SAVE_ERRNO(temp);
                 msg_error(errno, LOG_ERR,

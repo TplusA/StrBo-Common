@@ -59,9 +59,33 @@ int os_system(const char *command);
 int os_system_formatted(const char *format_string, ...)
     __attribute__ ((format (printf, 1, 2)));
 
-bool os_foreach_in_path(const char *path,
-                        void (*callback)(const char *path, void *user_data),
-                        void *user_data);
+/*!
+ * Read directory, call callback for each item.
+ *
+ * \param path
+ *     Which directory to read.
+ *
+ * \param callback
+ *     A function that is called for each item in the given directory. The
+ *     function must return 0 to continue reading more directory entries. In
+ *     case the function returns a non-zero value, the iteration over the
+ *     directory is stopped, and the return value becomes the return value of
+ *     #os_foreach_in_path(). Implementers of the callback function are advised
+ *     to return positive values in non-error situations, easily allowing the
+ *     caller to tell errors from deliberate, non-erroneous interruptions.
+ *
+ * \param user_data
+ *     Data passed unmodified to \p callback.
+ *
+ * \returns
+ *     0 on success, a negative value in case of error (check errno), or the
+ *     non-zero return value of \p callback.
+ *
+ */
+int os_foreach_in_path(const char *path,
+                       int (*callback)(const char *path, void *user_data),
+                       void *user_data);
+
 enum os_path_type os_path_get_type(const char *path);
 
 /*!

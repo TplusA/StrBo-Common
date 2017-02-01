@@ -74,8 +74,8 @@ class MockOs
     void expect_os_system(int retval, const char *command);
     void expect_os_system_formatted(int retval, const char *string);
     void expect_os_system_formatted_formatted(int retval, const char *string);
-    void expect_os_foreach_in_path(bool retval, const char *path);
-    void expect_os_foreach_in_path(bool retval, const char *path,
+    void expect_os_foreach_in_path(int retval, const char *path);
+    void expect_os_foreach_in_path(int retval, const char *path,
                                    const std::vector<ForeachItemData> &items);
     void expect_os_path_get_type(enum os_path_type retval, const char *path);
     void expect_os_resolve_symlink(const char *retval, const char *link);

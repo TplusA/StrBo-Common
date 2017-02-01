@@ -39,6 +39,9 @@
 #include "os.h"
 #include "messages.h"
 
+#define SAVE_ERRNO(VAR)         const int VAR = errno
+#define RESTORE_ERRNO(VAR)      errno = VAR
+
 int os_write_from_buffer(const void *src, size_t count, int fd)
 {
     const uint8_t *src_ptr = src;
@@ -176,11 +179,15 @@ bool os_foreach_in_path(const char *path,
     log_assert(path != NULL);
     log_assert(callback != NULL);
 
+    errno = 0;
+
     DIR *dir = opendir(path);
 
     if(dir == NULL)
     {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed opening directory \"%s\"", path);
+        RESTORE_ERRNO(temp);
         return false;
     }
 
@@ -201,14 +208,20 @@ bool os_foreach_in_path(const char *path,
             retval = (errno == 0);
 
             if(!retval)
+            {
+                SAVE_ERRNO(temp);
                 msg_error(errno, LOG_ERR,
                           "Failed reading directory \"%s\"", path);
+                RESTORE_ERRNO(temp);
+            }
 
             break;
         }
     }
 
+    SAVE_ERRNO(temp);
     closedir(dir);
+    RESTORE_ERRNO(temp);
 
     return retval;
 }
@@ -219,7 +232,9 @@ enum os_path_type os_path_get_type(const char *path)
 
     if(stat(path, &buf) < 0)
     {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to stat() file \"%s\"", path);
+        RESTORE_ERRNO(temp);
         return OS_PATH_TYPE_IO_ERROR;
     }
 
@@ -261,7 +276,11 @@ char *os_resolve_symlink(const char *link)
 
 bool os_mkdir_hierarchy(const char *path, bool must_not_exist)
 {
+    static const char failed_err[] = "Failed creating directory hierarchy %s";
+
     log_assert(path != NULL);
+
+    errno = 0;
 
     if(must_not_exist)
     {
@@ -269,21 +288,44 @@ bool os_mkdir_hierarchy(const char *path, bool must_not_exist)
 
         if(lstat(path, &buf) == 0)
         {
-            msg_error(EEXIST, LOG_ERR, "Failed creating directory hierarchy %s", path);
+            msg_error(EEXIST, LOG_ERR, failed_err, path);
+            errno = EEXIST;
             return false;
         }
     }
 
     /* oh well... */
-    return os_system_formatted("mkdir -m 0750 -p %s", path) == EXIT_SUCCESS;
+    if(os_system_formatted("mkdir -m 0750 -p %s", path) == EXIT_SUCCESS)
+        return true;
+
+    struct stat buf;
+
+    if(lstat(path, &buf) == 0)
+    {
+        /* that's just weird */
+        if(S_ISDIR(buf.st_mode))
+            return true;
+
+        errno = ENOTDIR;
+    }
+
+    SAVE_ERRNO(temp);
+    msg_error(errno, LOG_ERR, failed_err, path);
+    RESTORE_ERRNO(temp);
+
+    return false;
 }
 
 bool os_mkdir(const char *path, bool must_not_exist)
 {
     log_assert(path != NULL);
 
+    errno = 0;
+
     if(mkdir(path, 0750) == 0)
         return true;
+
+    SAVE_ERRNO(temp);
 
     if(errno == EEXIST && !must_not_exist)
     {
@@ -292,11 +334,11 @@ bool os_mkdir(const char *path, bool must_not_exist)
 
         if(lstat(path, &buf) == 0 && S_ISDIR(buf.st_mode))
             return true;
-
-        errno = EEXIST;
     }
 
     msg_error(errno, LOG_ERR, "Failed creating directory %s", path);
+
+    RESTORE_ERRNO(temp);
 
     return false;
 }
@@ -305,17 +347,25 @@ bool os_rmdir(const char *path, bool must_exist)
 {
     log_assert(path != NULL);
 
+    errno = 0;
+
     if(rmdir(path) == 0)
         return true;
 
     if(must_exist)
+    {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed removing directory %s", path);
+        RESTORE_ERRNO(temp);
+    }
 
     return false;
 }
 
 int os_file_new(const char *filename)
 {
+    errno = 0;
+
     int fd;
 
     while((fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC,
@@ -324,13 +374,21 @@ int os_file_new(const char *filename)
         ;
 
     if(fd < 0)
+    {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to create file \"%s\"", filename);
+        RESTORE_ERRNO(temp);
+    }
 
     return fd;
 }
 
 static void safe_close_fd(int fd)
 {
+    SAVE_ERRNO(previous_errno);
+
+    errno = 0;
+
     if(fsync(fd) < 0 && errno != EINVAL)
         msg_error(errno, LOG_ERR, "fsync() fd %d", fd);
 
@@ -338,15 +396,24 @@ static void safe_close_fd(int fd)
     while((ret = close(fd)) == -1 && errno == EINTR)
         ;
 
-    if(ret == -1 && errno != EINTR)
+    if(ret == 0)
+        RESTORE_ERRNO(previous_errno);
+    else if(ret == -1 && errno != EINTR)
+    {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to close file descriptor %d", fd);
+        RESTORE_ERRNO(temp);
+    }
 }
 
 void os_file_close(int fd)
 {
     if(fd < 0)
-        msg_error(EINVAL, LOG_ERR,
+    {
+        msg_error(EBADF, LOG_ERR,
                   "Passed invalid file descriptor %d to %s()", fd, __func__);
+        errno = EBADF;
+    }
     else
         safe_close_fd(fd);
 }
@@ -355,8 +422,14 @@ void os_file_delete(const char *filename)
 {
     log_assert(filename != NULL);
 
+    errno = 0;
+
     if(unlink(filename) < 0)
+    {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to delete file \"%s\"", filename);
+        RESTORE_ERRNO(temp);
+    }
 }
 
 int os_map_file_to_memory(struct os_mapped_file_data *mapped,
@@ -365,19 +438,25 @@ int os_map_file_to_memory(struct os_mapped_file_data *mapped,
     log_assert(mapped != NULL);
     log_assert(filename != NULL);
 
+    errno = 0;
+
     while((mapped->fd = open(filename, O_RDONLY)) == -1 && errno == EINTR)
         ;
 
     if(mapped->fd < 0)
     {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to open() file \"%s\"", filename);
+        RESTORE_ERRNO(temp);
         return -1;
     }
 
     struct stat buf;
     if(fstat(mapped->fd, &buf) < 0)
     {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to fstat() file \"%s\"", filename);
+        RESTORE_ERRNO(temp);
         goto error_exit;
     }
 
@@ -395,7 +474,8 @@ int os_map_file_to_memory(struct os_mapped_file_data *mapped,
 
     if(mapped->length == 0)
     {
-        msg_error(errno, LOG_ERR, "Refusing to map empty file \"%s\"", filename);
+        msg_error(EINVAL, LOG_ERR, "Refusing to map empty file \"%s\"", filename);
+        errno = EINVAL;
         goto error_exit;
     }
 
@@ -404,7 +484,9 @@ int os_map_file_to_memory(struct os_mapped_file_data *mapped,
 
     if(mapped->ptr == MAP_FAILED)
     {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to mmap() file \"%s\"", filename);
+        RESTORE_ERRNO(temp);
         goto error_exit;
     }
 
@@ -422,7 +504,12 @@ void os_unmap_file(struct os_mapped_file_data *mapped)
     log_assert(mapped != NULL);
 
     if(mapped->fd < 0)
+    {
+        errno = EBADF;
         return;
+    }
+
+    errno = 0;
 
     (void)munmap(mapped->ptr, mapped->length);
 
@@ -434,15 +521,20 @@ void os_sync_dir(const char *path)
 {
     log_assert(path != NULL);
 
+    errno = 0;
+
     int fd;
 
     while((fd = open(path, O_DIRECTORY | O_RDONLY)) == -1 && errno == EINTR)
         ;
 
-
     if(fd < 0)
+    {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR,
                   "Failed to open directory \"%s\" for syncing", path);
+        RESTORE_ERRNO(temp);
+    }
     else
         safe_close_fd(fd);
 }

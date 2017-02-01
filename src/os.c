@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2017  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -32,7 +32,9 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <linux/fs.h>
+#include <limits.h>
 
 #include "os.h"
 #include "messages.h"
@@ -112,10 +114,32 @@ int os_system(const char *command)
 
     const int ret = system(command);
 
-    if(ret == EXIT_SUCCESS)
-        msg_info("External command succeeded");
-    else
-        msg_error(0, LOG_ERR, "External command failed, exit code %d", ret);
+    if(WIFEXITED(ret))
+    {
+        if(WEXITSTATUS(ret) == EXIT_SUCCESS)
+            msg_info("External command succeeded");
+        else
+            msg_error(0, LOG_ERR,
+                      "External command failed with exit code %d",
+                      WEXITSTATUS(ret));
+
+        return WEXITSTATUS(ret);
+    }
+
+    if(WCOREDUMP(ret))
+    {
+        msg_error(0, LOG_ERR, "CRASHED: \"%s\"", command);
+        return INT_MIN;
+    }
+
+    if(WIFSIGNALED(ret))
+    {
+        msg_error(0, LOG_ERR, "TERMINATED by signal %d: \"%s\"",
+                  WTERMSIG(ret), command);
+        return -WTERMSIG(ret);
+    }
+
+    BUG("Bogus exit code %d from external command", ret);
 
     return ret;
 }

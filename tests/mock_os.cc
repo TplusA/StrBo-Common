@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2017  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -41,6 +41,8 @@ enum class OsFn
     file_new,
     file_close,
     file_delete,
+    file_rename,
+    link_new,
     sync_dir,
     map_file_to_memory,
     unmap_file,
@@ -119,6 +121,14 @@ static std::ostream &operator<<(std::ostream &os, const OsFn id)
         os << "file_delete";
         break;
 
+      case OsFn::file_rename:
+        os << "file_rename";
+        break;
+
+      case OsFn::link_new:
+        os << "link_new";
+        break;
+
       case OsFn::sync_dir:
         os << "sync_dir";
         break;
@@ -157,6 +167,7 @@ class MockOs::Expectation
         bool ret_bool_;
         enum os_path_type ret_path_type_;
         std::string arg_string_;
+        std::string arg_string_second_;
         bool arg_bool_;
         int arg_fd_;
         const void *arg_src_pointer_;
@@ -322,6 +333,13 @@ class MockOs::Expectation
         d(fn)
     {
         data_.arg_string_ = filename;
+    }
+
+    explicit Expectation(OsFn fn, bool ret, const char *filename_old, const char *filename_new):
+        d(fn)
+    {
+        data_.arg_string_ = filename_old;
+        data_.arg_string_second_ = filename_new;
     }
 
     explicit Expectation(OsFn fn, const char *filename, const std::function<void()> &cb):
@@ -549,6 +567,16 @@ void MockOs::expect_os_file_close(int fd)
 void MockOs::expect_os_file_delete(const char *filename)
 {
     expectations_->add(Expectation(OsFn::file_delete, filename));
+}
+
+void MockOs::expect_os_file_rename(bool retval, const char *oldpath, const char *newpath)
+{
+    expectations_->add(Expectation(OsFn::file_rename, retval, oldpath, newpath));
+}
+
+void MockOs::expect_os_link_new(bool retval, const char *oldpath, const char *newpath)
+{
+    expectations_->add(Expectation(OsFn::link_new, retval, oldpath, newpath));
 }
 
 void MockOs::expect_os_sync_dir(const char *path)
@@ -812,6 +840,28 @@ void os_file_delete(const char *filename)
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::file_delete);
     cppcut_assert_equal(expect.d.arg_string_, std::string(filename));
+}
+
+bool os_file_rename(const char *oldpath, const char *newpath)
+{
+    const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
+
+    cppcut_assert_equal(expect.d.function_id_, OsFn::file_rename);
+    cppcut_assert_equal(expect.d.arg_string_, std::string(oldpath));
+    cppcut_assert_equal(expect.d.arg_string_second_, std::string(newpath));
+
+    return expect.d.ret_bool_;
+}
+
+bool os_link_new(const char *oldpath, const char *newpath)
+{
+    const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
+
+    cppcut_assert_equal(expect.d.function_id_, OsFn::link_new);
+    cppcut_assert_equal(expect.d.arg_string_, std::string(oldpath));
+    cppcut_assert_equal(expect.d.arg_string_second_, std::string(newpath));
+
+    return expect.d.ret_bool_;
 }
 
 void os_sync_dir(const char *path)

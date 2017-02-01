@@ -432,6 +432,47 @@ void os_file_delete(const char *filename)
     }
 }
 
+bool os_file_rename(const char *oldpath, const char *newpath)
+{
+    errno = 0;
+
+    int ret;
+
+    while((ret = rename(oldpath, newpath)) == -1 && errno == EINTR)
+        ;
+
+    if(ret < 0)
+    {
+        SAVE_ERRNO(temp);
+        msg_error(errno, LOG_ERR, "Failed to rename \"%s\" to \"%s\"",
+                  oldpath, newpath);
+        RESTORE_ERRNO(temp);
+    }
+
+    return ret == 0;
+}
+
+bool os_link_new(const char *oldpath, const char *newpath)
+{
+    errno = 0;
+
+    int ret;
+
+    while((ret = link(oldpath, newpath)) == -1 && errno == EINTR)
+        ;
+
+    if(ret < 0)
+    {
+        SAVE_ERRNO(temp);
+        msg_error(errno, LOG_ERR,
+                  "Failed to create link \"%s\" from source \"%s\"",
+                  newpath, oldpath);
+        RESTORE_ERRNO(temp);
+    }
+
+    return ret == 0;
+}
+
 int os_map_file_to_memory(struct os_mapped_file_data *mapped,
                           const char *filename)
 {

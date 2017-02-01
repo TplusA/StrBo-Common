@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2017  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -85,6 +85,8 @@ class MockOs
     void expect_os_file_new(int ret, const char *filename);
     void expect_os_file_close(int fd);
     void expect_os_file_delete(const char *filename);
+    void expect_os_file_rename(bool retval, const char *oldpath, const char *newpath);
+    void expect_os_link_new(bool retval, const char *oldpath, const char *newpath);
     void expect_os_sync_dir(const char *path);
     void expect_os_sync_dir_callback(const char *path, const std::function<void()> &callback);
     void expect_os_map_file_to_memory(int ret, struct os_mapped_file_data *mapped,

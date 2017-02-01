@@ -166,6 +166,7 @@ class MockOs::Expectation
         int ret_int_;
         bool ret_bool_;
         enum os_path_type ret_path_type_;
+        int ret_errno_;
         std::string arg_string_;
         std::string arg_string_second_;
         bool arg_bool_;
@@ -190,6 +191,7 @@ class MockOs::Expectation
             function_id_(fn),
             ret_int_(-5),
             ret_bool_(false),
+            ret_errno_(ESRCH),
             arg_bool_(false),
             arg_fd_(-5),
             arg_src_pointer_(nullptr),
@@ -672,7 +674,10 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
     cppcut_assert_equal(expect.d.function_id_, OsFn::write_from_buffer);
 
     if(expect.d.os_write_from_buffer_callback_ != nullptr)
+    {
+        errno = expect.d.ret_errno_;
         return expect.d.os_write_from_buffer_callback_(src, count, fd);
+    }
 
     if(expect.d.arg_pointer_expect_concrete_value_)
         cppcut_assert_equal(expect.d.arg_src_pointer_, src);
@@ -683,6 +688,9 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
 
     cppcut_assert_equal(expect.d.arg_count_, count);
     cppcut_assert_equal(expect.d.arg_fd_, fd);
+
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_int_;
 }
 
@@ -693,7 +701,10 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *add_bytes_read, int 
     cppcut_assert_equal(expect.d.function_id_, OsFn::try_read_to_buffer);
 
     if(expect.d.os_try_read_to_buffer_callback_ != nullptr)
+    {
+        errno = expect.d.ret_errno_;
         return expect.d.os_try_read_to_buffer_callback_(dest, count, add_bytes_read, fd, suppress_error_on_eagain);
+    }
 
     if(expect.d.arg_pointer_expect_concrete_value_)
         cppcut_assert_equal(expect.d.arg_dest_pointer_, dest);
@@ -707,12 +718,16 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *add_bytes_read, int 
     cppcut_assert_equal(expect.d.arg_fd_, fd);
     cppcut_assert_equal(expect.d.arg_bool_, suppress_error_on_eagain);
 
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_int_;
 }
 
 void os_abort(void)
 {
     const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
+
+    errno = expect.d.ret_errno_;
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::stdlib_abort);
 }
@@ -723,6 +738,8 @@ int os_system(const char *command)
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::stdlib_system);
     cppcut_assert_equal(expect.d.arg_string_.c_str(), command);
+
+    errno = expect.d.ret_errno_;
 
     return expect.d.ret_int_;
 }
@@ -740,6 +757,8 @@ int os_system_formatted(const char *format_string, ...)
     va_end(va);
 
     cppcut_assert_equal(expect.d.arg_string_.c_str(), buffer);
+
+    errno = expect.d.ret_errno_;
 
     return expect.d.ret_int_;
 }
@@ -760,6 +779,8 @@ bool os_foreach_in_path(const char *path,
             callback(item.item_name_.c_str(), user_data);
     }
 
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_bool_;
 }
 
@@ -770,6 +791,8 @@ char *os_resolve_symlink(const char *link)
     cppcut_assert_equal(expect.d.function_id_, OsFn::resolve_symlink);
     cppcut_assert_not_null(link);
     cppcut_assert_equal(expect.d.arg_string_.c_str(), link);
+
+    errno = expect.d.ret_errno_;
 
     return expect.d.ret_string_.empty() ? nullptr : strdup(expect.d.ret_string_.c_str());
 }
@@ -782,6 +805,8 @@ bool os_mkdir_hierarchy(const char *path, bool must_not_exist)
     cppcut_assert_equal(expect.d.arg_string_.c_str(), path);
     cppcut_assert_equal(expect.d.arg_bool_, must_not_exist);
 
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_bool_;
 }
 
@@ -792,6 +817,8 @@ bool os_mkdir(const char *path, bool must_not_exist)
     cppcut_assert_equal(expect.d.function_id_, OsFn::unix_mkdir);
     cppcut_assert_equal(expect.d.arg_string_.c_str(), path);
     cppcut_assert_equal(expect.d.arg_bool_, must_not_exist);
+
+    errno = expect.d.ret_errno_;
 
     return expect.d.ret_bool_;
 }
@@ -804,6 +831,8 @@ bool os_rmdir(const char *path, bool must_exist)
     cppcut_assert_equal(expect.d.arg_string_.c_str(), path);
     cppcut_assert_equal(expect.d.arg_bool_, must_exist);
 
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_bool_;
 }
 
@@ -814,6 +843,8 @@ enum os_path_type os_path_get_type(const char *path)
     cppcut_assert_equal(expect.d.function_id_, OsFn::path_get_type);
     cppcut_assert_equal(expect.d.arg_string_.c_str(), path);
 
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_path_type_;
 }
 
@@ -823,6 +854,9 @@ int os_file_new(const char *filename)
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::file_new);
     cppcut_assert_equal(expect.d.arg_string_, std::string(filename));
+
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_int_;
 }
 
@@ -832,6 +866,8 @@ void os_file_close(int fd)
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::file_close);
     cppcut_assert_equal(expect.d.arg_fd_, fd);
+
+    errno = expect.d.ret_errno_;
 }
 
 void os_file_delete(const char *filename)
@@ -840,6 +876,8 @@ void os_file_delete(const char *filename)
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::file_delete);
     cppcut_assert_equal(expect.d.arg_string_, std::string(filename));
+
+    errno = expect.d.ret_errno_;
 }
 
 bool os_file_rename(const char *oldpath, const char *newpath)
@@ -849,6 +887,8 @@ bool os_file_rename(const char *oldpath, const char *newpath)
     cppcut_assert_equal(expect.d.function_id_, OsFn::file_rename);
     cppcut_assert_equal(expect.d.arg_string_, std::string(oldpath));
     cppcut_assert_equal(expect.d.arg_string_second_, std::string(newpath));
+
+    errno = expect.d.ret_errno_;
 
     return expect.d.ret_bool_;
 }
@@ -860,6 +900,8 @@ bool os_link_new(const char *oldpath, const char *newpath)
     cppcut_assert_equal(expect.d.function_id_, OsFn::link_new);
     cppcut_assert_equal(expect.d.arg_string_, std::string(oldpath));
     cppcut_assert_equal(expect.d.arg_string_second_, std::string(newpath));
+
+    errno = expect.d.ret_errno_;
 
     return expect.d.ret_bool_;
 }
@@ -873,6 +915,8 @@ void os_sync_dir(const char *path)
 
     if(expect.d.generic_callback_ != nullptr)
         expect.d.generic_callback_();
+
+    errno = expect.d.ret_errno_;
 }
 
 int os_map_file_to_memory(struct os_mapped_file_data *mapped,
@@ -896,6 +940,8 @@ int os_map_file_to_memory(struct os_mapped_file_data *mapped,
 
     cppcut_assert_equal(expect.d.arg_string_, std::string(filename));
 
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_int_;
 }
 
@@ -916,6 +962,8 @@ void os_unmap_file(struct os_mapped_file_data *mapped)
         else
             cppcut_assert_not_null(mapped);
     }
+
+    errno = expect.d.ret_errno_;
 }
 
 int os_clock_gettime(clockid_t clk_id, struct timespec *tp)
@@ -925,10 +973,16 @@ int os_clock_gettime(clockid_t clk_id, struct timespec *tp)
     cppcut_assert_equal(expect.d.function_id_, OsFn::os_clock_gettime_fn);
 
     if(expect.d.os_clock_gettime_callback_ != nullptr)
+    {
+        errno = expect.d.ret_errno_;
         return expect.d.os_clock_gettime_callback_(clk_id, tp);
+    }
 
     cppcut_assert_equal(expect.d.arg_clk_id_, clk_id);
     *tp = expect.d.timespec_;
+
+    errno = expect.d.ret_errno_;
+
     return expect.d.ret_int_;
 }
 
@@ -940,4 +994,6 @@ void os_nanosleep(const struct timespec *tp)
 
     cppcut_assert_equal(expect.d.timespec_.tv_sec, tp->tv_sec);
     cppcut_assert_equal(expect.d.timespec_.tv_nsec, tp->tv_nsec);
+
+    errno = expect.d.ret_errno_;
 }

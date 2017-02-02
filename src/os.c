@@ -251,6 +251,21 @@ enum os_path_type os_path_get_type(const char *path)
     return OS_PATH_TYPE_OTHER;
 }
 
+size_t os_path_get_number_of_hard_links(const char *path)
+{
+    struct stat buf;
+
+    if(stat(path, &buf) < 0)
+    {
+        SAVE_ERRNO(temp);
+        msg_error(errno, LOG_ERR, "Failed to stat() file \"%s\"", path);
+        RESTORE_ERRNO(temp);
+        return 0;
+    }
+
+    return buf.st_nlink;
+}
+
 char *os_resolve_symlink(const char *link)
 {
     log_assert(link != NULL);

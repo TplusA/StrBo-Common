@@ -34,6 +34,7 @@ enum class OsFn
     system_formatted,
     foreach_in_path,
     path_get_type,
+    path_get_number_of_hard_links,
     resolve_symlink,
     mkdir_hierarchy,
     unix_mkdir,
@@ -91,6 +92,10 @@ static std::ostream &operator<<(std::ostream &os, const OsFn id)
 
       case OsFn::path_get_type:
         os << "path_get_type";
+        break;
+
+      case OsFn::path_get_number_of_hard_links:
+        os << "path_get_number_of_hard_links";
         break;
 
       case OsFn::resolve_symlink:
@@ -167,6 +172,7 @@ class MockOs::Expectation
         bool ret_bool_;
         enum os_path_type ret_path_type_;
         int ret_errno_;
+        size_t ret_size_;
         std::string arg_string_;
         std::string arg_string_second_;
         bool arg_bool_;
@@ -192,6 +198,7 @@ class MockOs::Expectation
             ret_int_(-5),
             ret_bool_(false),
             ret_errno_(ESRCH),
+            ret_size_(123456),
             arg_bool_(false),
             arg_fd_(-5),
             arg_src_pointer_(nullptr),
@@ -232,6 +239,13 @@ class MockOs::Expectation
         d(fn)
     {
         data_.ret_int_ = ret_int;
+        data_.arg_string_ = arg_string;
+    }
+
+    explicit Expectation(OsFn fn, size_t ret_size, const char *arg_string):
+        d(fn)
+    {
+        data_.ret_size_ = ret_size;
         data_.arg_string_ = arg_string;
     }
 
@@ -527,6 +541,11 @@ void MockOs::expect_os_foreach_in_path(int retval, const char *path,
 void MockOs::expect_os_path_get_type(enum os_path_type retval, const char *path)
 {
     expectations_->add(Expectation(OsFn::path_get_type, retval, path));
+}
+
+void MockOs::expect_os_path_get_number_of_hard_links(size_t retval, const char *path)
+{
+    expectations_->add(Expectation(OsFn::path_get_number_of_hard_links, retval, path));
 }
 
 void MockOs::expect_os_resolve_symlink(const char *retval, const char *link)
@@ -851,6 +870,18 @@ enum os_path_type os_path_get_type(const char *path)
     errno = expect.d.ret_errno_;
 
     return expect.d.ret_path_type_;
+}
+
+size_t os_path_get_number_of_hard_links(const char *path)
+{
+    const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
+
+    cppcut_assert_equal(expect.d.function_id_, OsFn::path_get_number_of_hard_links);
+    cppcut_assert_equal(expect.d.arg_string_.c_str(), path);
+
+    errno = expect.d.ret_errno_;
+
+    return expect.d.ret_size_;
 }
 
 int os_file_new(const char *filename)

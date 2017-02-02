@@ -78,6 +78,7 @@ class MockOs
     void expect_os_foreach_in_path(int retval, const char *path,
                                    const std::vector<ForeachItemData> &items);
     void expect_os_path_get_type(enum os_path_type retval, const char *path);
+    void expect_os_path_get_number_of_hard_links(size_t retval, const char *path);
     void expect_os_resolve_symlink(const char *retval, const char *link);
     void expect_os_mkdir_hierarchy(bool retval, const char *path, bool must_not_exist);
     void expect_os_mkdir(bool retval, const char *path, bool must_not_exist);

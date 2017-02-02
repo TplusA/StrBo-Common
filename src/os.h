@@ -87,6 +87,7 @@ int os_foreach_in_path(const char *path,
                        void *user_data);
 
 enum os_path_type os_path_get_type(const char *path);
+size_t os_path_get_number_of_hard_links(const char *path);
 
 /*!
  * Read destination of symlink, if any.

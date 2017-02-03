@@ -173,7 +173,8 @@ static bool is_valid_directory_name(const char *path)
 }
 
 int os_foreach_in_path(const char *path,
-                       int (*callback)(const char *path, void *user_data),
+                       int (*callback)(const char *path, unsigned char dtype,
+                                       void *user_data),
                        void *user_data)
 {
     log_assert(path != NULL);
@@ -201,7 +202,7 @@ int os_foreach_in_path(const char *path,
         if(result != NULL)
         {
             if(is_valid_directory_name(result->d_name) &&
-               (retval = callback(result->d_name, user_data)) != 0)
+               (retval = callback(result->d_name, result->d_type, user_data)) != 0)
             {
                 errno = EINTR;
                 break;

@@ -83,7 +83,8 @@ int os_system_formatted(const char *format_string, ...)
  *
  */
 int os_foreach_in_path(const char *path,
-                       int (*callback)(const char *path, void *user_data),
+                       int (*callback)(const char *path, unsigned char dtype,
+                                       void *user_data),
                        void *user_data);
 
 enum os_path_type os_path_get_type(const char *path);

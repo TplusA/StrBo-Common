@@ -22,6 +22,7 @@
 
 #include <cppcutter.h>
 #include <string>
+#include <dirent.h>
 
 #include "mock_os.hh"
 
@@ -776,7 +777,8 @@ int os_system_formatted(const char *format_string, ...)
 }
 
 int os_foreach_in_path(const char *path,
-                       int (*callback)(const char *path, void *user_data),
+                       int (*callback)(const char *path, unsigned char dtype,
+                                       void *user_data),
                        void *user_data)
 {
     const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
@@ -792,7 +794,9 @@ int os_foreach_in_path(const char *path,
 
         for(const auto &item : *expect.d.foreach_item_data_)
         {
-            if((ret = callback(item.item_name_.c_str(), user_data)) != 0)
+            if((ret = callback(item.item_name_.c_str(),
+                               item.is_directory_ ? DT_DIR : DT_REG,
+                               user_data)) != 0)
             {
                 errno = EINTR;
                 break;

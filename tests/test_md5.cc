@@ -61,7 +61,7 @@ void test_empty_input()
 
 void test_empty_ascii_string()
 {
-    static const std::string input_data;
+    const std::string input_data;
 
     MD5::update(context, input_data);
     MD5::finish(context, hash);
@@ -101,7 +101,7 @@ static constexpr MD5::Hash expected_hash_short_ascii_string
 
 void test_short_ascii_string_single_update()
 {
-    static const std::string input_data = "short test string";
+    const std::string input_data = "short test string";
 
     MD5::update(context, input_data);
     MD5::finish(context, hash);
@@ -113,7 +113,7 @@ void test_short_ascii_string_single_update()
 
 void test_short_ascii_string_multiple_updates()
 {
-    static const std::array<const std::string, 5> input_data
+    const std::array<const std::string, 5> input_data
     {
         "short",
         " ",
@@ -205,7 +205,7 @@ void test_big_binary_input_multiple_updates()
 
 void test_conversion_to_string()
 {
-    static const std::string expected_string = "e4fbe92736fbe6d5913e8a5f3cf64470";
+    const std::string expected_string = "e4fbe92736fbe6d5913e8a5f3cf64470";
     static constexpr MD5::Hash input_hash
     {
         0xe4, 0xfb, 0xe9, 0x27, 0x36, 0xfb, 0xe6, 0xd5,

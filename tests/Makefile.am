@@ -39,6 +39,7 @@ LIBS += $(CPPCUTTER_LIBS)
 check_LTLIBRARIES = \
     test_inifile.la \
     test_md5.la \
+    test_gvariantwrapper.la \
     test_stream_id.la
 
 test_inifile_la_SOURCES = \
@@ -54,6 +55,11 @@ test_md5_la_SOURCES = test_md5.cc
 test_md5_la_LIBADD = $(top_builddir)/src/libmd5.la
 test_md5_la_CFLAGS = $(AM_CFLAGS)
 test_md5_la_CXXFLAGS = $(AM_CXXFLAGS)
+
+test_gvariantwrapper_la_SOURCES = test_gvariantwrapper.cc
+test_gvariantwrapper_la_LIBADD = $(top_builddir)/src/libgvariantwrapper.la
+test_gvariantwrapper_la_CFLAGS = $(AM_CFLAGS)
+test_gvariantwrapper_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 test_stream_id_la_SOURCES = \
     test_stream_id.cc \

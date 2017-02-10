@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2015, 2017  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of the T+A Streaming Board software stack ("StrBoWare").
 #
@@ -46,6 +46,7 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AM_PROG_AR
 AC_PROG_LIBTOOL
+PKG_PROG_PKG_CONFIG([0.26])
 AC_CHECK_PROGS([XSLTPROC], [xsltproc])
 AC_CHECK_PROGS([VALGRIND], [valgrind])
 
@@ -59,9 +60,10 @@ AC_CHECK_COVERAGE
 [ac_cv_use_cutter=no])
 
 # Checks for libraries.
+PKG_CHECK_MODULES([GVARIANTWRAPPER_DEPENDENCIES], [glib-2.0])
 
 # Checks for header files.
-AC_CHECK_HEADERS([fcntl.h inttypes.h stdlib.h string.h syslog.h unistd.h])
+AC_CHECK_HEADERS([fcntl.h limits.h inttypes.h stdlib.h string.h syslog.h unistd.h sys/ioctl.h])
 
 m4_ifdef([AC_CHECK_CUTTER],
 [
@@ -84,6 +86,9 @@ AC_C_INLINE
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
 AC_TYPE_UINT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
 
 # Checks for library functions.
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK

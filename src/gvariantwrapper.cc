@@ -23,26 +23,77 @@
 #include <glib.h>
 
 #include "gvariantwrapper.hh"
+#include "messages.h"
 
-static inline void ref(void *v)
+static void sink_op(void *v)
 {
-    if(v != nullptr)
-        g_variant_ref(static_cast<GVariant *>(v));
+    g_variant_ref_sink(static_cast<GVariant *>(v));
 }
 
-static inline void unref(void *&v)
+static void ref_op(void *v)
 {
-    if(v != nullptr)
-    {
-        g_variant_unref(static_cast<GVariant *>(v));
-        v = nullptr;
-    }
+    g_variant_ref(static_cast<GVariant *>(v));
 }
 
-GVariantWrapper::GVariantWrapper(void *variant):
+static void unref_op(void *&v)
+{
+    g_variant_unref(static_cast<GVariant *>(v));
+    v = nullptr;
+}
+
+static bool is_full_reference_op(void *v)
+{
+    return !g_variant_is_floating(static_cast<GVariant *>(v));
+}
+
+static const GVariantWrapper::Ops default_ops =
+{
+    sink_op, ref_op, unref_op, is_full_reference_op,
+};
+
+static const GVariantWrapper::Ops *ops = &default_ops;
+
+void GVariantWrapper::set_ops(const GVariantWrapper::Ops &o) { ops = &o; }
+
+static inline void sink(void *variant)
+{
+    if(variant != nullptr)
+        ops->sink(variant);
+}
+
+static inline void ref(void *variant)
+{
+    if(variant != nullptr)
+        ops->ref(variant);
+}
+
+static inline void unref(void *&variant)
+{
+    if(variant != nullptr)
+        ops->unref(variant);
+}
+
+static inline bool is_full_reference(void *variant)
+{
+    return (variant != nullptr)
+        ? ops->is_full_reference(variant)
+        : true;
+}
+
+
+GVariantWrapper::GVariantWrapper(void *variant, GVariantWrapper::Transfer transfer):
     variant_(variant)
 {
-    ref(variant_);
+    switch(transfer)
+    {
+      case Transfer::TAKE_OWNERSHIP:
+        sink(variant_);
+        break;
+
+      case Transfer::JUST_MOVE:
+        log_assert(is_full_reference(variant));
+        break;
+    }
 }
 
 GVariantWrapper::GVariantWrapper(const GVariantWrapper &src):

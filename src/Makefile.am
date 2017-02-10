@@ -18,7 +18,7 @@
 
 ACLOCAL_AMFLAGS = -I ../m4
 
-noinst_LTLIBRARIES = libinifile.la libmd5.la
+noinst_LTLIBRARIES = libinifile.la libmd5.la libgvariantwrapper.la
 
 libinifile_la_SOURCES = inifile.c inifile.h messages.h os.h
 libinifile_la_CFLAGS = $(AM_CFLAGS)
@@ -27,11 +27,15 @@ libmd5_la_SOURCES = md5.cc md5.hh
 libmd5_la_CFLAGS = $(AM_CFLAGS)
 libmd5_la_CXXFLAGS = $(AM_CXXFLAGS)
 
+libgvariantwrapper_la_SOURCES = gvariantwrapper.cc gvariantwrapper.hh
+libgvariantwrapper_la_CPPFLAGS = $(GVARIANTWRAPPER_DEPENDENCIES_CFLAGS)
+libgvariantwrapper_la_CFLAGS = $(AM_CFLAGS)
+libgvariantwrapper_la_CXXFLAGS = $(AM_CXXFLAGS)
+
 EXTRA_DIST = \
     messages.c \
     messages_glib.c messages_glib.h \
     messages_dbus.c messages_dbus.h \
-    gvariantwrapper.cc gvariantwrapper.hh \
     os.c \
     hexdump.c hexdump.h \
     actor_id.h

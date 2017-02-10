@@ -21,6 +21,21 @@
 
 class GVariantWrapper
 {
+  public:
+    struct Ops
+    {
+        void (*const sink)(void *v);
+        void (*const ref)(void *v);
+        void (*const unref)(void *&v);
+        bool (*const is_full_reference)(void *v);
+    };
+
+    enum class Transfer
+    {
+        TAKE_OWNERSHIP,
+        JUST_MOVE,
+    };
+
   private:
     void *variant_;
 
@@ -31,7 +46,7 @@ class GVariantWrapper
     GVariantWrapper &operator=(GVariantWrapper &&);
 
   private:
-    explicit GVariantWrapper(void *variant);
+    explicit GVariantWrapper(void *variant, Transfer transfer);
 
   public:
     explicit GVariantWrapper():
@@ -51,15 +66,25 @@ class GVariantWrapper
         return variant_ == other.variant_;
     }
 
+    static void set_ops(const Ops &ops);
+
 #ifdef GLIB_CHECK_VERSION
   public:
-    explicit GVariantWrapper(GVariant *variant):
-        GVariantWrapper(static_cast<void *>(variant))
+    explicit GVariantWrapper(GVariant *variant,
+                             Transfer transfer = Transfer::TAKE_OWNERSHIP):
+        GVariantWrapper(static_cast<void *>(variant), transfer)
     {}
 
     static GVariant *get(const GVariantWrapper &w)
     {
         return static_cast<GVariant *>(w.variant_);
+    }
+
+    static GVariant *move(GVariantWrapper &w)
+    {
+        auto *temp(get(w));
+        w.variant_ = nullptr;
+        return temp;
     }
 #endif /* GLIB_CHECK_VERSION */
 };

@@ -19,6 +19,8 @@
 #ifndef GVARIANTWRAPPER_HH
 #define GVARIANTWRAPPER_HH
 
+#include <cstddef>
+
 class GVariantWrapper
 {
   public:
@@ -60,6 +62,9 @@ class GVariantWrapper
 
   public:
     void release();
+
+    bool operator==(std::nullptr_t n) const { return variant_ == nullptr; }
+    bool operator!=(std::nullptr_t n) const { return variant_ != nullptr; }
 
     bool operator==(const GVariantWrapper &other) const
     {

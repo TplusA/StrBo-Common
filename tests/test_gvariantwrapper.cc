@@ -108,6 +108,8 @@ void test_default_ctor_manages_nothing()
     GVariantWrapper w;
 
     cppcut_assert_null(GVariantWrapper::get(w));
+    cut_assert_true(w == nullptr);
+    cut_assert_false(w != nullptr);
 }
 
 void test_managed_variant_can_be_obtained()
@@ -116,6 +118,8 @@ void test_managed_variant_can_be_obtained()
     GVariantWrapper w(gv);
 
     cppcut_assert_equal(gv, GVariantWrapper::get(w));
+    cut_assert_false(w == nullptr);
+    cut_assert_true(w != nullptr);
 }
 
 void test_wrapper_takes_ownership_of_floating_variant()

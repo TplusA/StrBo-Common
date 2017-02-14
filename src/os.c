@@ -33,6 +33,7 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 #include <linux/fs.h>
 #include <limits.h>
 
@@ -265,6 +266,47 @@ size_t os_path_get_number_of_hard_links(const char *path)
     }
 
     return buf.st_nlink;
+}
+
+bool os_path_utimes(const char *path, const struct timeval *times)
+{
+    errno = 0;
+
+    if(utimes(path, times) < 0)
+    {
+        msg_error(errno, LOG_ERR, "Failed setting timestamps on \"%s\"", path);
+        return false;
+    }
+
+    return true;
+}
+
+int os_lstat(const char *path, struct stat *buf)
+{
+    const int ret = lstat(path, buf);
+
+    if(ret < 0)
+    {
+        SAVE_ERRNO(temp);
+        msg_error(errno, LOG_ERR, "Failed to lstat() file \"%s\"", path);
+        RESTORE_ERRNO(temp);
+    }
+
+    return ret;
+}
+
+int os_stat(const char *path, struct stat *buf)
+{
+    const int ret = stat(path, buf);
+
+    if(ret < 0)
+    {
+        SAVE_ERRNO(temp);
+        msg_error(errno, LOG_ERR, "Failed to stat() file \"%s\"", path);
+        RESTORE_ERRNO(temp);
+    }
+
+    return ret;
 }
 
 char *os_resolve_symlink(const char *link)

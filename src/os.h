@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <poll.h>
+#include <sys/stat.h>
 
 /*!
  * Data for keeping track of memory-mapped files.
@@ -89,6 +90,17 @@ int os_foreach_in_path(const char *path,
 
 enum os_path_type os_path_get_type(const char *path);
 size_t os_path_get_number_of_hard_links(const char *path);
+bool os_path_utimes(const char *path, const struct timeval *times);
+
+/*!
+ * Plain wrapper around lstat(2), no fanciness here.
+ */
+int os_lstat(const char *path, struct stat *buf);
+
+/*!
+ * Plain wrapper around stat(2), no fanciness here.
+ */
+int os_stat(const char *path, struct stat *buf);
 
 /*!
  * Read destination of symlink, if any.

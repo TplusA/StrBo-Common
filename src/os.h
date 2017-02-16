@@ -51,14 +51,16 @@ extern ssize_t (*os_read)(int fd, void *dest, size_t count);
 extern ssize_t (*os_write)(int fd, const void *buf, size_t count);
 extern int (*os_poll)(struct pollfd *fds, nfds_t nfds, int timeout);
 
+bool os_suppress_error_messages(bool do_suppress);
+
 int os_write_from_buffer(const void *src, size_t count, int fd);
 int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,
                           bool suppress_error_on_eagain);
 void os_abort(void);
 
-int os_system(const char *command);
-int os_system_formatted(const char *format_string, ...)
-    __attribute__ ((format (printf, 1, 2)));
+int os_system(bool is_verbose, const char *command);
+int os_system_formatted(bool is_verbose, const char *format_string, ...)
+    __attribute__ ((format (printf, 2, 3)));
 
 /*!
  * Read directory, call callback for each item.

@@ -50,6 +50,8 @@ class MockOs
     typedef MockExpectationsTemplate<Expectation> MockExpectations;
     MockExpectations *expectations_;
 
+    bool suppress_errors_;
+
     explicit MockOs();
     ~MockOs();
 
@@ -71,9 +73,9 @@ class MockOs
     void expect_os_try_read_to_buffer_callback(const TryReadToBufferCallback &fn);
 
     void expect_os_abort(void);
-    void expect_os_system(int retval, const char *command);
-    void expect_os_system_formatted(int retval, const char *string);
-    void expect_os_system_formatted_formatted(int retval, const char *string);
+    void expect_os_system(int retval, bool is_verbose, const char *command);
+    void expect_os_system_formatted(int retval, bool is_verbose, const char *string);
+    void expect_os_system_formatted_formatted(int retval, bool is_verbose, const char *string);
     void expect_os_foreach_in_path(int retval, const char *path);
     void expect_os_foreach_in_path(int retval, const char *path,
                                    const std::vector<ForeachItemData> &items);

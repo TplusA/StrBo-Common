@@ -43,6 +43,19 @@
 #define SAVE_ERRNO(VAR)         const int VAR = errno
 #define RESTORE_ERRNO(VAR)      errno = VAR
 
+static struct
+{
+    bool suppress_errors;
+}
+verbosity;
+
+bool os_suppress_error_messages(bool do_suppress)
+{
+    bool ret = verbosity.suppress_errors;
+    verbosity.suppress_errors = do_suppress;
+    return ret;
+}
+
 int os_write_from_buffer(const void *src, size_t count, int fd)
 {
     const uint8_t *src_ptr = src;
@@ -56,7 +69,9 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
 
         if(len < 0)
         {
-            msg_error(errno, LOG_ERR, "Failed writing to fd %d", fd);
+            if(!verbosity.suppress_errors)
+                msg_error(errno, LOG_ERR, "Failed writing to fd %d", fd);
+
             return -1;
         }
 
@@ -112,17 +127,21 @@ void os_abort(void)
     abort();
 }
 
-int os_system(const char *command)
+int os_system(bool is_verbose, const char *command)
 {
-    msg_info("Executing external command: %s", command);
+    if(is_verbose)
+        msg_info("Executing external command: %s", command);
 
     const int ret = system(command);
 
     if(WIFEXITED(ret))
     {
         if(WEXITSTATUS(ret) == EXIT_SUCCESS)
-            msg_info("External command succeeded");
-        else
+        {
+            if(is_verbose)
+                msg_info("External command succeeded");
+        }
+        else if(!verbosity.suppress_errors)
             msg_error(0, LOG_ERR,
                       "External command failed with exit code %d",
                       WEXITSTATUS(ret));
@@ -148,7 +167,7 @@ int os_system(const char *command)
     return ret;
 }
 
-int os_system_formatted(const char *format_string, ...)
+int os_system_formatted(bool is_verbose, const char *format_string, ...)
 {
     char buffer[1024];
 
@@ -159,7 +178,7 @@ int os_system_formatted(const char *format_string, ...)
 
     va_end(va);
 
-    return os_system(buffer);
+    return os_system(is_verbose, buffer);
 }
 
 static bool is_valid_directory_name(const char *path)
@@ -187,9 +206,13 @@ int os_foreach_in_path(const char *path,
 
     if(dir == NULL)
     {
-        SAVE_ERRNO(temp);
-        msg_error(errno, LOG_ERR, "Failed opening directory \"%s\"", path);
-        RESTORE_ERRNO(temp);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+            msg_error(errno, LOG_ERR, "Failed opening directory \"%s\"", path);
+            RESTORE_ERRNO(temp);
+        }
+
         return -1;
     }
 
@@ -213,7 +236,7 @@ int os_foreach_in_path(const char *path,
         {
             retval = (errno == 0) ? 0 : -2;
 
-            if(retval < 0)
+            if(retval < 0 && !verbosity.suppress_errors)
             {
                 SAVE_ERRNO(temp);
                 msg_error(errno, LOG_ERR,
@@ -238,9 +261,13 @@ enum os_path_type os_path_get_type(const char *path)
 
     if(stat(path, &buf) < 0)
     {
-        SAVE_ERRNO(temp);
-        msg_error(errno, LOG_ERR, "Failed to stat() file \"%s\"", path);
-        RESTORE_ERRNO(temp);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+            msg_error(errno, LOG_ERR, "Failed to stat() file \"%s\"", path);
+            RESTORE_ERRNO(temp);
+        }
+
         return OS_PATH_TYPE_IO_ERROR;
     }
 
@@ -259,9 +286,13 @@ size_t os_path_get_number_of_hard_links(const char *path)
 
     if(stat(path, &buf) < 0)
     {
-        SAVE_ERRNO(temp);
-        msg_error(errno, LOG_ERR, "Failed to stat() file \"%s\"", path);
-        RESTORE_ERRNO(temp);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+            msg_error(errno, LOG_ERR, "Failed to stat() file \"%s\"", path);
+            RESTORE_ERRNO(temp);
+        }
+
         return 0;
     }
 
@@ -274,7 +305,13 @@ bool os_path_utimes(const char *path, const struct timeval *times)
 
     if(utimes(path, times) < 0)
     {
-        msg_error(errno, LOG_ERR, "Failed setting timestamps on \"%s\"", path);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+            msg_error(errno, LOG_ERR, "Failed setting timestamps on \"%s\"", path);
+            RESTORE_ERRNO(temp);
+        }
+
         return false;
     }
 
@@ -285,7 +322,7 @@ int os_lstat(const char *path, struct stat *buf)
 {
     const int ret = lstat(path, buf);
 
-    if(ret < 0)
+    if(ret < 0 && !verbosity.suppress_errors)
     {
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to lstat() file \"%s\"", path);
@@ -299,7 +336,7 @@ int os_stat(const char *path, struct stat *buf)
 {
     const int ret = stat(path, buf);
 
-    if(ret < 0)
+    if(ret < 0 && !verbosity.suppress_errors)
     {
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to stat() file \"%s\"", path);
@@ -317,21 +354,32 @@ char *os_resolve_symlink(const char *link)
 
     if(readlink(link, &dummy, sizeof(dummy)) < 0)
     {
-        if(errno == EINVAL)
-            msg_error(errno, LOG_NOTICE,
-                      "Path \"%s\" is not a symlink", link);
-        else
-            msg_error(errno, LOG_NOTICE,
-                      "readlink() failed for path \"%s\"", link);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+
+            if(errno == EINVAL)
+                msg_error(errno, LOG_NOTICE,
+                          "Path \"%s\" is not a symlink", link);
+            else
+                msg_error(errno, LOG_NOTICE,
+                          "readlink() failed for path \"%s\"", link);
+
+            RESTORE_ERRNO(temp);
+        }
 
         return NULL;
     }
 
     char *const result = realpath(link, NULL);
 
-    if(result == NULL)
+    if(result == NULL && !verbosity.suppress_errors)
+    {
+        SAVE_ERRNO(temp);
         msg_error(errno, LOG_NOTICE,
                   "Failed resolving symlink \"%s\"", link);
+        RESTORE_ERRNO(temp);
+    }
 
     return result;
 }
@@ -350,14 +398,16 @@ bool os_mkdir_hierarchy(const char *path, bool must_not_exist)
 
         if(lstat(path, &buf) == 0)
         {
-            msg_error(EEXIST, LOG_ERR, failed_err, path);
+            if(!verbosity.suppress_errors)
+                msg_error(EEXIST, LOG_ERR, failed_err, path);
+
             errno = EEXIST;
             return false;
         }
     }
 
     /* oh well... */
-    if(os_system_formatted("mkdir -m 0750 -p %s", path) == EXIT_SUCCESS)
+    if(os_system_formatted(false, "mkdir -m 0750 -p %s", path) == EXIT_SUCCESS)
         return true;
 
     struct stat buf;
@@ -398,7 +448,8 @@ bool os_mkdir(const char *path, bool must_not_exist)
             return true;
     }
 
-    msg_error(errno, LOG_ERR, "Failed creating directory %s", path);
+    if(!verbosity.suppress_errors)
+        msg_error(errno, LOG_ERR, "Failed creating directory %s", path);
 
     RESTORE_ERRNO(temp);
 
@@ -414,7 +465,7 @@ bool os_rmdir(const char *path, bool must_exist)
     if(rmdir(path) == 0)
         return true;
 
-    if(must_exist)
+    if(must_exist && !verbosity.suppress_errors)
     {
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed removing directory %s", path);
@@ -435,7 +486,7 @@ int os_file_new(const char *filename)
           errno == EINTR)
         ;
 
-    if(fd < 0)
+    if(fd < 0 && !verbosity.suppress_errors)
     {
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to create file \"%s\"", filename);
@@ -451,7 +502,7 @@ static void safe_close_fd(int fd)
 
     errno = 0;
 
-    if(fsync(fd) < 0 && errno != EINVAL)
+    if(fsync(fd) < 0 && errno != EINVAL && !verbosity.suppress_errors)
         msg_error(errno, LOG_ERR, "fsync() fd %d", fd);
 
     int ret;
@@ -460,7 +511,7 @@ static void safe_close_fd(int fd)
 
     if(ret == 0)
         RESTORE_ERRNO(previous_errno);
-    else if(ret == -1 && errno != EINTR)
+    else if(ret == -1 && errno != EINTR && !verbosity.suppress_errors)
     {
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to close file descriptor %d", fd);
@@ -486,7 +537,7 @@ void os_file_delete(const char *filename)
 
     errno = 0;
 
-    if(unlink(filename) < 0)
+    if(unlink(filename) < 0 && !verbosity.suppress_errors)
     {
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to delete file \"%s\"", filename);
@@ -503,7 +554,7 @@ bool os_file_rename(const char *oldpath, const char *newpath)
     while((ret = rename(oldpath, newpath)) == -1 && errno == EINTR)
         ;
 
-    if(ret < 0)
+    if(ret < 0 && !verbosity.suppress_errors)
     {
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR, "Failed to rename \"%s\" to \"%s\"",
@@ -523,7 +574,7 @@ bool os_link_new(const char *oldpath, const char *newpath)
     while((ret = link(oldpath, newpath)) == -1 && errno == EINTR)
         ;
 
-    if(ret < 0)
+    if(ret < 0 && !verbosity.suppress_errors)
     {
         SAVE_ERRNO(temp);
         msg_error(errno, LOG_ERR,
@@ -548,18 +599,26 @@ int os_map_file_to_memory(struct os_mapped_file_data *mapped,
 
     if(mapped->fd < 0)
     {
-        SAVE_ERRNO(temp);
-        msg_error(errno, LOG_ERR, "Failed to open() file \"%s\"", filename);
-        RESTORE_ERRNO(temp);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+            msg_error(errno, LOG_ERR, "Failed to open() file \"%s\"", filename);
+            RESTORE_ERRNO(temp);
+        }
+
         return -1;
     }
 
     struct stat buf;
     if(fstat(mapped->fd, &buf) < 0)
     {
-        SAVE_ERRNO(temp);
-        msg_error(errno, LOG_ERR, "Failed to fstat() file \"%s\"", filename);
-        RESTORE_ERRNO(temp);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+            msg_error(errno, LOG_ERR, "Failed to fstat() file \"%s\"", filename);
+            RESTORE_ERRNO(temp);
+        }
+
         goto error_exit;
     }
 
@@ -587,9 +646,13 @@ int os_map_file_to_memory(struct os_mapped_file_data *mapped,
 
     if(mapped->ptr == MAP_FAILED)
     {
-        SAVE_ERRNO(temp);
-        msg_error(errno, LOG_ERR, "Failed to mmap() file \"%s\"", filename);
-        RESTORE_ERRNO(temp);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+            msg_error(errno, LOG_ERR, "Failed to mmap() file \"%s\"", filename);
+            RESTORE_ERRNO(temp);
+        }
+
         goto error_exit;
     }
 
@@ -633,10 +696,13 @@ void os_sync_dir(const char *path)
 
     if(fd < 0)
     {
-        SAVE_ERRNO(temp);
-        msg_error(errno, LOG_ERR,
-                  "Failed to open directory \"%s\" for syncing", path);
-        RESTORE_ERRNO(temp);
+        if(!verbosity.suppress_errors)
+        {
+            SAVE_ERRNO(temp);
+            msg_error(errno, LOG_ERR,
+                      "Failed to open directory \"%s\" for syncing", path);
+            RESTORE_ERRNO(temp);
+        }
     }
     else
         safe_close_fd(fd);

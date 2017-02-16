@@ -243,6 +243,14 @@ class MockOs::Expectation
         data_.arg_string_ = arg_string;
     }
 
+    explicit Expectation(OsFn fn, int ret_int, bool arg_bool, const char *arg_string):
+        d(fn)
+    {
+        data_.ret_int_ = ret_int;
+        data_.arg_bool_ = arg_bool;
+        data_.arg_string_ = arg_string;
+    }
+
     explicit Expectation(OsFn fn, size_t ret_size, const char *arg_string):
         d(fn)
     {
@@ -449,10 +457,10 @@ class MockOs::Expectation
     Expectation(Expectation &&) = default;
 };
 
-MockOs::MockOs()
-{
-    expectations_ = new MockExpectations();
-}
+MockOs::MockOs():
+    expectations_(new MockExpectations()),
+    suppress_errors_(false)
+{}
 
 MockOs::~MockOs()
 {
@@ -513,19 +521,19 @@ void MockOs::expect_os_abort(void)
     expectations_->add(Expectation(OsFn::stdlib_abort));
 }
 
-void MockOs::expect_os_system(int retval, const char *command)
+void MockOs::expect_os_system(int retval, bool is_verbose, const char *command)
 {
-    expectations_->add(Expectation(OsFn::stdlib_system, retval, command));
+    expectations_->add(Expectation(OsFn::stdlib_system, retval, is_verbose, command));
 }
 
-void MockOs::expect_os_system_formatted(int retval, const char *string)
+void MockOs::expect_os_system_formatted(int retval, bool is_verbose, const char *string)
 {
-    expectations_->add(Expectation(OsFn::system_formatted, retval, string));
+    expectations_->add(Expectation(OsFn::system_formatted, retval, is_verbose, string));
 }
 
-void MockOs::expect_os_system_formatted_formatted(int retval, const char *string)
+void MockOs::expect_os_system_formatted_formatted(int retval, bool is_verbose, const char *string)
 {
-    expectations_->add(Expectation(OsFn::system_formatted, retval, string));
+    expectations_->add(Expectation(OsFn::system_formatted, retval, is_verbose, string));
 }
 
 void MockOs::expect_os_foreach_in_path(int retval, const char *path)
@@ -680,6 +688,13 @@ void MockOs::expect_os_nanosleep(long milliseconds)
 
 MockOs *mock_os_singleton = nullptr;
 
+bool os_suppress_error_messages(bool do_suppress)
+{
+    bool ret = mock_os_singleton->suppress_errors_;
+    mock_os_singleton->suppress_errors_ = do_suppress;
+    return ret;
+}
+
 int os_write_from_buffer(const void *src, size_t count, int fd)
 {
     const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
@@ -745,11 +760,12 @@ void os_abort(void)
     cppcut_assert_equal(expect.d.function_id_, OsFn::stdlib_abort);
 }
 
-int os_system(const char *command)
+int os_system(bool is_verbose, const char *command)
 {
     const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
 
     cppcut_assert_equal(expect.d.function_id_, OsFn::stdlib_system);
+    cppcut_assert_equal(expect.d.arg_bool_, is_verbose);
     cppcut_assert_equal(expect.d.arg_string_.c_str(), command);
 
     errno = expect.d.ret_errno_;
@@ -757,7 +773,7 @@ int os_system(const char *command)
     return expect.d.ret_int_;
 }
 
-int os_system_formatted(const char *format_string, ...)
+int os_system_formatted(bool is_verbose, const char *format_string, ...)
 {
     const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
 
@@ -769,6 +785,7 @@ int os_system_formatted(const char *format_string, ...)
     (void)vsnprintf(buffer, sizeof(buffer), format_string, va);
     va_end(va);
 
+    cppcut_assert_equal(expect.d.arg_bool_, is_verbose);
     cppcut_assert_equal(expect.d.arg_string_.c_str(), buffer);
 
     errno = expect.d.ret_errno_;

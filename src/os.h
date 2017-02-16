@@ -24,6 +24,7 @@
 #include <time.h>
 #include <poll.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 /*!
  * Data for keeping track of memory-mapped files.

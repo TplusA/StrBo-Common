@@ -98,4 +98,7 @@ typedef uint16_t stream_id_t;
 /*! Stream source: Smartphone app, i.e., passed via DCP registers. */
 #define STREAM_ID_SOURCE_APP            STREAM_ID_MAKE_SOURCE(2)
 
+/*! Stream source: Roon Ready. */
+#define STREAM_ID_SOURCE_ROON_READY     STREAM_ID_MAKE_SOURCE(3)
+
 #endif /* !STREAM_ID_H */

@@ -60,6 +60,8 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
 {
     const uint8_t *src_ptr = src;
 
+    errno = 0;
+
     while(count > 0)
     {
         ssize_t len;
@@ -70,7 +72,11 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
         if(len < 0)
         {
             if(!verbosity.suppress_errors)
+            {
+                SAVE_ERRNO(temp);
                 msg_error(errno, LOG_ERR, "Failed writing to fd %d", fd);
+                RESTORE_ERRNO(temp);
+            }
 
             return -1;
         }
@@ -79,6 +85,7 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
 
         src_ptr += len;
         count -= len;
+        errno = 0;
     }
 
     return 0;
@@ -91,6 +98,7 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,
 
     dest_ptr += *dest_pos;
     count -= *dest_pos;
+    errno = 0;
 
     int retval = 0;
 
@@ -99,14 +107,21 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,
         const ssize_t len = os_read(fd, dest_ptr, count);
 
         if(len == 0)
+        {
+            errno = 0;
             break;
+        }
 
         if(len < 0)
         {
             retval = (errno == EAGAIN) ? 0 : -1;
 
             if(errno != EAGAIN || !suppress_error_on_eagain)
+            {
+                SAVE_ERRNO(temp);
                 msg_error(errno, LOG_ERR, "Failed reading from fd %d", fd);
+                RESTORE_ERRNO(temp);
+            }
 
             break;
         }
@@ -117,6 +132,7 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,
         count -= len;
         *dest_pos += len;
         retval = 1;
+        errno = 0;
     }
 
     return retval;

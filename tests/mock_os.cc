@@ -50,9 +50,10 @@ enum class OsFn
     unmap_file,
     os_clock_gettime_fn,
     os_nanosleep_fn,
+    os_sched_yield_fn,
 
     first_valid_os_fn_id = write_from_buffer,
-    last_valid_os_fn_id = os_nanosleep_fn,
+    last_valid_os_fn_id = os_sched_yield_fn,
 };
 
 
@@ -153,6 +154,10 @@ static std::ostream &operator<<(std::ostream &os, const OsFn id)
 
       case OsFn::os_nanosleep_fn:
         os << "os_nanosleep";
+        break;
+
+      case OsFn::os_sched_yield_fn:
+        os << "os_sched_yield";
         break;
     }
 
@@ -685,6 +690,11 @@ void MockOs::expect_os_nanosleep(long milliseconds)
     expectations_->add(Expectation(tp));
 }
 
+void MockOs::expect_os_sched_yield(void)
+{
+    expectations_->add(Expectation(OsFn::os_sched_yield_fn));
+}
+
 
 MockOs *mock_os_singleton = nullptr;
 
@@ -1053,4 +1063,11 @@ void os_nanosleep(const struct timespec *tp)
     cppcut_assert_equal(expect.d.timespec_.tv_nsec, tp->tv_nsec);
 
     errno = expect.d.ret_errno_;
+}
+
+void os_sched_yield(void)
+{
+    const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
+
+    cppcut_assert_equal(expect.d.function_id_, OsFn::os_sched_yield_fn);
 }

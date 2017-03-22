@@ -36,6 +36,7 @@
 #include <sys/time.h>
 #include <linux/fs.h>
 #include <limits.h>
+#include <sched.h>
 
 #include "os.h"
 #include "messages.h"
@@ -735,4 +736,9 @@ void os_nanosleep(const struct timespec *tp)
 
     while(nanosleep(&remaining, &remaining) == -1 && errno == EINTR)
         ;
+}
+
+void os_sched_yield(void)
+{
+    sched_yield();
 }

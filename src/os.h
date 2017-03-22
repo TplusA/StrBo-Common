@@ -137,6 +137,7 @@ void os_unmap_file(struct os_mapped_file_data *mapped);
 
 int os_clock_gettime(clockid_t clk_id, struct timespec *tp);
 void os_nanosleep(const struct timespec *tp);
+void os_sched_yield(void);
 
 #ifdef __cplusplus
 }

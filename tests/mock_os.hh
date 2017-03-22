@@ -110,6 +110,8 @@ class MockOs
 
     void expect_os_nanosleep(const struct timespec *tp);
     void expect_os_nanosleep(long milliseconds);
+
+    void expect_os_sched_yield(void);
 };
 
 extern MockOs *mock_os_singleton;

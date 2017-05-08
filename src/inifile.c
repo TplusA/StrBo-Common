@@ -593,6 +593,147 @@ struct ini_section *inifile_new_section(struct ini_file *inifile,
     return section;
 }
 
+static struct ini_section *find_section_by_pointer(const struct ini_file *inifile,
+                                                   const struct ini_section *section,
+                                                   struct ini_section **preceding)
+{
+    struct ini_section *p = NULL;
+
+    for(struct ini_section *s = inifile->sections_head; s != NULL; s = s->next)
+    {
+        if(s == section)
+        {
+            if(preceding != NULL)
+                *preceding = p;
+
+            return s;
+        }
+
+        p = s;
+    }
+
+    return NULL;
+}
+
+static struct ini_section *find_section_by_name(const struct ini_file *inifile,
+                                                const char *section_name,
+                                                size_t section_name_length,
+                                                struct ini_section **preceding)
+{
+    if(section_name_length == 0)
+        section_name_length = strlen(section_name);
+
+    struct ini_section *p = NULL;
+
+    for(struct ini_section *s = inifile->sections_head; s != NULL; s = s->next)
+    {
+        if(s->name_length == section_name_length &&
+           memcmp(s->name, section_name, section_name_length) == 0)
+        {
+            if(preceding != NULL)
+                *preceding = p;
+
+            return s;
+        }
+
+        p = s;
+    }
+
+    return NULL;
+}
+
+static void free_kv_pair(struct ini_key_value_pair *kv)
+{
+    parser_free(kv->key);
+    parser_free(kv->value);
+    parser_free(kv);
+}
+
+static void free_section(struct ini_section *section)
+{
+    struct ini_key_value_pair *kv = section->values_head;
+
+    if(kv != NULL)
+    {
+        for(struct ini_key_value_pair *next_kv = kv->next; kv != NULL; kv = next_kv)
+        {
+            next_kv = kv->next;
+            free_kv_pair(kv);
+        }
+    }
+
+    parser_free(section->name);
+    parser_free(section);
+}
+
+static void remove_section(struct ini_file *inifile,
+                           struct ini_section *section,
+                           struct ini_section *preceding)
+{
+    if(preceding != NULL)
+    {
+        log_assert(section == preceding->next);
+
+        preceding->next = section->next;
+
+        if(preceding->next == NULL)
+            inifile->sections_tail = preceding;
+    }
+    else
+    {
+        log_assert(section == inifile->sections_head);
+
+        if(section->next != NULL)
+            inifile->sections_head = section->next;
+        else
+        {
+            inifile->sections_head = NULL;
+            inifile->sections_tail = NULL;
+        }
+    }
+
+    free_section(section);
+}
+
+bool inifile_remove_section(struct ini_file *inifile,
+                            struct ini_section *section)
+{
+    log_assert(inifile != NULL);
+
+    if(section == NULL)
+        return false;
+
+    struct ini_section *preceding;
+    struct ini_section *s = find_section_by_pointer(inifile, section,
+                                                    &preceding);
+
+    if(s == NULL)
+        return false;
+
+    remove_section(inifile, s, preceding);
+
+    return true;
+}
+
+bool inifile_remove_section_by_name(struct ini_file *inifile,
+                                    const char *section_name,
+                                    size_t section_name_length)
+{
+    log_assert(inifile != NULL);
+    log_assert(section_name != NULL);
+
+    struct ini_section *preceding;
+    struct ini_section *s = find_section_by_name(inifile, section_name,
+                                                 section_name_length, &preceding);
+
+    if(s == NULL)
+        return false;
+
+    remove_section(inifile, s, preceding);
+
+    return true;
+}
+
 struct ini_section *inifile_find_section(const struct ini_file *inifile,
                                          const char *section_name,
                                          size_t section_name_length)
@@ -600,17 +741,8 @@ struct ini_section *inifile_find_section(const struct ini_file *inifile,
     log_assert(inifile != NULL);
     log_assert(section_name != NULL);
 
-    if(section_name_length == 0)
-        section_name_length = strlen(section_name);
-
-    for(struct ini_section *s = inifile->sections_head; s != NULL; s = s->next)
-    {
-        if(s->name_length == section_name_length &&
-           memcmp(s->name, section_name, section_name_length) == 0)
-            return s;
-    }
-
-    return NULL;
+    return find_section_by_name(inifile, section_name, section_name_length,
+                                NULL);
 }
 
 int inifile_write_to_file(const struct ini_file *inifile,
@@ -662,13 +794,6 @@ error_exit:
     return -1;
 }
 
-static void free_kv_pair(struct ini_key_value_pair *kv)
-{
-    parser_free(kv->key);
-    parser_free(kv->value);
-    parser_free(kv);
-}
-
 void inifile_free(struct ini_file *inifile)
 {
     log_assert(inifile != NULL);
@@ -681,20 +806,7 @@ void inifile_free(struct ini_file *inifile)
     for(struct ini_section *next_section = s->next; s != NULL; s = next_section)
     {
         next_section = s->next;
-
-        struct ini_key_value_pair *kv = s->values_head;
-
-        if(kv != NULL)
-        {
-            for(struct ini_key_value_pair *next_kv = kv->next; kv != NULL; kv = next_kv)
-            {
-                next_kv = kv->next;
-                free_kv_pair(kv);
-            }
-        }
-
-        parser_free(s->name);
-        parser_free(s);
+        free_section(s);
     }
 }
 

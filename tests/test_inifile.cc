@@ -920,6 +920,126 @@ void test_new_write_ini_file()
 }
 
 /*!\test
+ * Regular adding and removing of sections.
+ */
+void test_add_and_remove_sections()
+{
+    cppcut_assert_not_null(inifile_new_section(&ini, "Foo", 0));
+    cppcut_assert_not_null(ini.sections_head);
+    cppcut_assert_equal(ini.sections_head, ini.sections_tail);
+    cut_assert_true(inifile_remove_section_by_name(&ini, "Foo", 3));
+    cut_assert_null(ini.sections_head);
+    cut_assert_null(ini.sections_tail);
+
+    cppcut_assert_not_null(inifile_new_section(&ini, "Bar", 3));
+    cppcut_assert_not_null(ini.sections_head);
+    cppcut_assert_equal(ini.sections_head, ini.sections_tail);
+    cppcut_assert_not_null(inifile_new_section(&ini, "Foobar", 6));
+    cppcut_assert_not_null(ini.sections_head);
+    cppcut_assert_not_equal(ini.sections_head, ini.sections_tail);
+    cppcut_assert_not_null(inifile_new_section(&ini, "Baz", 3));
+    cppcut_assert_not_null(inifile_new_section(&ini, "Qux", 3));
+
+    cut_assert_true(inifile_remove_section_by_name(&ini, "Bar", 3));
+    cut_assert_true(inifile_remove_section(&ini, inifile_find_section(&ini, "Baz", 0)));
+    const struct ini_section *section = inifile_find_section(&ini, "Qux", 0);
+    cut_assert_true(inifile_remove_section_by_name(&ini, section->name, section->name_length));
+    cut_assert_true(inifile_remove_section_by_name(&ini, "Foobar", 0));
+
+    cppcut_assert_null(ini.sections_head);
+    cppcut_assert_null(ini.sections_tail);
+}
+
+/*!\test
+ * Trying to remove nonexistent sections by name is not fatal.
+ */
+void test_removing_nonexistent_section_by_name_returns_failure()
+{
+    /* OK for empty files */
+    cut_assert_false(inifile_remove_section_by_name(&ini, "Foo", 0));
+
+    cppcut_assert_not_null(inifile_new_section(&ini, "Empty", 0));
+
+    /* OK for files with content */
+    cut_assert_false(inifile_remove_section_by_name(&ini, "Foo", 0));
+}
+
+/*!\test
+ * Trying to remove nonexistent sections by wrong pointer is not fatal.
+ */
+void test_removing_nonexistent_section_by_section_pointer_returns_failure()
+{
+    auto *does_not_exist = reinterpret_cast<struct ini_section *>(0x0123);
+
+    /* OK for empty files */
+    cut_assert_false(inifile_remove_section(&ini, does_not_exist));
+
+    struct ini_section *section = inifile_new_section(&ini, "Empty", 0);
+    cppcut_assert_not_null(section);
+
+    /* OK for files with content */
+    cut_assert_false(inifile_remove_section(&ini, does_not_exist));
+}
+
+/*!\test
+ * Trying to remove NULL section is not fatal.
+ */
+void test_removing_null_section_returns_failure()
+{
+    /* OK for empty files */
+    cut_assert_false(inifile_remove_section(&ini, NULL));
+
+    cppcut_assert_not_null(inifile_new_section(&ini, "Empty", 0));
+
+    /* OK for files with content */
+    cut_assert_false(inifile_remove_section(&ini, NULL));
+}
+
+/*!\test
+ * It is possible to load an INI file, remove a section, and write it back with
+ * the section removed.
+ */
+void test_remove_section_from_file()
+{
+    static const char text[] =
+        "[First]\n"
+        "key 1-1 = value 1-1\n"
+        "key 1-2 = value 1-2\n"
+        "[Second]\n"
+        "key 2-1 = value 2-1\n"
+        "key 2-2 = value 2-2\n"
+        "key 2-3 = value 2-3\n"
+        "[Third]\n"
+        "key 3-1 = value 3-1\n"
+        "key 3-2 = value 3-2\n"
+        ;
+
+    cppcut_assert_equal(0, inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1));
+    cppcut_assert_not_null(ini.sections_head);
+
+    cut_assert_true(inifile_remove_section_by_name(&ini, "Second", 0));
+
+    mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
+    for(int i = 0; i < 2 * 3 + (2 + 2) * 4; ++i)
+        mock_os->expect_os_write_from_buffer_callback(write_from_buffer_callback);
+    mock_os->expect_os_file_close(expected_os_write_fd);
+
+    cppcut_assert_equal(0, inifile_write_to_file(&ini, "outfile.config"));
+
+    static const char expected_ini_file[] =
+        "[First]\n"
+        "key 1-1 = value 1-1\n"
+        "key 1-2 = value 1-2\n"
+        "[Third]\n"
+        "key 3-1 = value 3-1\n"
+        "key 3-2 = value 3-2\n"
+        ;
+
+    cut_assert_equal_memory(expected_ini_file, sizeof(expected_ini_file) - 1,
+                            os_write_buffer.data(), os_write_buffer.size());
+}
+
+/*!\test
  * It is possible to assign empty values to keys.
  */
 void test_write_empty_value_to_ini_file()

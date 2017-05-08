@@ -153,6 +153,40 @@ struct ini_section *inifile_new_section(struct ini_file *inifile,
                                         const char *name, size_t length);
 
 /*!
+ * Remove section from file, freeing all resources occupied by it.
+ *
+ * \param inifile
+ *     INI file structure the section should be removed from.
+ *
+ * \param section
+ *     Pointer to the section to be removed. The section must be part of
+ *     \p inifile.
+ *
+ * returns
+ *     True on success, false in case the section does not exist.
+ */
+bool inifile_remove_section(struct ini_file *inifile,
+                            struct ini_section *section);
+
+/*!
+ * Remove section from file, freeing all resources occupied by it.
+ *
+ * \param inifile
+ *     INI file structure the section should be removed from.
+ *
+ * \param section_name, section_name_length
+ *     Name of the section and length of the section_name. Parameter
+ *     \p section_name_length may be 0, in which case the length will be
+ *     determined by a call of \c strlen() for \p section_name.
+ *
+ * returns
+ *     True on success, false in case the section does not exist.
+ */
+bool inifile_remove_section_by_name(struct ini_file *inifile,
+                                    const char *section_name,
+                                    size_t section_name_length);
+
+/*!
  * Find section by name.
  *
  * Parameters as for #inifile_new_section().

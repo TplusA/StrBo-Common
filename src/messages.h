@@ -170,6 +170,30 @@ int msg_out_of_memory(const char *what);
 
 #define BUG(...) msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__)
 
+#if !defined(MSG_TRACE_PREFIX)
+#define MSG_TRACE_PREFIX "*** "
+#endif /* !MSG_TRACE_PREFIX */
+
+#define MSG_TRACE() \
+    MSG_PRTRACE(MSG_TRACE_PREFIX)
+
+#define MSG_TRACE_FORMAT(FMT, ...) \
+    MSG_PRTRACE_FORMAT(MSG_TRACE_PREFIX, FMT, __VA_ARGS__)
+
+#define MSG_PRTRACE(PREFIX) \
+    do \
+    { \
+        msg_info(PREFIX "%s(%d)", __func__, __LINE__); \
+    } \
+    while(0)
+
+#define MSG_PRTRACE_FORMAT(PREFIX, FMT, ...) \
+    do \
+    { \
+        msg_info(PREFIX "%s(%d): " FMT, __func__, __LINE__, __VA_ARGS__); \
+    } \
+    while(0)
+
 #ifdef NDEBUG
 #define log_assert(EXPR) do {} while(0)
 #else /* !NDEBUG */

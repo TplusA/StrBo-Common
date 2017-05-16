@@ -174,6 +174,14 @@ int msg_out_of_memory(const char *what);
 #define MSG_TRACE_PREFIX "*** "
 #endif /* !MSG_TRACE_PREFIX */
 
+#if !defined(MSG_TRACE_SUFFIX)
+#define MSG_TRACE_SUFFIX ""
+#endif /* !MSG_TRACE_SUFFIX */
+
+#if !defined(MSG_TRACE_FUNCTION)
+#define MSG_TRACE_FUNCTION msg_info
+#endif /* !MSG_TRACE_FUNCTION */
+
 #define MSG_TRACE() \
     MSG_PRTRACE(MSG_TRACE_PREFIX)
 
@@ -183,14 +191,14 @@ int msg_out_of_memory(const char *what);
 #define MSG_PRTRACE(PREFIX) \
     do \
     { \
-        msg_info(PREFIX "%s(%d)", __func__, __LINE__); \
+        MSG_TRACE_FUNCTION(PREFIX "%s(%d)" MSG_TRACE_SUFFIX, __func__, __LINE__); \
     } \
     while(0)
 
 #define MSG_PRTRACE_FORMAT(PREFIX, FMT, ...) \
     do \
     { \
-        msg_info(PREFIX "%s(%d): " FMT, __func__, __LINE__, __VA_ARGS__); \
+        MSG_TRACE_FUNCTION(PREFIX "%s(%d): " FMT MSG_TRACE_SUFFIX, __func__, __LINE__, __VA_ARGS__); \
     } \
     while(0)
 

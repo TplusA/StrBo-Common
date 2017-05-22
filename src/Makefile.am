@@ -36,6 +36,8 @@ EXTRA_DIST = \
     messages.c \
     messages_glib.c messages_glib.h \
     messages_dbus.c messages_dbus.h \
+    configuration.cc configuration.hh configuration_base.hh \
+    configuration_changed.hh configuration_settings.hh \
     os.c os.hh \
     hexdump.c hexdump.h \
     actor_id.h

@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <cstring>
 
 #include "configuration_changed.hh"
 #include "gvariantwrapper.hh"
@@ -100,7 +101,24 @@ class ConfigManager: public ConfigChanged<ValuesT>
         return result;
     }
 
-    VariantType *lookup_boxed(const char *key) const;
+    GVariantWrapper lookup_boxed(const char *key) const
+    {
+        if(!to_local_key(key))
+            return GVariantWrapper(nullptr);
+
+        const size_t requested_key_length(strlen(key));
+
+        for(const auto &k : ValuesT::all_keys)
+        {
+            if(k.name_.length() == requested_key_length &&
+               strcmp(k.name_.c_str(), key) == 0)
+            {
+                return k.box(settings_.values());
+            }
+        }
+
+        return GVariantWrapper(nullptr);
+    }
 
     static bool to_local_key(const char *&key)
     {
@@ -213,8 +231,6 @@ class ConfigManager: public ConfigChanged<ValuesT>
         log_assert(!is_updating_);
         return try_store(configuration_file_, settings_.values());
     }
-
-    static VariantType *box_value(const ValuesT &values, typename ValuesT::KeyID key_id);
 };
 
 void default_serialize(char *dest, size_t dest_size, const char *src, size_t src_length = 0);
@@ -222,13 +238,22 @@ void default_serialize(char *dest, size_t dest_size, const std::string &src);
 void default_serialize(char *dest, size_t dest_size, uint16_t value);
 void default_serialize(char *dest, size_t dest_size, uint32_t value);
 void default_serialize(char *dest, size_t dest_size, uint64_t value);
-void default_serialize(char *dest, size_t dest_size, const GVariantWrapper &gv);
 
-void default_deserialize(std::string &dest, const char *src);
+GVariantWrapper default_box(const char *src);
+GVariantWrapper default_box(const std::string &src);
+GVariantWrapper default_box(uint16_t value);
+GVariantWrapper default_box(uint32_t value);
+GVariantWrapper default_box(uint64_t value);
+
+bool default_deserialize(std::string &dest, const char *src);
 bool default_deserialize(uint16_t &value, const char *src);
 bool default_deserialize(uint32_t &value, const char *src);
 bool default_deserialize(uint64_t &value, const char *src);
-GVariantWrapper default_deserialize(const char *src, const struct _GVariantType *gvtype);
+
+bool default_unbox(std::string &dest, GVariantWrapper &&src);
+bool default_unbox(uint16_t &value, GVariantWrapper &&src);
+bool default_unbox(uint32_t &value, GVariantWrapper &&src);
+bool default_unbox(uint64_t &value, GVariantWrapper &&src);
 
 template <typename ValuesT, typename Traits>
 static void serialize_value(char *dest, size_t dest_size, const ValuesT &v)
@@ -237,10 +262,16 @@ static void serialize_value(char *dest, size_t dest_size, const ValuesT &v)
 };
 
 template <typename ValuesT, typename Traits>
-static void deserialize_value(ValuesT &v, const char *value)
+static bool deserialize_value(ValuesT &v, const char *value)
 {
-    ::Configuration::default_deserialize(v.*Traits::field, value);
+    return ::Configuration::default_deserialize(v.*Traits::field, value);
 };
+
+template <typename ValuesT, typename Traits>
+static GVariantWrapper box_value(const ValuesT &v)
+{
+    return ::Configuration::default_box(v.*Traits::field);
+}
 
 }
 

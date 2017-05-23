@@ -20,12 +20,12 @@
 #define CONFIGURATION_BASE_HH
 
 #include <string>
+#include <functional>
+
+#include "gvariantwrapper.hh"
 
 namespace Configuration
 {
-
-/* let's avoid the GLib mess as much as possible... */
-struct VariantType;
 
 /*!
  * \internal
@@ -94,12 +94,38 @@ template <typename ValuesT>
 class Settings;
 
 /*!
+ * Interface to managed table of values for the purpose of updating.
+ *
+ * Structure members are set through table-specific function members to enable
+ * tracking of changes.
+ */
+template <typename ValuesT>
+class UpdateSettings;
+
+enum class InsertResult
+{
+    UPDATED,
+    UNCHANGED,
+    KEY_UNKNOWN,
+    VALUE_TYPE_INVALID,  //<! Type of given value is invalid/not supported
+    VALUE_INVALID,       //<! Value has correct type, but value is invalid
+    PERMISSION_DENIED,
+
+    LAST_CODE = PERMISSION_DENIED,
+};
+
+/*!
  * Base class template for configuration keys in a managed table.
  */
 template <typename ValuesT>
 class ConfigKeyBase
 {
   public:
+    using Serializer = std::function<void(char *, size_t, const ValuesT &)>;
+    using Deserializer = std::function<bool(ValuesT &, const char *)>;
+    using Boxer = std::function<GVariantWrapper(const ValuesT &)>;
+    using Unboxer = std::function<InsertResult(UpdateSettings<ValuesT> &, GVariantWrapper &&)>;
+
     const typename ValuesT::KeyID id_;
     const std::string name_;
 
@@ -115,17 +141,10 @@ class ConfigKeyBase
     virtual ~ConfigKeyBase() {}
 
     virtual void read(char *dest, size_t dest_size, const ValuesT &src) const = 0;
-    virtual void write(ValuesT &dest, const char *src) const = 0;
+    virtual bool write(ValuesT &dest, const char *src) const = 0;
+    virtual GVariantWrapper box(const ValuesT &src) const = 0;
+    virtual InsertResult unbox(UpdateSettings<ValuesT> &dest, GVariantWrapper &&src) const = 0;
 };
-
-/*!
- * Interface to managed table of values for the purpose of updating.
- *
- * Structure members are set through table-specific function members to enable
- * tracking of changes.
- */
-template <typename ValuesT>
-class UpdateSettings;
 
 }
 

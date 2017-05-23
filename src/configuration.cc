@@ -58,69 +58,71 @@ void Configuration::default_serialize(char *dest, size_t dest_size, const std::s
     dest[len] = '\0';
 }
 
-void Configuration::default_deserialize(std::string &dest, const char *src)
+bool Configuration::default_deserialize(std::string &dest, const char *src)
 {
     std::copy(src, src + strlen(src), dest.begin());
+    return true;
 }
 
-void Configuration::default_serialize(char *dest, size_t dest_size, const GVariantWrapper &gv)
+GVariantWrapper Configuration::default_box(const char *src)
 {
-    log_assert(gv != nullptr);
-
-    auto *value = GVariantWrapper::get(gv);
-
-    if(g_variant_is_of_type(value, G_VARIANT_TYPE_UINT16))
-        default_serialize(dest, dest_size, g_variant_get_uint16(value));
-    else if(g_variant_is_of_type(value, G_VARIANT_TYPE_UINT32))
-        default_serialize(dest, dest_size, g_variant_get_uint32(value));
-    else if(g_variant_is_of_type(value, G_VARIANT_TYPE_UINT64))
-        default_serialize(dest, dest_size, g_variant_get_uint64(value));
-    else if(g_variant_is_of_type(value, G_VARIANT_TYPE_STRING))
-    {
-        gsize len = 0;
-        const char *temp = g_variant_get_string(value, &len);
-        default_serialize(dest, dest_size, temp, len);
-    }
-    else
-    {
-        BUG("Cannot serialize unsupported GVariant type \"%s\"",
-            g_variant_get_type_string(value));
-        *dest = '\0';
-    }
+    return GVariantWrapper(g_variant_new_string(src));
 }
 
-GVariantWrapper Configuration::default_deserialize(const char *src, const GVariantType *gvtype)
+GVariantWrapper Configuration::default_box(const std::string &src)
 {
-    GVariant *value = nullptr;
+    return GVariantWrapper(g_variant_new_string(src.c_str()));
+}
 
-    if(g_variant_is_of_type(value, G_VARIANT_TYPE_UINT16))
-    {
-        uint16_t temp;
-        if(default_deserialize(temp, src))
-            value = g_variant_new_uint16(temp);
-    }
-    else if(g_variant_is_of_type(value, G_VARIANT_TYPE_UINT32))
-    {
-        uint32_t temp;
-        if(default_deserialize(temp, src))
-            value = g_variant_new_uint32(temp);
-    }
-    else if(g_variant_is_of_type(value, G_VARIANT_TYPE_UINT64))
-    {
-        uint64_t temp;
-        if(default_deserialize(temp, src))
-            value = g_variant_new_uint64(temp);
-    }
-    else if(g_variant_is_of_type(value, G_VARIANT_TYPE_STRING))
-        value = g_variant_new_string(src);
-    else
-    {
-        char *ts = g_variant_type_dup_string(gvtype);
-        BUG("Cannot deserialize unsupported GVariant type \"%s\"", ts);
-        g_free(ts);
-    }
+GVariantWrapper Configuration::default_box(uint16_t value)
+{
+    return GVariantWrapper(g_variant_new_uint16(value));
+}
 
-    return GVariantWrapper(value);
+GVariantWrapper Configuration::default_box(uint32_t value)
+{
+    return GVariantWrapper(g_variant_new_uint32(value));
+}
+
+GVariantWrapper Configuration::default_box(uint64_t value)
+{
+    return GVariantWrapper(g_variant_new_uint64(value));
+}
+
+bool Configuration::default_unbox(std::string &dest, GVariantWrapper &&src)
+{
+    if(!g_variant_is_of_type(GVariantWrapper::get(src), G_VARIANT_TYPE_STRING))
+        return false;
+
+    dest = g_variant_get_string(GVariantWrapper::get(src), nullptr);
+    return true;
+}
+
+bool Configuration::default_unbox(uint16_t &value, GVariantWrapper &&src)
+{
+    if(!g_variant_is_of_type(GVariantWrapper::get(src), G_VARIANT_TYPE_UINT16))
+        return false;
+
+    value = g_variant_get_uint16(GVariantWrapper::get(src));
+    return true;
+}
+
+bool Configuration::default_unbox(uint32_t &value, GVariantWrapper &&src)
+{
+    if(!g_variant_is_of_type(GVariantWrapper::get(src), G_VARIANT_TYPE_UINT32))
+        return false;
+
+    value = g_variant_get_uint32(GVariantWrapper::get(src));
+    return true;
+}
+
+bool Configuration::default_unbox(uint64_t &value, GVariantWrapper &&src)
+{
+    if(!g_variant_is_of_type(GVariantWrapper::get(src), G_VARIANT_TYPE_UINT64))
+        return false;
+
+    value = g_variant_get_uint64(GVariantWrapper::get(src));
+    return true;
 }
 
 template <typename T>

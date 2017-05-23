@@ -39,7 +39,7 @@ class ConfigChangedIface
 
   protected:
     virtual void update_begin() = 0;
-    virtual void update_done() = 0;
+    virtual void update_done(const char *origin) = 0;
 };
 
 template <typename ValuesT>
@@ -50,6 +50,7 @@ class ConfigChanged: public ConfigChangedIface
     {
       private:
         ConfigChanged &changed_iface_;
+        const char *origin_;
 
       public:
         UpdateScope(const UpdateScope &) = delete;
@@ -57,8 +58,9 @@ class ConfigChanged: public ConfigChangedIface
         UpdateScope &operator=(const UpdateScope &) = delete;
 
       private:
-        explicit UpdateScope(ConfigChanged &changed_iface):
-            changed_iface_(changed_iface)
+        explicit UpdateScope(ConfigChanged &changed_iface, const char *origin):
+            changed_iface_(changed_iface),
+            origin_(origin)
         {
             changed_iface_.update_begin();
         }
@@ -66,7 +68,7 @@ class ConfigChanged: public ConfigChangedIface
         friend class ConfigChanged;
 
       public:
-        ~UpdateScope() { changed_iface_.update_done(); }
+        ~UpdateScope() { changed_iface_.update_done(origin_); }
 
         UpdateSettings<ValuesT> &operator()() { return changed_iface_.get_update_settings_iface(); }
     };
@@ -80,7 +82,10 @@ class ConfigChanged: public ConfigChangedIface
 
     virtual ~ConfigChanged() {}
 
-    UpdateScope get_update_scope() { return UpdateScope(*this); }
+    UpdateScope get_update_scope(const char *origin)
+    {
+        return UpdateScope(*this, origin);
+    }
 
   protected:
     virtual UpdateSettings<ValuesT> &get_update_settings_iface() = 0;

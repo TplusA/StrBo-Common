@@ -39,7 +39,8 @@ template <typename ValuesT>
 class ConfigManager: public ConfigChanged<ValuesT>
 {
   public:
-    using UpdatedCallback = std::function<void(const std::array<bool, ValuesT::NUMBER_OF_KEYS> &)>;
+    using UpdatedCallback = std::function<void(const char *,
+                                               const std::array<bool, ValuesT::NUMBER_OF_KEYS> &)>;
 
   private:
     const char *const configuration_file_;
@@ -147,7 +148,7 @@ class ConfigManager: public ConfigChanged<ValuesT>
         is_updating_ = true;
     }
 
-    void update_done() final override
+    void update_done(const char *origin) final override
     {
         log_assert(is_updating_);
         is_updating_ = false;
@@ -157,7 +158,7 @@ class ConfigManager: public ConfigChanged<ValuesT>
             store();
 
             if(configuration_updated_callback_ != nullptr)
-                configuration_updated_callback_(settings_.get_changed_ids());
+                configuration_updated_callback_(origin, settings_.get_changed_ids());
 
             settings_.changes_processed_notification();
         }

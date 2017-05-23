@@ -60,7 +60,7 @@ void Configuration::default_serialize(char *dest, size_t dest_size, const std::s
 
 bool Configuration::default_deserialize(std::string &dest, const char *src)
 {
-    std::copy(src, src + strlen(src), dest.begin());
+    dest = src;
     return true;
 }
 

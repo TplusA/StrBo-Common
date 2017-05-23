@@ -180,3 +180,9 @@ bool Configuration::default_deserialize(uint64_t &value, const char *src)
 {
     return deserialize_uint(value, src);
 }
+
+size_t Configuration::find_varname_offset_in_keyname(const char *key)
+{
+    const char *found = strrchr(key, ':');
+    return (found == nullptr) ? 0 : found - key + 1;
+}

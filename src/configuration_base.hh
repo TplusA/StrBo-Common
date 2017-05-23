@@ -128,14 +128,17 @@ class ConfigKeyBase
 
     const typename ValuesT::KeyID id_;
     const std::string name_;
+    const size_t varname_offset_;
 
     ConfigKeyBase(const ConfigKeyBase &) = delete;
     ConfigKeyBase(ConfigKeyBase &&) = default;
     ConfigKeyBase &operator=(const ConfigKeyBase &) = delete;
 
-    explicit ConfigKeyBase(typename ValuesT::KeyID id, const char *name):
+    explicit ConfigKeyBase(typename ValuesT::KeyID id, const char *name,
+                           size_t varname_offset):
         id_(id),
-        name_(name)
+        name_(name),
+        varname_offset_(varname_offset)
     {}
 
     virtual ~ConfigKeyBase() {}
@@ -145,6 +148,8 @@ class ConfigKeyBase
     virtual GVariantWrapper box(const ValuesT &src) const = 0;
     virtual InsertResult unbox(UpdateSettings<ValuesT> &dest, GVariantWrapper &&src) const = 0;
 };
+
+size_t find_varname_offset_in_keyname(const char *name);
 
 }
 

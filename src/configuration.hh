@@ -183,8 +183,9 @@ class ConfigManager: public ConfigChanged<ValuesT>
 
         for(const auto &k : ValuesT::all_keys)
         {
-            auto *kv = inifile_section_lookup_kv_pair(section, k.name_.c_str() + 1,
-                                                      k.name_.length() - 1);
+            auto *kv = inifile_section_lookup_kv_pair(section,
+                                                      k.name_.c_str() + k.varname_offset_,
+                                                      k.name_.length() - k.varname_offset_);
 
             if(kv != nullptr)
                 k.write(values, kv->value);
@@ -216,7 +217,8 @@ class ConfigManager: public ConfigChanged<ValuesT>
         {
             k.read(buffer, sizeof(buffer), values);
             inifile_section_store_value(section,
-                                        k.name_.c_str() + 1, k.name_.length() - 1,
+                                        k.name_.c_str() + k.varname_offset_,
+                                        k.name_.length() - k.varname_offset_,
                                         buffer, 0);
         }
 

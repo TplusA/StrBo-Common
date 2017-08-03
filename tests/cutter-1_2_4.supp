@@ -44152,40 +44152,6 @@
    Cutter internal allocation (child process)
    Memcheck:Leak
    match-leak-kinds: reachable
-   fun:calloc
-   fun:g_malloc0
-   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
-   fun:g_type_register_static
-   fun:g_type_register_static_simple
-   fun:g_cancellable_get_type
-   fun:g_cancellable_new
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   fun:g_bus_get_sync
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   fun:g_initable_new_valist
-}
-{
-   Cutter internal allocation (child process)
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:malloc
-   fun:realloc
-   fun:g_realloc
-   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
-   fun:g_type_register_static
-   fun:g_type_register_static_simple
-   fun:g_cancellable_get_type
-   fun:g_cancellable_new
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   fun:g_bus_get_sync
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-}
-{
-   Cutter internal allocation (child process)
-   Memcheck:Leak
-   match-leak-kinds: reachable
    fun:g_type_create_instance
    obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
    fun:g_object_newv
@@ -51374,23 +51340,6 @@
    obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
    fun:g_type_register_static
    fun:g_type_register_static_simple
-   fun:g_cancellable_get_type
-   fun:g_cancellable_new
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   fun:g_bus_get_sync
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   fun:g_initable_new_valist
-}
-{
-   Cutter internal allocation (child process)
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:g_malloc0
-   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
-   fun:g_type_register_static
-   fun:g_type_register_static_simple
    fun:g_simple_async_result_get_type
    obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
    obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
@@ -53158,23 +53107,6 @@
    obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
    obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
    fun:g_bus_get_sync
-}
-{
-   Cutter internal allocation (child process)
-   Memcheck:Leak
-   match-leak-kinds: reachable
-   fun:calloc
-   fun:g_malloc0
-   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
-   fun:g_type_register_static
-   fun:g_type_register_static_simple
-   fun:g_cancellable_get_type
-   fun:g_cancellable_new
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   fun:g_bus_get_sync
-   obj:/usr/lib/x86_64-linux-gnu/libgio-2.0.so*
-   fun:g_initable_new_valist
 }
 {
    Cutter internal allocation (child process)
@@ -56385,4 +56317,73 @@
    fun:gobject_init_ctor
    ...
    fun:_dl_init
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
+   fun:g_type_register_static
+   fun:g_type_register_static_simple
+   fun:g_cancellable_get_type
+   fun:g_cancellable_new
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:realloc
+   fun:g_realloc
+   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
+   fun:g_type_register_static
+   fun:g_type_register_static_simple
+   fun:g_cancellable_get_type
+   fun:g_cancellable_new
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:realloc
+   fun:g_realloc
+   obj:/usr/lib/x86_64-linux-gnu/libgobject-2.0.so*
+   fun:g_type_register_static
+   fun:g_type_register_static_simple
+   fun:g_cancellable_get_type
+   fun:g_cancellable_new
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:realloc
+   ...
+   fun:g_signal_new
+   fun:g_cancellable_class_intern_init
+   fun:g_type_class_ref
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:?alloc
+   ...
+   fun:g_signal_new
+   fun:g_cancellable_class_intern_init
+   fun:g_type_class_ref
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:?alloc
+   ...
+   fun:g_signal_new
+   fun:g_object_do_class_init
+   fun:g_type_class_ref
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:?alloc
+   ...
+   fun:g_mutex_lock
+   fun:g_cancellable_cancel
 }

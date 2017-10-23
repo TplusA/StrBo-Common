@@ -35,6 +35,51 @@ struct _GVariantType;
 namespace Configuration
 {
 
+static inline bool key_to_local_key(const char *&key,
+                                    const char *expected_owner,
+                                    size_t expected_owner_length)
+{
+    if(key[0] != '@')
+        return true;
+
+    if(expected_owner_length == 0)
+        expected_owner_length = strlen(expected_owner);
+
+    if(strncmp(key + 1, expected_owner, expected_owner_length) == 0 &&
+        key[expected_owner_length + 1] == ':')
+    {
+        key += expected_owner_length + 1;
+        return true;
+    }
+
+    return false;
+}
+
+static inline bool key_extract_section_name(const char *const key,
+                                            const char *expected_owner,
+                                            size_t expected_owner_length,
+                                            const char **out_local_key,
+                                            std::string &section)
+{
+    const char *local_key = key;
+
+    if(!key_to_local_key(local_key, expected_owner, expected_owner_length))
+        return false;
+
+    if(local_key[0] != ':')
+        return false;
+
+    if(out_local_key != nullptr)
+        *out_local_key = local_key;
+
+    section.clear();
+
+    for(size_t i = 1; local_key[i] != '\0' && local_key[i] != ':'; ++i)
+        section.push_back(local_key[i]);
+
+    return true;
+}
+
 template <typename ValuesT>
 class ConfigManager: public ConfigChanged<ValuesT>
 {
@@ -123,17 +168,18 @@ class ConfigManager: public ConfigChanged<ValuesT>
 
     static bool to_local_key(const char *&key)
     {
-        if(key[0] != '@')
-            return true;
+        return key_to_local_key(key, ValuesT::OWNER_NAME,
+                                sizeof(ValuesT::OWNER_NAME) - 1);
+    }
 
-        if(strncmp(key + 1, ValuesT::OWNER_NAME, sizeof(ValuesT::OWNER_NAME) - 1) == 0 &&
-           key[sizeof(ValuesT::OWNER_NAME)] == ':')
-        {
-            key += sizeof(ValuesT::OWNER_NAME);
-            return true;
-        }
+    static bool is_matching_key(const char *key)
+    {
+        std::string section;
 
-        return false;
+        return key_extract_section_name(key, ValuesT::OWNER_NAME,
+                                        sizeof(ValuesT::OWNER_NAME) - 1,
+                                        nullptr, section) &&
+            section == ValuesT::CONFIGURATION_SECTION_NAME;
     }
 
   protected:

@@ -246,16 +246,29 @@ class ConfigManager: public ConfigChanged<ValuesT>
     static bool try_store(const char *file, const ValuesT &values)
     {
         struct ini_file ini;
-        inifile_new(&ini);
+        struct ini_section *section;
 
-        auto *section =
-            inifile_new_section(&ini, ValuesT::CONFIGURATION_SECTION_NAME,
-                                sizeof(ValuesT::CONFIGURATION_SECTION_NAME) - 1);
+        if(inifile_parse_from_file(&ini, file) == 0)
+            section =
+                inifile_find_section(&ini, ValuesT::CONFIGURATION_SECTION_NAME,
+                                     sizeof(ValuesT::CONFIGURATION_SECTION_NAME) - 1);
+        else
+        {
+            inifile_new(&ini);
+            section = nullptr;
+        }
 
         if(section == nullptr)
         {
-            inifile_free(&ini);
-            return false;
+            section =
+                inifile_new_section(&ini, ValuesT::CONFIGURATION_SECTION_NAME,
+                                    sizeof(ValuesT::CONFIGURATION_SECTION_NAME) - 1);
+
+            if(section == nullptr)
+            {
+                inifile_free(&ini);
+                return false;
+            }
         }
 
         char buffer[128];

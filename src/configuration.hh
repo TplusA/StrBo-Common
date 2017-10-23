@@ -276,10 +276,15 @@ class ConfigManager: public ConfigChanged<ValuesT>
         for(const auto &k : ValuesT::all_keys)
         {
             k.read(buffer, sizeof(buffer), values);
-            inifile_section_store_value(section,
-                                        k.name_.c_str() + k.varname_offset_,
-                                        k.name_.length() - k.varname_offset_,
-                                        buffer, 0);
+            if(buffer[0] != '\0')
+                inifile_section_store_value(section,
+                                            k.name_.c_str() + k.varname_offset_,
+                                            k.name_.length() - k.varname_offset_,
+                                            buffer, 0);
+            else
+                inifile_section_store_empty_value(section,
+                                                  k.name_.c_str() + k.varname_offset_,
+                                                  k.name_.length() - k.varname_offset_);
         }
 
         inifile_write_to_file(&ini, file);

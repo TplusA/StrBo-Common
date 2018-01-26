@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2016, 2018  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -24,6 +24,8 @@ extern "C" {
 #endif
 
 void msg_install_debug_level_signals(void);
+void msg_install_extra_handler(unsigned int relative_signum,
+                               void (*handler)(unsigned int));
 
 #ifdef __cplusplus
 }

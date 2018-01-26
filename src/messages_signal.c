@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2016, 2018  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -56,4 +56,45 @@ void msg_install_debug_level_signals(void)
 
     for(int i = SIG_LOG_LEVEL_MIN; i <= SIG_LOG_LEVEL_MAX; ++i)
         sigaction(i, &action, NULL);
+}
+
+static void (*extra_handlers[10])(unsigned int);
+static const size_t MAX_EXTRA_HANDLERS = sizeof(extra_handlers) / sizeof(extra_handlers[0]);
+
+static void handle_extra(int signum, siginfo_t *info, void *ucontext)
+{
+    const unsigned int relative_signum = signum - SIG_LOG_LEVEL_MAX - 1;
+
+    extra_handlers[relative_signum](relative_signum);
+}
+
+void msg_install_extra_handler(unsigned int relative_signum,
+                               void (*handler)(unsigned int))
+{
+    if(relative_signum >= MAX_EXTRA_HANDLERS)
+    {
+        msg_error(0, LOG_ERR, "Relative signal number must be less than %zu",
+                  MAX_EXTRA_HANDLERS);
+        return;
+    }
+
+    const int signum = SIG_LOG_LEVEL_MAX + 1 + relative_signum;
+
+    if(signum > SIGRTMAX)
+    {
+        BUG("Relative signal number %u > %d", relative_signum, SIGRTMAX);
+        return;
+    }
+
+    static struct sigaction action =
+    {
+        .sa_sigaction = handle_extra,
+        .sa_flags = SA_SIGINFO | SA_RESTART,
+    };
+
+    log_assert(handler != NULL);
+    extra_handlers[relative_signum] = handler;
+
+    sigemptyset(&action.sa_mask);
+    sigaction(signum, &action, NULL);
 }

@@ -19,6 +19,8 @@
 #ifndef MAYBE_HH
 #define MAYBE_HH
 
+#include <utility>
+
 template <typename T>
 class Maybe
 {

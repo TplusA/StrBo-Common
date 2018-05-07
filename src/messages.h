@@ -170,6 +170,8 @@ int msg_out_of_memory(const char *what);
 
 #define BUG(...) msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__)
 
+#define APPLIANCE_BUG(...) msg_error(0, LOG_CRIT, "APPLIANCE BUG: " __VA_ARGS__)
+
 #if !defined(MSG_TRACE_PREFIX)
 #define MSG_TRACE_PREFIX "*** "
 #endif /* !MSG_TRACE_PREFIX */

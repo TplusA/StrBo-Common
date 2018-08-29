@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2017  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2017, 2018 T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -121,7 +121,7 @@ bool os_rmdir(const char *path, bool must_exist);
 
 int os_file_new(const char *filename);
 void os_file_close(int fd);
-void os_file_delete(const char *filename);
+int os_file_delete(const char *filename);
 bool os_file_rename(const char *oldpath, const char *newpath);
 
 bool os_link_new(const char *oldpath, const char *newpath);

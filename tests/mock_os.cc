@@ -937,7 +937,7 @@ void os_file_close(int fd)
     errno = expect.d.ret_errno_;
 }
 
-void os_file_delete(const char *filename)
+int os_file_delete(const char *filename)
 {
     const auto &expect(mock_os_singleton->expectations_->get_next_expectation(__func__));
 
@@ -945,6 +945,8 @@ void os_file_delete(const char *filename)
     cppcut_assert_equal(expect.d.arg_string_, std::string(filename));
 
     errno = expect.d.ret_errno_;
+
+    return expect.d.ret_int_;
 }
 
 bool os_file_rename(const char *oldpath, const char *newpath)

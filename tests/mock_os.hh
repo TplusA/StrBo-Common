@@ -86,7 +86,7 @@ class MockOs
     void expect_os_rmdir(bool retval, const char *path, bool must_exist);
     void expect_os_file_new(int ret, const char *filename);
     void expect_os_file_close(int fd);
-    void expect_os_file_delete(int ret, const char *filename);
+    void expect_os_file_delete(int ret, int ret_errno, const char *filename);
     void expect_os_file_rename(bool retval, const char *oldpath, const char *newpath);
     void expect_os_link_new(bool retval, const char *oldpath, const char *newpath);
     void expect_os_sync_dir(const char *path);

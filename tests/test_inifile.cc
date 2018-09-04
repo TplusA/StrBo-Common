@@ -1158,7 +1158,7 @@ void test_write_file_fails_if_file_cannot_be_written()
     mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
     mock_os->expect_os_write_from_buffer(-1, false, 1, expected_os_write_fd);
     mock_os->expect_os_file_close(expected_os_write_fd);
-    mock_os->expect_os_file_delete(0, "outfile.config");
+    mock_os->expect_os_file_delete(0, 0, "outfile.config");
     mock_messages->expect_msg_error_formatted(0, LOG_ERR,
         "Failed writing INI file \"outfile.config\", deleting partially written file");
 
@@ -1179,11 +1179,11 @@ void test_message_on_failure_to_delete_file_after_failure_to_write_to_file()
     mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
     mock_os->expect_os_write_from_buffer(-1, false, 1, expected_os_write_fd);
     mock_os->expect_os_file_close(expected_os_write_fd);
-    mock_os->expect_os_file_delete(-1, "outfile.config");
+    mock_os->expect_os_file_delete(-1, EIO, "outfile.config");
     mock_messages->expect_msg_error_formatted(0, LOG_ERR,
         "Failed writing INI file \"outfile.config\", deleting partially written file");
-    mock_messages->expect_msg_error_formatted(ESRCH, LOG_ERR,
-        "Failed to delete incomplete file (No such process)");
+    mock_messages->expect_msg_error_formatted(EIO, LOG_ERR,
+        "Failed to delete incomplete file (Input/output error)");
 
     cppcut_assert_equal(-1, inifile_write_to_file(&ini, "outfile.config"));
 

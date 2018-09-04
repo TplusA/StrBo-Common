@@ -274,6 +274,12 @@ class MockOs::Expectation
         d(fn, ret)
     {}
 
+    Expectation &expect_ret_errno(int errno_value)
+    {
+        data_.ret_errno_ = errno_value;
+        return *this;
+    }
+
     Expectation &expect_arg_source_pointer(const void *src)
     {
         data_.arg_src_pointer_ = src;
@@ -590,10 +596,11 @@ void MockOs::expect_os_file_close(int fd)
         Expectation(OsFn::file_close).expect_arg_fd(fd)));
 }
 
-void MockOs::expect_os_file_delete(int ret, const char *filename)
+void MockOs::expect_os_file_delete(int ret, int ret_errno, const char *filename)
 {
     expectations_->add(std::move(
         Expectation(OsFn::file_delete, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(filename)));
 }
 

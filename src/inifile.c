@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2018  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -789,7 +789,13 @@ error_exit:
               filename);
 
     os_file_close(fd);
-    os_file_delete(filename);
+
+    const bool was_suppressed = os_suppress_error_messages(true);
+
+    if(os_file_delete(filename) < 0)
+        msg_error(errno, LOG_ERR, "Failed to delete incomplete file");
+
+    os_suppress_error_messages(was_suppressed);
 
     return -1;
 }

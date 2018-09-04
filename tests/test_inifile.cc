@@ -1168,6 +1168,29 @@ void test_write_file_fails_if_file_cannot_be_written()
 }
 
 /*!\test
+ * In case #os_write_from_buffer() fails for whatever reason, function
+ * #inifile_write_to_file() tries to delete the output file. If this fails,
+ * then an additional diagnostic message is emitted.
+ */
+void test_message_on_failure_to_delete_file_after_failure_to_write_to_file()
+{
+    cppcut_assert_not_null(inifile_new_section(&ini, "section", 0));
+
+    mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
+    mock_os->expect_os_write_from_buffer(-1, false, 1, expected_os_write_fd);
+    mock_os->expect_os_file_close(expected_os_write_fd);
+    mock_os->expect_os_file_delete(-1, "outfile.config");
+    mock_messages->expect_msg_error_formatted(0, LOG_ERR,
+        "Failed writing INI file \"outfile.config\", deleting partially written file");
+    mock_messages->expect_msg_error_formatted(ESRCH, LOG_ERR,
+        "Failed to delete incomplete file (No such process)");
+
+    cppcut_assert_equal(-1, inifile_write_to_file(&ini, "outfile.config"));
+
+    cut_assert_true(os_write_buffer.empty());
+}
+
+/*!\test
  * Removing a key from an empty section returns an error.
  */
 void test_remove_key_from_empty_section()

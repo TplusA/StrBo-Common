@@ -59,56 +59,56 @@ class MockOs
     void check() const;
 
     using WriteFromBufferCallback = std::function<int(const void *src, size_t count, int fd)>;
-    void expect_os_write_from_buffer(int ret, const void *src, size_t count, int fd);
-    void expect_os_write_from_buffer(int ret, bool expect_null_pointer, size_t count, int fd);
-    void expect_os_write_from_buffer_callback(const WriteFromBufferCallback &fn);
+    void expect_os_write_from_buffer(int ret, int ret_errno, const void *src, size_t count, int fd);
+    void expect_os_write_from_buffer(int ret, int ret_errno, bool expect_null_pointer, size_t count, int fd);
+    void expect_os_write_from_buffer_callback(int ret_errno, const WriteFromBufferCallback &fn);
 
     using TryReadToBufferCallback =
         std::function<int(void *dest, size_t count, size_t *add_bytes_read, int fd,
                           bool suppress_error_on_eagain)>;
-    void expect_os_try_read_to_buffer(int ret, void *dest, size_t count,
+    void expect_os_try_read_to_buffer(int ret, int ret_errno, void *dest, size_t count,
                                       size_t *add_bytes_read, int fd, bool suppress);
-    void expect_os_try_read_to_buffer(int ret, bool expect_null_pointer, size_t count,
+    void expect_os_try_read_to_buffer(int ret, int ret_errno, bool expect_null_pointer, size_t count,
                                       size_t *add_bytes_read, int fd, bool suppress);
-    void expect_os_try_read_to_buffer_callback(const TryReadToBufferCallback &fn);
+    void expect_os_try_read_to_buffer_callback(int ret_errno, const TryReadToBufferCallback &fn);
 
-    void expect_os_abort(void);
-    void expect_os_system(int retval, bool is_verbose, const char *command);
-    void expect_os_system_formatted(int retval, bool is_verbose, const char *string);
-    void expect_os_foreach_in_path(int retval, const char *path);
-    void expect_os_foreach_in_path(int retval, const char *path,
+    void expect_os_abort(int ret_errno);
+    void expect_os_system(int retval, int ret_errno, bool is_verbose, const char *command);
+    void expect_os_system_formatted(int retval, int ret_errno, bool is_verbose, const char *string);
+    void expect_os_foreach_in_path(int retval, int ret_errno, const char *path);
+    void expect_os_foreach_in_path(int retval, int ret_errno, const char *path,
                                    const std::vector<ForeachItemData> &items);
-    void expect_os_path_get_type(enum os_path_type retval, const char *path);
-    void expect_os_path_get_number_of_hard_links(size_t retval, const char *path);
-    void expect_os_resolve_symlink(const char *retval, const char *link);
-    void expect_os_mkdir_hierarchy(bool retval, const char *path, bool must_not_exist);
-    void expect_os_mkdir(bool retval, const char *path, bool must_not_exist);
-    void expect_os_rmdir(bool retval, const char *path, bool must_exist);
-    void expect_os_file_new(int ret, const char *filename);
-    void expect_os_file_close(int fd);
+    void expect_os_path_get_type(enum os_path_type retval, int ret_errno, const char *path);
+    void expect_os_path_get_number_of_hard_links(size_t retval, int ret_errno, const char *path);
+    void expect_os_resolve_symlink(const char *retval, int ret_errno, const char *link);
+    void expect_os_mkdir_hierarchy(bool retval, int ret_errno, const char *path, bool must_not_exist);
+    void expect_os_mkdir(bool retval, int ret_errno, const char *path, bool must_not_exist);
+    void expect_os_rmdir(bool retval, int ret_errno, const char *path, bool must_exist);
+    void expect_os_file_new(int ret, int ret_errno, const char *filename);
+    void expect_os_file_close(int ret_errno, int fd);
     void expect_os_file_delete(int ret, int ret_errno, const char *filename);
-    void expect_os_file_rename(bool retval, const char *oldpath, const char *newpath);
-    void expect_os_link_new(bool retval, const char *oldpath, const char *newpath);
-    void expect_os_sync_dir(const char *path);
-    void expect_os_sync_dir_callback(const char *path, const std::function<void()> &callback);
-    void expect_os_map_file_to_memory(int ret, struct os_mapped_file_data *mapped,
+    void expect_os_file_rename(bool retval, int ret_errno, const char *oldpath, const char *newpath);
+    void expect_os_link_new(bool retval, int ret_errno, const char *oldpath, const char *newpath);
+    void expect_os_sync_dir(int ret_errno, const char *path);
+    void expect_os_sync_dir_callback(int ret_errno, const char *path, const std::function<void()> &callback);
+    void expect_os_map_file_to_memory(int ret, int ret_errno, struct os_mapped_file_data *mapped,
                                       const char *filename);
-    void expect_os_map_file_to_memory(int ret, const struct os_mapped_file_data *mapped,
+    void expect_os_map_file_to_memory(int ret, int ret_errno, const struct os_mapped_file_data *mapped,
                                       const char *filename);
-    void expect_os_map_file_to_memory(int ret, bool expect_null_pointer,
+    void expect_os_map_file_to_memory(int ret, int ret_errno, bool expect_null_pointer,
                                       const char *filename);
-    void expect_os_unmap_file(struct os_mapped_file_data *mapped);
-    void expect_os_unmap_file(const struct os_mapped_file_data *mapped);
-    void expect_os_unmap_file(bool expect_null_pointer);
+    void expect_os_unmap_file(int ret_errno, struct os_mapped_file_data *mapped);
+    void expect_os_unmap_file(int ret_errno, const struct os_mapped_file_data *mapped);
+    void expect_os_unmap_file(int ret_errno, bool expect_null_pointer);
 
     using ClockGettimeCallback = std::function<int(clockid_t clk_id, struct timespec *tp)>;
-    void expect_os_clock_gettime(int ret, clockid_t clk_id, const struct timespec &ret_tp);
-    void expect_os_clock_gettime_callback(const ClockGettimeCallback &fn);
+    void expect_os_clock_gettime(int ret, int ret_errno, clockid_t clk_id, const struct timespec &ret_tp);
+    void expect_os_clock_gettime_callback(int ret_errno, const ClockGettimeCallback &fn);
 
-    void expect_os_nanosleep(const struct timespec *tp);
-    void expect_os_nanosleep(long milliseconds);
+    void expect_os_nanosleep(int ret_errno, const struct timespec *tp);
+    void expect_os_nanosleep(int ret_errno, long milliseconds);
 
-    void expect_os_sched_yield(void);
+    void expect_os_sched_yield();
 };
 
 extern MockOs *mock_os_singleton;

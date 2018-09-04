@@ -897,10 +897,10 @@ void test_new_write_ini_file()
     cppcut_assert_not_null(inifile_section_store_value(section, "foo", 0, "bar", 0));
     cppcut_assert_not_null(inifile_section_store_value(section, "foobar", 0, "barfoo", 0));
 
-    mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
+    mock_os->expect_os_file_new(expected_os_write_fd, 0, "outfile.config");
     for(int i = 0; i < 3 * 3 + (3 + 0 + 2) * 4; ++i)
-        mock_os->expect_os_write_from_buffer_callback(write_from_buffer_callback);
-    mock_os->expect_os_file_close(expected_os_write_fd);
+        mock_os->expect_os_write_from_buffer_callback(0, write_from_buffer_callback);
+    mock_os->expect_os_file_close(0, expected_os_write_fd);
 
     cppcut_assert_equal(0, inifile_write_to_file(&ini, "outfile.config"));
 
@@ -1019,10 +1019,10 @@ void test_remove_section_from_file()
 
     cut_assert_true(inifile_remove_section_by_name(&ini, "Second", 0));
 
-    mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
+    mock_os->expect_os_file_new(expected_os_write_fd, 0, "outfile.config");
     for(int i = 0; i < 2 * 3 + (2 + 2) * 4; ++i)
-        mock_os->expect_os_write_from_buffer_callback(write_from_buffer_callback);
-    mock_os->expect_os_file_close(expected_os_write_fd);
+        mock_os->expect_os_write_from_buffer_callback(0, write_from_buffer_callback);
+    mock_os->expect_os_file_close(0, expected_os_write_fd);
 
     cppcut_assert_equal(0, inifile_write_to_file(&ini, "outfile.config"));
 
@@ -1055,10 +1055,10 @@ void test_write_empty_value_to_ini_file()
     cppcut_assert_not_null(inifile_section_store_value(section, "foo", 0, "bar", 0));
     cppcut_assert_not_null(inifile_section_store_empty_value(section, "foobar", 0));
 
-    mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
+    mock_os->expect_os_file_new(expected_os_write_fd, 0, "outfile.config");
     for(int i = 0; i < 2 * 3 + 3 + 4 + 3; ++i)
-        mock_os->expect_os_write_from_buffer_callback(write_from_buffer_callback);
-    mock_os->expect_os_file_close(expected_os_write_fd);
+        mock_os->expect_os_write_from_buffer_callback(0, write_from_buffer_callback);
+    mock_os->expect_os_file_close(0, expected_os_write_fd);
 
     cppcut_assert_equal(0, inifile_write_to_file(&ini, "outfile.config"));
 
@@ -1110,10 +1110,10 @@ void test_manipulate_value_in_file()
     cppcut_assert_not_null(inifile_section_store_value(section, "key 3-2", 0,
                                                        "also changed", 0));
 
-    mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
+    mock_os->expect_os_file_new(expected_os_write_fd, 0, "outfile.config");
     for(int i = 0; i < 3 * 3 + (2 + 4 + 2) * 4; ++i)
-        mock_os->expect_os_write_from_buffer_callback(write_from_buffer_callback);
-    mock_os->expect_os_file_close(expected_os_write_fd);
+        mock_os->expect_os_write_from_buffer_callback(0, write_from_buffer_callback);
+    mock_os->expect_os_file_close(0, expected_os_write_fd);
 
     cppcut_assert_equal(0, inifile_write_to_file(&ini, "outfile.config"));
 
@@ -1142,7 +1142,7 @@ void test_manipulate_value_in_file()
 void test_write_file_fails_if_file_cannot_be_created()
 {
     cppcut_assert_not_null(inifile_new_section(&ini, "section", 0));
-    mock_os->expect_os_file_new(-1, "outfile.config");
+    mock_os->expect_os_file_new(-1, ENOSPC, "outfile.config");
     cppcut_assert_equal(-1, inifile_write_to_file(&ini, "outfile.config"));
     cut_assert_true(os_write_buffer.empty());
 }
@@ -1155,9 +1155,9 @@ void test_write_file_fails_if_file_cannot_be_written()
 {
     cppcut_assert_not_null(inifile_new_section(&ini, "section", 0));
 
-    mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
-    mock_os->expect_os_write_from_buffer(-1, false, 1, expected_os_write_fd);
-    mock_os->expect_os_file_close(expected_os_write_fd);
+    mock_os->expect_os_file_new(expected_os_write_fd, 0, "outfile.config");
+    mock_os->expect_os_write_from_buffer(-1, ENOSPC, false, 1, expected_os_write_fd);
+    mock_os->expect_os_file_close(0, expected_os_write_fd);
     mock_os->expect_os_file_delete(0, 0, "outfile.config");
     mock_messages->expect_msg_error_formatted(0, LOG_ERR,
         "Failed writing INI file \"outfile.config\", deleting partially written file");
@@ -1176,9 +1176,9 @@ void test_message_on_failure_to_delete_file_after_failure_to_write_to_file()
 {
     cppcut_assert_not_null(inifile_new_section(&ini, "section", 0));
 
-    mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
-    mock_os->expect_os_write_from_buffer(-1, false, 1, expected_os_write_fd);
-    mock_os->expect_os_file_close(expected_os_write_fd);
+    mock_os->expect_os_file_new(expected_os_write_fd, 0, "outfile.config");
+    mock_os->expect_os_write_from_buffer(-1, EIO, false, 1, expected_os_write_fd);
+    mock_os->expect_os_file_close(0, expected_os_write_fd);
     mock_os->expect_os_file_delete(-1, EIO, "outfile.config");
     mock_messages->expect_msg_error_formatted(0, LOG_ERR,
         "Failed writing INI file \"outfile.config\", deleting partially written file");

@@ -450,34 +450,42 @@ void MockOs::check() const
     expectations_->check();
 }
 
-void MockOs::expect_os_write_from_buffer(int ret, const void *src, size_t count, int fd)
+void MockOs::expect_os_write_from_buffer(int ret, int ret_errno, const void *src,
+                                         size_t count, int fd)
 {
     expectations_->add(std::move(
         Expectation(OsFn::write_from_buffer, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_source_pointer(src)
             .expect_arg_count(count)
             .expect_arg_fd(fd)));
 }
 
-void MockOs::expect_os_write_from_buffer(int ret, bool expect_null_pointer, size_t count, int fd)
+void MockOs::expect_os_write_from_buffer(int ret, int ret_errno,
+                                         bool expect_null_pointer, size_t count, int fd)
 {
     expectations_->add(std::move(
         Expectation(OsFn::write_from_buffer, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_source_pointer_null(expect_null_pointer)
             .expect_arg_count(count)
             .expect_arg_fd(fd)));
 }
 
-void MockOs::expect_os_write_from_buffer_callback(const WriteFromBufferCallback &fn)
+void MockOs::expect_os_write_from_buffer_callback(int ret_errno, const WriteFromBufferCallback &fn)
 {
     expectations_->add(std::move(
-        Expectation(OsFn::write_from_buffer).set_write_buffer_callback(fn)));
+        Expectation(OsFn::write_from_buffer)
+            .expect_ret_errno(ret_errno)
+            .set_write_buffer_callback(fn)));
 }
 
-void MockOs::expect_os_try_read_to_buffer(int ret, void *dest, size_t count, size_t *add_bytes_read, int fd, bool suppress)
+void MockOs::expect_os_try_read_to_buffer(int ret, int ret_errno, void *dest, size_t count,
+                                          size_t *add_bytes_read, int fd, bool suppress)
 {
     expectations_->add(std::move(
         Expectation(OsFn::try_read_to_buffer, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_dest_pointer(dest)
             .expect_arg_count(count)
             .expect_arg_add_bytes_read_pointer(add_bytes_read)
@@ -485,11 +493,13 @@ void MockOs::expect_os_try_read_to_buffer(int ret, void *dest, size_t count, siz
             .expect_arg_bool(suppress)));
 }
 
-void MockOs::expect_os_try_read_to_buffer(int ret, bool expect_null_pointer, size_t count,
+void MockOs::expect_os_try_read_to_buffer(int ret, int ret_errno,
+                                          bool expect_null_pointer, size_t count,
                                           size_t *add_bytes_read, int fd, bool suppress)
 {
     expectations_->add(std::move(
         Expectation(OsFn::try_read_to_buffer, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_dest_pointer_null(expect_null_pointer)
             .expect_arg_count(count)
             .expect_arg_add_bytes_read_pointer(add_bytes_read)
@@ -497,103 +507,122 @@ void MockOs::expect_os_try_read_to_buffer(int ret, bool expect_null_pointer, siz
             .expect_arg_bool(suppress)));
 }
 
-void MockOs::expect_os_try_read_to_buffer_callback(const TryReadToBufferCallback &fn)
+void MockOs::expect_os_try_read_to_buffer_callback(int ret_errno, const TryReadToBufferCallback &fn)
 {
     expectations_->add(std::move(
-        Expectation(OsFn::try_read_to_buffer).set_try_read_buffer_callback(fn)));
+        Expectation(OsFn::try_read_to_buffer)
+            .expect_ret_errno(ret_errno)
+            .set_try_read_buffer_callback(fn)));
 }
 
-void MockOs::expect_os_abort(void)
+void MockOs::expect_os_abort(int ret_errno)
 {
-    expectations_->add(Expectation(OsFn::stdlib_abort));
+    expectations_->add(std::move(
+        Expectation(OsFn::stdlib_abort).expect_ret_errno(ret_errno)));
 }
 
-void MockOs::expect_os_system(int retval, bool is_verbose, const char *command)
+void MockOs::expect_os_system(int retval, int ret_errno, bool is_verbose, const char *command)
 {
     expectations_->add(std::move(
         Expectation(OsFn::stdlib_system, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_bool(is_verbose)
             .expect_arg_string(command)));
 }
 
-void MockOs::expect_os_system_formatted(int retval, bool is_verbose, const char *string)
+void MockOs::expect_os_system_formatted(int retval, int ret_errno, bool is_verbose, const char *string)
 {
     expectations_->add(std::move(
         Expectation(OsFn::system_formatted, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_bool(is_verbose)
             .expect_arg_string(string)));
 }
 
-void MockOs::expect_os_foreach_in_path(int retval, const char *path)
+void MockOs::expect_os_foreach_in_path(int retval, int ret_errno, const char *path)
 {
     expectations_->add(std::move(
-        Expectation(OsFn::foreach_in_path, retval).expect_arg_string(path)));
+        Expectation(OsFn::foreach_in_path, retval)
+            .expect_ret_errno(ret_errno)
+            .expect_arg_string(path)));
 }
 
-void MockOs::expect_os_foreach_in_path(int retval, const char *path,
+void MockOs::expect_os_foreach_in_path(int retval, int ret_errno, const char *path,
                                        const std::vector<ForeachItemData> &items)
 {
     expectations_->add(std::move(
         Expectation(OsFn::foreach_in_path, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(path)
             .set_pointer_to_data_items(items)));
 }
 
-void MockOs::expect_os_path_get_type(enum os_path_type retval, const char *path)
+void MockOs::expect_os_path_get_type(enum os_path_type retval, int ret_errno, const char *path)
 {
     expectations_->add(std::move(
         Expectation(OsFn::path_get_type, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(path)));
 }
 
-void MockOs::expect_os_path_get_number_of_hard_links(size_t retval, const char *path)
+void MockOs::expect_os_path_get_number_of_hard_links(size_t retval, int ret_errno, const char *path)
 {
     expectations_->add(std::move(
         Expectation(OsFn::path_get_number_of_hard_links, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(path)));
 }
 
-void MockOs::expect_os_resolve_symlink(const char *retval, const char *link)
+void MockOs::expect_os_resolve_symlink(const char *retval, int ret_errno, const char *link)
 {
     expectations_->add(std::move(
         Expectation(OsFn::resolve_symlink, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(link)));
 }
 
-void MockOs::expect_os_mkdir_hierarchy(bool retval, const char *path, bool must_not_exist)
+void MockOs::expect_os_mkdir_hierarchy(bool retval, int ret_errno, const char *path,
+                                       bool must_not_exist)
 {
     expectations_->add(std::move(
         Expectation(OsFn::mkdir_hierarchy, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(path)
             .expect_arg_bool(must_not_exist)));
 }
 
-void MockOs::expect_os_mkdir(bool retval, const char *path, bool must_not_exist)
+void MockOs::expect_os_mkdir(bool retval, int ret_errno, const char *path, bool must_not_exist)
 {
     expectations_->add(std::move(
         Expectation(OsFn::unix_mkdir, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(path)
             .expect_arg_bool(must_not_exist)));
 }
 
-void MockOs::expect_os_rmdir(bool retval, const char *path, bool must_exist)
+void MockOs::expect_os_rmdir(bool retval, int ret_errno, const char *path, bool must_exist)
 {
     expectations_->add(std::move(
         Expectation(OsFn::unix_rmdir, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(path)
             .expect_arg_bool(must_exist)));
 }
 
-void MockOs::expect_os_file_new(int ret, const char *filename)
+void MockOs::expect_os_file_new(int ret, int ret_errno, const char *filename)
 {
     expectations_->add(std::move(
-        Expectation(OsFn::file_new, ret).expect_arg_string(filename)));
+        Expectation(OsFn::file_new, ret)
+            .expect_ret_errno(ret_errno)
+            .expect_arg_string(filename)));
 }
 
-void MockOs::expect_os_file_close(int fd)
+void MockOs::expect_os_file_close(int ret_errno, int fd)
 {
     expectations_->add(std::move(
-        Expectation(OsFn::file_close).expect_arg_fd(fd)));
+        Expectation(OsFn::file_close)
+            .expect_ret_errno(ret_errno)
+            .expect_arg_fd(fd)));
 }
 
 void MockOs::expect_os_file_delete(int ret, int ret_errno, const char *filename)
@@ -604,109 +633,128 @@ void MockOs::expect_os_file_delete(int ret, int ret_errno, const char *filename)
             .expect_arg_string(filename)));
 }
 
-void MockOs::expect_os_file_rename(bool retval, const char *oldpath, const char *newpath)
+void MockOs::expect_os_file_rename(bool retval, int ret_errno, const char *oldpath,
+                                   const char *newpath)
 {
     expectations_->add(std::move(
         Expectation(OsFn::file_rename, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(oldpath)
             .expect_arg_string_second(newpath)));
 }
 
-void MockOs::expect_os_link_new(bool retval, const char *oldpath, const char *newpath)
+void MockOs::expect_os_link_new(bool retval, int ret_errno, const char *oldpath,
+                                const char *newpath)
 {
     expectations_->add(std::move(
         Expectation(OsFn::link_new, retval)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(oldpath)
             .expect_arg_string_second(newpath)));
 }
 
-void MockOs::expect_os_sync_dir(const char *path)
+void MockOs::expect_os_sync_dir(int ret_errno, const char *path)
 {
     expectations_->add(std::move(
         Expectation(OsFn::sync_dir)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(path)));
 }
 
-void MockOs::expect_os_sync_dir_callback(const char *path, const std::function<void()> &callback)
+void MockOs::expect_os_sync_dir_callback(int ret_errno, const char *path,
+                                         const std::function<void()> &callback)
 {
     expectations_->add(std::move(
         Expectation(OsFn::sync_dir)
+            .expect_ret_errno(ret_errno)
             .expect_arg_string(path)
             .set_generic_callback(callback)));
 }
 
-void MockOs::expect_os_map_file_to_memory(int ret, struct os_mapped_file_data *mapped,
+void MockOs::expect_os_map_file_to_memory(int ret, int ret_errno,
+                                          struct os_mapped_file_data *mapped,
                                           const char *filename)
 {
     expectations_->add(std::move(
         Expectation(OsFn::map_file_to_memory, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_mapped_pointer(mapped)
             .expect_arg_string(filename)));
 }
 
-void MockOs::expect_os_map_file_to_memory(int ret,
+void MockOs::expect_os_map_file_to_memory(int ret, int ret_errno,
                                           const struct os_mapped_file_data *mapped,
                                           const char *filename)
 {
     expectations_->add(std::move(
         Expectation(OsFn::map_file_to_memory, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_mapped_template(mapped)
             .expect_arg_string(filename)));
 }
 
-void MockOs::expect_os_map_file_to_memory(int ret, bool expect_null_pointer,
+void MockOs::expect_os_map_file_to_memory(int ret, int ret_errno,
+                                          bool expect_null_pointer,
                                           const char *filename)
 {
     expectations_->add(std::move(
         Expectation(OsFn::map_file_to_memory, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_mapped_null(expect_null_pointer)
             .expect_arg_string(filename)));
 }
 
-void MockOs::expect_os_unmap_file(struct os_mapped_file_data *mapped)
+void MockOs::expect_os_unmap_file(int ret_errno, struct os_mapped_file_data *mapped)
 {
     expectations_->add(std::move(
         Expectation(OsFn::unmap_file)
+            .expect_ret_errno(ret_errno)
             .expect_arg_mapped_pointer(mapped)));
 }
 
-void MockOs::expect_os_unmap_file(const struct os_mapped_file_data *mapped)
+void MockOs::expect_os_unmap_file(int ret_errno, const struct os_mapped_file_data *mapped)
 {
     expectations_->add(std::move(
         Expectation(OsFn::unmap_file)
+            .expect_ret_errno(ret_errno)
             .expect_arg_mapped_template(mapped)));
 }
 
-void MockOs::expect_os_unmap_file(bool expect_null_pointer)
+void MockOs::expect_os_unmap_file(int ret_errno, bool expect_null_pointer)
 {
     expectations_->add(std::move(
         Expectation(OsFn::unmap_file)
+            .expect_ret_errno(ret_errno)
             .expect_arg_mapped_null(expect_null_pointer)));
 }
 
-void MockOs::expect_os_clock_gettime(int ret, clockid_t clk_id,
+void MockOs::expect_os_clock_gettime(int ret, int ret_errno, clockid_t clk_id,
                                      const struct timespec &ret_tp)
 {
     expectations_->add(std::move(
         Expectation(OsFn::os_clock_gettime_fn, ret)
+            .expect_ret_errno(ret_errno)
             .expect_arg_clock_id(clk_id)
             .expect_arg_timespec(ret_tp)));
 }
 
-void MockOs::expect_os_clock_gettime_callback(const ClockGettimeCallback &fn)
+void MockOs::expect_os_clock_gettime_callback(int ret_errno, const ClockGettimeCallback &fn)
 {
     expectations_->add(std::move(
         Expectation(OsFn::os_clock_gettime_fn)
+            .expect_ret_errno(ret_errno)
             .set_clock_gettime_callback(fn)));
 }
 
-void MockOs::expect_os_nanosleep(const struct timespec *tp)
+void MockOs::expect_os_nanosleep(int ret_errno, const struct timespec *tp)
 {
     expectations_->add(std::move(
-        Expectation(OsFn::os_nanosleep_fn).expect_arg_timespec(*tp)));
+        Expectation(OsFn::os_nanosleep_fn)
+            .expect_ret_errno(ret_errno)
+            .expect_arg_timespec(*tp)));
 }
 
-void MockOs::expect_os_nanosleep(long milliseconds)
+void MockOs::expect_os_nanosleep(int ret_errno, long milliseconds)
 {
     const struct timespec tp =
     {
@@ -715,10 +763,12 @@ void MockOs::expect_os_nanosleep(long milliseconds)
     };
 
     expectations_->add(std::move(
-        Expectation(OsFn::os_nanosleep_fn).expect_arg_timespec(tp)));
+        Expectation(OsFn::os_nanosleep_fn)
+            .expect_ret_errno(ret_errno)
+            .expect_arg_timespec(tp)));
 }
 
-void MockOs::expect_os_sched_yield(void)
+void MockOs::expect_os_sched_yield()
 {
     expectations_->add(Expectation(OsFn::os_sched_yield_fn));
 }
@@ -842,10 +892,11 @@ int os_foreach_in_path(const char *path,
     cppcut_assert_equal(expect.d.arg_string_.c_str(), path);
     cppcut_assert_not_null(reinterpret_cast<void *>(callback));
 
+    errno = expect.d.ret_errno_;
+
     if(expect.d.foreach_item_data_ != NULL)
     {
         int ret = 0;
-        errno = ESRCH;
 
         for(const auto &item : *expect.d.foreach_item_data_)
         {
@@ -861,8 +912,6 @@ int os_foreach_in_path(const char *path,
         cppcut_assert_equal(expect.d.ret_errno_, errno);
         cppcut_assert_equal(expect.d.ret_int_, ret);
     }
-
-    errno = expect.d.ret_errno_;
 
     return expect.d.ret_int_;
 }

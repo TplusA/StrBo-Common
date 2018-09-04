@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2018  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -1158,7 +1158,7 @@ void test_write_file_fails_if_file_cannot_be_written()
     mock_os->expect_os_file_new(expected_os_write_fd, "outfile.config");
     mock_os->expect_os_write_from_buffer(-1, false, 1, expected_os_write_fd);
     mock_os->expect_os_file_close(expected_os_write_fd);
-    mock_os->expect_os_file_delete("outfile.config");
+    mock_os->expect_os_file_delete(0, "outfile.config");
     mock_messages->expect_msg_error_formatted(0, LOG_ERR,
         "Failed writing INI file \"outfile.config\", deleting partially written file");
 

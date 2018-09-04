@@ -75,7 +75,6 @@ class MockOs
     void expect_os_abort(void);
     void expect_os_system(int retval, bool is_verbose, const char *command);
     void expect_os_system_formatted(int retval, bool is_verbose, const char *string);
-    void expect_os_system_formatted_formatted(int retval, bool is_verbose, const char *string);
     void expect_os_foreach_in_path(int retval, const char *path);
     void expect_os_foreach_in_path(int retval, const char *path,
                                    const std::vector<ForeachItemData> &items);
@@ -94,11 +93,9 @@ class MockOs
     void expect_os_sync_dir_callback(const char *path, const std::function<void()> &callback);
     void expect_os_map_file_to_memory(int ret, struct os_mapped_file_data *mapped,
                                       const char *filename);
-    void expect_os_map_file_to_memory(int ret, bool expect_null_pointer,
-                                      const char *filename);
-    void expect_os_map_file_to_memory(const struct os_mapped_file_data *mapped,
-                                      const char *filename);
     void expect_os_map_file_to_memory(int ret, const struct os_mapped_file_data *mapped,
+                                      const char *filename);
+    void expect_os_map_file_to_memory(int ret, bool expect_null_pointer,
                                       const char *filename);
     void expect_os_unmap_file(struct os_mapped_file_data *mapped);
     void expect_os_unmap_file(const struct os_mapped_file_data *mapped);

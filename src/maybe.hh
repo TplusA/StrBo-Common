@@ -32,6 +32,7 @@ class Maybe
     Maybe(const Maybe &) = default;
     Maybe(Maybe &&) = default;
     Maybe &operator=(const Maybe &) = default;
+    Maybe &operator=(Maybe &&) = default;
 
     explicit Maybe():
         is_value_known_(false),

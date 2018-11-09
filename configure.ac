@@ -80,6 +80,10 @@ CPPFLAGS="$save_CPPFLAGS"
 AC_LANG_POP([C++])
 ])
 
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADER([doctest.h])
+AC_LANG_POP([C++])
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
 AC_C_INLINE
@@ -97,9 +101,10 @@ AC_FUNC_MMAP
 AC_CHECK_FUNCS([clock_gettime memset mkdir munmap realpath rmdir strdup strerror])
 
 AM_CONDITIONAL([WITH_CUTTER], [test "x$ac_cv_use_cutter" = "xyes"])
+AM_CONDITIONAL([WITH_DOCTEST], [test "x$ac_cv_header_doctest_h" = "xyes"])
 AM_CONDITIONAL([WITH_VALGRIND], [test "x$enable_valgrind" = "xyes"])
 
-AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile tests_new/Makefile tests/Makefile])
 AC_CONFIG_FILES([tests/run_test.sh], [chmod +x tests/run_test.sh])
 AC_CONFIG_FILES([tests/valgrind.sh], [chmod +x tests/valgrind.sh])
 AC_OUTPUT

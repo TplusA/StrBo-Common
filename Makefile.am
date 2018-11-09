@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2015, 2018  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of the T+A Streaming Board software stack ("StrBoWare").
 #
@@ -16,6 +16,11 @@
 # along with StrBoWare.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-SUBDIRS = . src tests
+SUBDIRS = . src tests_new tests
 
 ACLOCAL_AMFLAGS = -I m4
+
+if WITH_DOCTEST
+doctest:
+	$(MAKE) $(AM_MAKEFLAGS) -C tests_new $@
+endif

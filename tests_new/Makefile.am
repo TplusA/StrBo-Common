@@ -25,6 +25,14 @@ check_PROGRAMS = \
 
 TESTS = $(check_PROGRAMS)
 
+if WITH_VALGRIND
+AM_TESTS_ENVIRONMENT = VALGRIND="$(VALGRIND)"
+TESTS += valgrind.sh
+endif
+
+EXTRA_DIST = valgrind.sh
+CLEANFILES = *.valgrind.xml
+
 AM_CPPFLAGS = -DDOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING
 AM_CPPFLAGS += -I$(top_srcdir)/src
 AM_CFLAGS = $(CWARNINGS)
@@ -70,5 +78,8 @@ test_stream_id_CXXFLAGS = $(AM_CXXFLAGS)
 
 doctest: $(check_PROGRAMS)
 	for p in $(check_PROGRAMS); do ./$$p $(DOCTEST_EXTRA_OPTIONS); done
+
+doctest-valgrind: $(check_PROGRAMS)
+	for p in $(check_PROGRAMS); do $(VALGRIND) --leak-check=full --show-reachable=yes --error-limit=no ./$$p $(DOCTEST_EXTRA_OPTIONS); done
 endif
 

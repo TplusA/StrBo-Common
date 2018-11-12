@@ -95,10 +95,12 @@ class MockExpectationsTemplate
             MESSAGE(mock_id_ << ": Code under test does more than it was expected to do. "
                     "Please fix the code, or expect() more from it (fix the test).");
 
-            if(n == 1)
+            if(n == 0)
+                MESSAGE(mock_id_ << ": There are no expectations defined.");
+            else if(n == 1)
                 MESSAGE(mock_id_ << ": There is only 1 expectation defined.");
             else
-                MESSAGE("There are only " << n << " defined.");
+                MESSAGE("There are only " << n << " expectations defined.");
 
             FAIL("Missing expectations for " << mock_id_);
         }

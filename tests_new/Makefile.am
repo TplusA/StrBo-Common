@@ -23,15 +23,15 @@ check_PROGRAMS = \
     test_gvariantwrapper \
     test_stream_id
 
-TESTS = $(check_PROGRAMS)
+TESTS = run_tests.sh
 
 if WITH_VALGRIND
 AM_TESTS_ENVIRONMENT = VALGRIND="$(VALGRIND)"
 TESTS += valgrind.sh
 endif
 
-EXTRA_DIST = valgrind.sh
-CLEANFILES = *.valgrind.xml
+EXTRA_DIST = run_tests.sh valgrind.sh
+CLEANFILES = *.junit.xml *.valgrind.xml
 
 AM_CPPFLAGS = -DDOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING
 AM_CPPFLAGS += -I$(top_srcdir)/src

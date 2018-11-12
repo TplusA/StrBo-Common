@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2018  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -71,7 +71,7 @@ class GVariantWrapper
         return variant_ == other.variant_;
     }
 
-    static void set_ops(const Ops &ops);
+    static void set_ops(const Ops &o);
 
 #ifdef GLIB_CHECK_VERSION
   public:

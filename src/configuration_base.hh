@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2018  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -149,7 +149,7 @@ class ConfigKeyBase
     virtual InsertResult unbox(UpdateSettings<ValuesT> &dest, GVariantWrapper &&src) const = 0;
 };
 
-size_t find_varname_offset_in_keyname(const char *name);
+size_t find_varname_offset_in_keyname(const char *key);
 
 }
 

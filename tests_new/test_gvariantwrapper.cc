@@ -57,6 +57,8 @@ void msg_error(int, int , const char *, ...) { FAIL("unexpected call"); }
 void os_abort() { FAIL("unexpected call"); }
 }
 
+TEST_SUITE_BEGIN("GVariant wrapper tests");
+
 class GVariantWrapperTestsFixture
 {
   protected:
@@ -452,3 +454,5 @@ TEST_CASE_FIXTURE(GVariantWrapperTestsFixture, "Unequality of wrappers around di
     CHECK_FALSE(a == b);
     CHECK_FALSE(b == a);
 }
+
+TEST_SUITE_END();

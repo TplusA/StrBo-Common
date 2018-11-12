@@ -39,6 +39,8 @@
  */
 /*!@{*/
 
+TEST_SUITE_BEGIN("INI file parser");
+
 class InifileParserTestsFixture
 {
   protected:
@@ -814,6 +816,10 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Multiple assignments to a key name
     CHECK(pair->value == "foobar");
 }
 
+TEST_SUITE_END();
+
+
+TEST_SUITE_BEGIN("INI file manipulation");
 
 class InifileManipulationTestsFixture
 {
@@ -1316,5 +1322,7 @@ TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "Remove nonexistant key from 
     CHECK_FALSE(inifile_section_remove_value(section, "k", 0));
     CHECK(inifile_section_lookup_kv_pair(section, "key", 0) != nullptr);
 }
+
+TEST_SUITE_END();
 
 /*!@}*/

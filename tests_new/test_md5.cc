@@ -34,6 +34,8 @@
  */
 /*!@{*/
 
+TEST_SUITE_BEGIN("MD5 sum computation");
+
 class MD5TestsFixture
 {
   protected:
@@ -194,5 +196,7 @@ TEST_CASE_FIXTURE(MD5TestsFixture, "Conversion of hash to string representation"
     MD5::to_string(input_hash, output);
     CHECK(output == expected_string);
 }
+
+TEST_SUITE_END();
 
 /*!@}*/

@@ -37,6 +37,8 @@
 static constexpr const stream_id_t our_source = STREAM_ID_MAKE_SOURCE(123);
 static constexpr const stream_id_t other_source = STREAM_ID_MAKE_SOURCE(42);
 
+TEST_SUITE_BEGIN("Generic stream ID handling");
+
 class GenericStreamIDTests
 {
   public:
@@ -166,6 +168,10 @@ TEST_CASE_FIXTURE(GenericStreamIDTests, "All components of invalid ID are invali
     CHECK(id.get_cookie() == STREAM_ID_COOKIE_INVALID);
 }
 
+TEST_SUITE_END();
+
+
+TEST_SUITE_BEGIN("Sourced stream IDs");
 
 class SourcedStreamIDTests
 {
@@ -263,5 +269,7 @@ TEST_CASE_FIXTURE(SourcedStreamIDTests, "ID from different sources are incompati
     CHECK(ID::SourcedStream<other_source>::compatible_with(other_id_a));
     CHECK(ID::SourcedStream<other_source>::compatible_with(other_id_b));
 }
+
+TEST_SUITE_END();
 
 /*!@}*/

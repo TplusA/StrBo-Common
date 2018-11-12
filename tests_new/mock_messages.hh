@@ -30,10 +30,10 @@ class Expectation
 {
   public:
     Expectation(const Expectation &) = delete;
+    Expectation(Expectation &&) = default;
     Expectation &operator=(const Expectation &) = delete;
-
+    Expectation &operator=(Expectation &&) = default;
     Expectation() {}
-
     virtual ~Expectation() {}
 };
 

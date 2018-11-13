@@ -215,7 +215,12 @@ class WriteFromBuffer: public Expectation
         if(arg_src_shall_be_null_)
             CHECK(src == nullptr);
         else
+        {
             CHECK(src != nullptr);
+
+            if(src_ != nullptr)
+                CHECK(src == src_);
+        }
 
         CHECK(count == count_);
         CHECK(fd == fd_);

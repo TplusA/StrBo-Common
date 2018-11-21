@@ -26,6 +26,9 @@
 #include <cstdio>
 #include <cstdarg>
 #include <utility>
+#include <typeinfo>
+#include <typeindex>
+#include <unordered_map>
 
 template <typename E>
 class MockExpectationsTemplate
@@ -37,6 +40,8 @@ class MockExpectationsTemplate
     typename decltype(expectations_)::const_iterator next_checked_expectation_;
     bool next_checked_expectation_needs_initialization_;
     bool next_checked_is_front_;
+
+    std::unordered_map<std::type_index, std::unique_ptr<E>> ignored_;
 
   public:
     MockExpectationsTemplate(const MockExpectationsTemplate &) = delete;
@@ -86,9 +91,56 @@ class MockExpectationsTemplate
         }
     }
 
+    template <typename T>
+    void ignore(std::unique_ptr<E> default_result)
+    {
+        ignored_[std::type_index(typeid(T))] = std::move(default_result);
+    }
+
+    template <typename T>
+    void allow()
+    {
+        ignored_.erase(std::type_index(typeid(T)));
+    }
+
+  private:
+    struct expectation_default_ignore {};
+    struct expectation_ignore_behavior: expectation_default_ignore {};
+    template<typename> struct expectation_ignores_by_fn { using type = bool; };
+    template<typename> struct expectation_ignores_by_value { using type = bool; };
+
+    template <typename T, typename R,
+              typename std::enable_if<!std::is_same<R, void>::value, bool>::type = 0,
+              typename expectation_ignores_by_fn<decltype(&T::ignored)>::type = 0>
+    R ignore_expectation(const T *default_result, expectation_ignore_behavior)
+    {
+        return default_result->ignored();
+    }
+
+    template <typename T, typename R,
+              typename std::enable_if<!std::is_same<R, void>::value, bool>::type = 0,
+              typename expectation_ignores_by_value<decltype(T::retval_)>::type = 0>
+    R ignore_expectation(const T *default_result, expectation_ignore_behavior)
+    {
+        return default_result->retval_;
+    }
+
+    template <typename T, typename R>
+    R ignore_expectation(const T *, expectation_default_ignore)
+    {
+        return R();
+    }
+
+  public:
     template <typename T, typename R, typename ... Args>
     R check_and_advance(Args ... args)
     {
+        const auto &ignored(ignored_.find(std::type_index(typeid(T))));
+
+        if(ignored != ignored_.end())
+            return ignore_expectation<T, R>(dynamic_cast<const T *>(ignored->second.get()),
+                                            expectation_ignore_behavior());
+
         if(next_checked_expectation_ == expectations_.end())
         {
             const auto n = expectations_.size();

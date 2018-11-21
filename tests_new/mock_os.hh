@@ -75,6 +75,21 @@ class Mock
         expectations_.add(std::unique_ptr<Expectation>(expectation));
     }
 
+    template <typename T>
+    void ignore(std::unique_ptr<T> default_result)
+    {
+        expectations_.ignore<T>(std::move(default_result));
+    }
+
+    template <typename T>
+    void ignore(T *default_result)
+    {
+        expectations_.ignore<T>(std::unique_ptr<Expectation>(default_result));
+    }
+
+    template <typename T>
+    void allow() { expectations_.allow<T>(); }
+
     void done() const { expectations_.done(); }
 
     template <typename T, typename ... Args>

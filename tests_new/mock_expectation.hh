@@ -25,6 +25,7 @@
 #include <memory>
 #include <cstdio>
 #include <cstdarg>
+#include <utility>
 
 template <typename E>
 class MockExpectationsTemplate
@@ -85,8 +86,8 @@ class MockExpectationsTemplate
         }
     }
 
-    template <typename T, typename ... Args>
-    typename T::CheckReturnType check_and_advance(Args ... args)
+    template <typename T, typename R, typename ... Args>
+    R check_and_advance(Args ... args)
     {
         if(next_checked_expectation_ == expectations_.end())
         {

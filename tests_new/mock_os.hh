@@ -78,9 +78,9 @@ class Mock
     void done() const { expectations_.done(); }
 
     template <typename T, typename ... Args>
-    typename T::CheckReturnType check_next(Args ... args)
+    auto check_next(Args ... args) -> decltype(std::declval<T>().check(args...))
     {
-        return expectations_.check_and_advance<T>(args...);
+        return expectations_.check_and_advance<T, decltype(std::declval<T>().check(args...))>(args...);
     }
 
     template <typename T>
@@ -98,8 +98,7 @@ class Abort: public Expectation
   public:
     explicit Abort(int ret_errno): ret_errno_(ret_errno) {}
     virtual ~Abort() {}
-    using CheckReturnType = void;
-    CheckReturnType check() const { errno = ret_errno_; }
+    void check() const { errno = ret_errno_; }
 };
 
 class MapFileToMemory: public Expectation
@@ -131,9 +130,7 @@ class MapFileToMemory: public Expectation
         filename_(filename)
     {}
 
-    using CheckReturnType = decltype(retval_);
-
-    CheckReturnType check(struct os_mapped_file_data *mapped, const char *filename) const
+    int check(struct os_mapped_file_data *mapped, const char *filename) const
     {
         if(mapped_template_ != nullptr)
         {
@@ -202,9 +199,7 @@ class WriteFromBuffer: public Expectation
         fd_(fd)
     {}
 
-    using CheckReturnType = decltype(retval_);
-
-    CheckReturnType check(const void *src, size_t count, int fd) const
+    int check(const void *src, size_t count, int fd) const
     {
         if(callback_ != nullptr)
         {
@@ -245,9 +240,7 @@ class FileNew: public Expectation
         filename_(filename)
     {}
 
-    using CheckReturnType = decltype(retval_);
-
-    CheckReturnType check(const char *filename) const
+    int check(const char *filename) const
     {
         REQUIRE(filename != nullptr);
         CHECK(filename == filename_);
@@ -268,9 +261,7 @@ class FileClose: public Expectation
         fd_(fd)
     {}
 
-    using CheckReturnType = void;
-
-    CheckReturnType check(int fd) const
+    void check(int fd) const
     {
         CHECK(fd == fd_);
         errno = ret_errno_;
@@ -291,9 +282,7 @@ class FileDelete: public Expectation
         filename_(filename)
     {}
 
-    using CheckReturnType = decltype(retval_);
-
-    CheckReturnType check(const char *filename) const
+    int check(const char *filename) const
     {
         REQUIRE(filename != nullptr);
         CHECK(filename == filename_);
@@ -314,9 +303,7 @@ class UnmapFile: public Expectation
         mapped_(mapped)
     {}
 
-    using CheckReturnType = void;
-
-    CheckReturnType check(struct os_mapped_file_data *mapped) const
+    void check(struct os_mapped_file_data *mapped) const
     {
         CHECK(mapped != nullptr);
         CHECK(mapped == mapped_);

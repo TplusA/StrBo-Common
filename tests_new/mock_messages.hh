@@ -73,9 +73,9 @@ class Mock
     void done() const { expectations_.done(); }
 
     template <typename T, typename ... Args>
-    typename T::CheckReturnType check_next(Args ... args)
+    auto check_next(Args ... args) -> decltype(std::declval<T>().check(args...))
     {
-        return expectations_.check_and_advance<T>(args...);
+        return expectations_.check_and_advance<T, decltype(std::declval<T>().check(args...))>(args...);
     }
 
     template <typename T>
@@ -112,9 +112,7 @@ class MsgIsVerbose: public Expectation
 
     virtual ~MsgIsVerbose() {}
 
-    using CheckReturnType = bool;
-
-    CheckReturnType check(MessageVerboseLevel level) const
+    bool check(MessageVerboseLevel level) const
     {
         CHECK(level_ == level);
         return retval_;
@@ -159,9 +157,7 @@ class MsgInfo: public Message
         Message(prefix, suffix, is_format_string)
     {}
 
-    using CheckReturnType = void;
-
-    CheckReturnType check(const char *format_string, va_list va) const
+    void check(const char *format_string, va_list va) const
     {
         check_generic(format_string, va, 0);
     }
@@ -188,10 +184,8 @@ class MsgError: public Message
         priority_(priority)
     {}
 
-    using CheckReturnType = void;
-
-    CheckReturnType check(int error_code, int priority,
-                          const char *format_string, va_list va) const
+    void check(int error_code, int priority,
+               const char *format_string, va_list va) const
     {
         CHECK(error_code == error_code_);
         CHECK(priority == priority_);
@@ -206,9 +200,7 @@ class MsgOOM: public MsgError
         MsgError(ENOMEM, LOG_EMERG, msg, false)
     {}
 
-    using CheckReturnType = void;
-
-    CheckReturnType check(const char *msg) const
+    void check(const char *msg) const
     {
         CHECK(msg == msg_);
     }

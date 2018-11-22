@@ -155,11 +155,17 @@ class MockExpectationsTemplate
             else
                 MESSAGE("There are only " << n << " expectations defined.");
 
-            FAIL("Missing expectations for " << mock_id_);
+            FAIL("Missing expectations for " << mock_id_ << ": " << typeid(T).name());
         }
 
         const auto *ptr = dynamic_cast<const T *>(next_checked_expectation_->get());
-        REQUIRE_MESSAGE(ptr != nullptr, mock_id_ << ": Expectation type mismatch");
+
+        if(ptr == nullptr)
+        {
+            const auto &name(typeid(T).name());
+            REQUIRE_MESSAGE(ptr != nullptr,
+                            mock_id_ << ": Expectation type mismatch, expected " << name);
+        }
 
         ++next_checked_expectation_;
 

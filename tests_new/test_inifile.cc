@@ -60,9 +60,16 @@ class InifileParserTestsFixture
 
     ~InifileParserTestsFixture()
     {
-        inifile_free(&ini);
+        try
+        {
+            inifile_free(&ini);
+            mock_messages->done();
+        }
+        catch(...)
+        {
+            /* no throwing from dtors */
+        }
 
-        mock_messages->done();
         MockMessages::singleton = nullptr;
     }
 };
@@ -847,15 +854,22 @@ class InifileManipulationTestsFixture
 
     ~InifileManipulationTestsFixture()
     {
-        inifile_free(&ini);
+        try
+        {
+            inifile_free(&ini);
 
-        os_write_buffer.clear();
-        os_write_buffer.shrink_to_fit();
+            os_write_buffer.clear();
+            os_write_buffer.shrink_to_fit();
 
-        mock_messages->done();
+            mock_messages->done();
+            mock_os->done();
+        }
+        catch(...)
+        {
+            /* no throwing from dtors */
+        }
+
         MockMessages::singleton = nullptr;
-
-        mock_os->done();
         MockOS::singleton = nullptr;
     }
 

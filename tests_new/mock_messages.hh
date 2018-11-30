@@ -141,42 +141,92 @@ class Message: public Expectation
     const std::string msg_end_;
     const bool is_format_string_;
     const bool is_complete_string_;
+    const MessageVerboseLevel level_;
 
   protected:
-    explicit Message(std::string &&msg, bool is_format_string):
+    explicit Message(std::string &&msg, bool is_format_string,
+                     MessageVerboseLevel level):
         msg_(std::move(msg)),
         is_format_string_(is_format_string),
-        is_complete_string_(true)
+        is_complete_string_(true),
+        level_(level)
     {}
 
     explicit Message(std::string &&prefix, std::string &&suffix,
-                     bool is_format_string):
+                     bool is_format_string, MessageVerboseLevel level):
         msg_(std::move(prefix)),
         msg_end_(std::move(suffix)),
         is_format_string_(is_format_string),
-        is_complete_string_(false)
+        is_complete_string_(false),
+        level_(level)
     {}
 
-    void check_generic(const char *format_string, va_list va, int error_code) const;
+    void check_generic(MessageVerboseLevel level, const char *format_string,
+                       va_list va, int error_code) const;
 };
 
-class MsgInfo: public Message
+class MsgVinfo: public Message
+{
+  public:
+    explicit MsgVinfo(MessageVerboseLevel level,
+                      const char *msg, bool is_format_string):
+        Message(msg, is_format_string, level)
+    {}
+
+    explicit MsgVinfo(MessageVerboseLevel level, const char *prefix,
+                      const char *suffix, bool is_format_string):
+        Message(prefix, suffix, is_format_string, level)
+    {}
+
+    void check(MessageVerboseLevel level, const char *format_string, va_list va) const
+    {
+        check_generic(level, format_string, va, 0);
+    }
+};
+
+class MsgInfo: public MsgVinfo
 {
   public:
     explicit MsgInfo(const char *msg, bool is_format_string):
-        Message(msg, is_format_string)
+        MsgVinfo(MESSAGE_LEVEL_NORMAL, msg, is_format_string)
     {}
 
     explicit MsgInfo(const char *prefix, const char *suffix,
                      bool is_format_string):
-        Message(prefix, suffix, is_format_string)
+        MsgVinfo(MESSAGE_LEVEL_NORMAL, prefix, suffix, is_format_string)
     {}
 
     void check(const char *format_string, va_list va) const
     {
-        check_generic(format_string, va, 0);
+        check_generic(MESSAGE_LEVEL_NORMAL, format_string, va, 0);
     }
 };
+
+static enum MessageVerboseLevel map_syslog_prio_to_verbose_level(int priority)
+{
+    switch(priority)
+    {
+      case LOG_EMERG:
+      case LOG_ALERT:
+      case LOG_CRIT:
+        return MESSAGE_LEVEL_QUIET;
+
+      case LOG_ERR:
+      case LOG_WARNING:
+        return MESSAGE_LEVEL_IMPORTANT;
+
+      case LOG_NOTICE:
+        return MESSAGE_LEVEL_NORMAL;
+
+      case LOG_INFO:
+        return MESSAGE_LEVEL_DIAG;
+
+      case LOG_DEBUG:
+        return MESSAGE_LEVEL_DEBUG;
+    }
+
+    return MESSAGE_LEVEL_IMPOSSIBLE;
+}
 
 class MsgError: public Message
 {
@@ -186,7 +236,8 @@ class MsgError: public Message
 
     explicit MsgError(int error_code, int priority,
                       const char *msg, bool is_format_string):
-        Message(msg, is_format_string),
+        Message(msg, is_format_string,
+                map_syslog_prio_to_verbose_level(priority)),
         error_code_(error_code),
         priority_(priority)
     {}
@@ -194,7 +245,8 @@ class MsgError: public Message
     explicit MsgError(int error_code, int priority,
                       const char *prefix, const char *suffix,
                       bool is_format_string):
-        Message(prefix, suffix, is_format_string),
+        Message(prefix, suffix, is_format_string,
+                map_syslog_prio_to_verbose_level(priority)),
         error_code_(error_code),
         priority_(priority)
     {}
@@ -204,7 +256,8 @@ class MsgError: public Message
     {
         CHECK(error_code == error_code_);
         CHECK(priority == priority_);
-        check_generic(format_string, va, error_code);
+        check_generic(map_syslog_prio_to_verbose_level(priority),
+                      format_string, va, error_code);
     }
 };
 

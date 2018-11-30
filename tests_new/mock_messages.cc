@@ -98,7 +98,8 @@ static void check_prefix_and_suffix(const std::string &expected_prefix,
     CHECK(str.substr(str.length() - expected_suffix.length()) == expected_suffix);
 }
 
-void MockMessages::Message::check_generic(const char *format_string, va_list va,
+void MockMessages::Message::check_generic(MessageVerboseLevel level,
+                                          const char *format_string, va_list va,
                                           int error_code) const
 {
     if(is_format_string_)
@@ -123,6 +124,7 @@ void MockMessages::Message::check_generic(const char *format_string, va_list va,
             check_prefix_and_suffix(msg_, msg_end_, buffer);
     }
 
+    CHECK(level == level_);
 }
 
 void msg_enable_syslog(bool enable_syslog) {}
@@ -246,7 +248,7 @@ void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
 
     try
     {
-        MockMessages::singleton->check_next<MockMessages::MsgInfo>(format_string, va);
+        MockMessages::singleton->check_next<MockMessages::MsgVinfo>(level, format_string, va);
     }
     catch(...)
     {

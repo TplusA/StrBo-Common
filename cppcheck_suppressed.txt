@@ -1,1 +1,1 @@
-variableHidingTypedef:/usr/include/bits/siginfo.h:303
+*:/usr/*

@@ -31,7 +31,7 @@
 #define __EXTENSIONS__ 1
 #define __x86_64__
 #define __GNUC__
-#define __STDC__
+#define __STDC__ 1
+#define __STDC_HOSTED__ 1
 #define __linux__
 #define __WORDSIZE 64
-#define HAVE_CONFIG_H

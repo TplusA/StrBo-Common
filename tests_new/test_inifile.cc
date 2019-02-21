@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -49,7 +49,7 @@ class InifileParserTestsFixture
 
   public:
     explicit InifileParserTestsFixture():
-        mock_messages(new MockMessages::Mock)
+        mock_messages(std::make_unique<MockMessages::Mock>())
     {
         MockMessages::singleton = mock_messages.get();
 
@@ -237,9 +237,9 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Parser skips assignments before fi
         "key 1 = value 1"
         ;
 
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 1 in \"test\") (Invalid argument)",
-        false));
+        false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -381,9 +381,9 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "End of file within section header 
         "[foo"
         ;
 
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "End of file within section header (line 4 in \"test\") (Invalid argument)",
-        false));
+        false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -422,18 +422,18 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "End of line within section header 
         "bar key 2 = bar value 2\n"
         ;
 
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "End of line within section header (line 4 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 5 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 6 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 7 in \"test\") (Invalid argument)",
-        false));
+        false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -498,27 +498,27 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Line numbers in error messages rem
         "  [  broken"
         ;
 
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "End of line within section header (line 4 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 5 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 6 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "End of line within section header (line 9 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 12 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 13 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "End of file within section header (line 15 in \"test\") (Invalid argument)",
-        false));
+        false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -549,9 +549,9 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Missing assignment character is de
         ;
 
     /* EOL */
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected assignment (line 2 in \"test\") (Invalid argument)",
-        false));
+        false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -565,9 +565,9 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Missing assignment character is de
     inifile_free(&ini);
 
     /* EOF */
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected assignment (line 2 in \"test\") (Invalid argument)",
-        false));
+        false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 8) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -631,8 +631,8 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Missing key name before assignment
         ;
 
     /* EOL */
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
-        "Expected key name (line 2 in \"test\") (Invalid argument)", false));
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
+        "Expected key name (line 2 in \"test\") (Invalid argument)", false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -650,8 +650,8 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Missing key name before assignment
     inifile_free(&ini);
 
     /* EOF */
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
-        "Expected key name (line 2 in \"test\") (Invalid argument)", false));
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
+        "Expected key name (line 2 in \"test\") (Invalid argument)", false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 8) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -701,11 +701,11 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Sections with empty section name a
         "key 2 = value 2\n"
         ;
 
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
-        "Empty section name (line 3 in \"test\") (Invalid argument)", false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
+        "Empty section name (line 3 in \"test\") (Invalid argument)", false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 4 in \"test\") (Invalid argument)",
-        false));
+        false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -764,12 +764,12 @@ TEST_CASE_FIXTURE(InifileParserTestsFixture, "Sections with junk after section h
         "key 3 = value 3\n"
         ;
 
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Got junk after section header (line 3 in \"test\") (Invalid argument)",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EINVAL, LOG_ERR,
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EINVAL, LOG_ERR,
         "Expected begin of section, got junk (line 4 in \"test\") (Invalid argument)",
-        false));
+        false);
 
     REQUIRE(inifile_parse_from_memory(&ini, "test", text, sizeof(text) - 1) == 0);
     CHECK(ini.sections_head != nullptr);
@@ -839,8 +839,8 @@ class InifileManipulationTestsFixture
 
   public:
     explicit InifileManipulationTestsFixture():
-        mock_messages(new MockMessages::Mock),
-        mock_os(new MockOS::Mock)
+        mock_messages(std::make_unique<MockMessages::Mock>()),
+        mock_os(std::make_unique<MockOS::Mock>())
     {
         MockMessages::singleton = mock_messages.get();
         MockOS::singleton = mock_os.get();
@@ -929,10 +929,10 @@ TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "New_write_ini_file")
     CHECK(inifile_section_store_value(section, "foo", 0, "bar", 0) != nullptr);
     CHECK(inifile_section_store_value(section, "foobar", 0, "barfoo", 0) != nullptr);
 
-    mock_os->expect(new MockOS::FileNew(expected_os_write_fd, 0, "outfile.config"));
+    expect<MockOS::FileNew>(mock_os, expected_os_write_fd, 0, "outfile.config");
     for(int i = 0; i < 3 * 3 + (3 + 0 + 2) * 4; ++i)
-        mock_os->expect(new MockOS::WriteFromBuffer(0, buffer_writer()));
-    mock_os->expect(new MockOS::FileClose(0, expected_os_write_fd));
+        expect<MockOS::WriteFromBuffer>(mock_os, 0, buffer_writer());
+    expect<MockOS::FileClose>(mock_os, 0, expected_os_write_fd);
 
     REQUIRE(inifile_write_to_file(&ini, "outfile.config") == 0);
 
@@ -1051,10 +1051,10 @@ TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "Remove section from file")
 
     CHECK(inifile_remove_section_by_name(&ini, "Second", 0));
 
-    mock_os->expect(new MockOS::FileNew(expected_os_write_fd, 0, "outfile.config"));
+    expect<MockOS::FileNew>(mock_os, expected_os_write_fd, 0, "outfile.config");
     for(int i = 0; i < 2 * 3 + (2 + 2) * 4; ++i)
-        mock_os->expect(new MockOS::WriteFromBuffer(0, buffer_writer()));
-    mock_os->expect(new MockOS::FileClose(0, expected_os_write_fd));
+        expect<MockOS::WriteFromBuffer>(mock_os, 0, buffer_writer());
+    expect<MockOS::FileClose>(mock_os, 0, expected_os_write_fd);
 
     REQUIRE(inifile_write_to_file(&ini, "outfile.config") == 0);
 
@@ -1087,10 +1087,10 @@ TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "Write empty value to .ini fi
     CHECK(inifile_section_store_value(section, "foo", 0, "bar", 0) != nullptr);
     CHECK(inifile_section_store_empty_value(section, "foobar", 0) != nullptr);
 
-    mock_os->expect(new MockOS::FileNew(expected_os_write_fd, 0, "outfile.config"));
+    expect<MockOS::FileNew>(mock_os, expected_os_write_fd, 0, "outfile.config");
     for(int i = 0; i < 2 * 3 + 3 + 4 + 3; ++i)
-        mock_os->expect(new MockOS::WriteFromBuffer(0, buffer_writer()));
-    mock_os->expect(new MockOS::FileClose(0, expected_os_write_fd));
+        expect<MockOS::WriteFromBuffer>(mock_os, 0, buffer_writer());
+    expect<MockOS::FileClose>(mock_os, 0, expected_os_write_fd);
 
     REQUIRE(inifile_write_to_file(&ini, "outfile.config") == 0);
 
@@ -1139,10 +1139,10 @@ TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "Manipulate value in file")
 
     CHECK(inifile_section_store_value(section, "key 3-2", 0, "also changed", 0) != nullptr);
 
-    mock_os->expect(new MockOS::FileNew(expected_os_write_fd, 0, "outfile.config"));
+    expect<MockOS::FileNew>(mock_os, expected_os_write_fd, 0, "outfile.config");
     for(int i = 0; i < 3 * 3 + (2 + 4 + 2) * 4; ++i)
-        mock_os->expect(new MockOS::WriteFromBuffer(0, buffer_writer()));
-    mock_os->expect(new MockOS::FileClose(0, expected_os_write_fd));
+        expect<MockOS::WriteFromBuffer>(mock_os, 0, buffer_writer());
+    expect<MockOS::FileClose>(mock_os, 0, expected_os_write_fd);
 
     REQUIRE(inifile_write_to_file(&ini, "outfile.config") == 0);
 
@@ -1171,7 +1171,7 @@ TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "Manipulate value in file")
 TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "Write file fails if file cannot be created")
 {
     CHECK(inifile_new_section(&ini, "section", 0) != nullptr);
-    mock_os->expect(new MockOS::FileNew(-1, ENOSPC, "outfile.config"));
+    expect<MockOS::FileNew>(mock_os, -1, ENOSPC, "outfile.config");
     CHECK(inifile_write_to_file(&ini, "outfile.config") == -1);
     CHECK(os_write_buffer.empty());
 }
@@ -1184,13 +1184,13 @@ TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "Write file fails if file can
 {
     CHECK(inifile_new_section(&ini, "section", 0) != nullptr);
 
-    mock_os->expect(new MockOS::FileNew(expected_os_write_fd, 0, "outfile.config"));
-    mock_os->expect(new MockOS::WriteFromBuffer(-1, ENOSPC, false, 1, expected_os_write_fd));
-    mock_os->expect(new MockOS::FileClose(0, expected_os_write_fd));
-    mock_os->expect(new MockOS::FileDelete(0, 0, "outfile.config"));
-    mock_messages->expect(new MockMessages::MsgError(0, LOG_ERR,
+    expect<MockOS::FileNew>(mock_os, expected_os_write_fd, 0, "outfile.config");
+    expect<MockOS::WriteFromBuffer>(mock_os, -1, ENOSPC, false, 1, expected_os_write_fd);
+    expect<MockOS::FileClose>(mock_os, 0, expected_os_write_fd);
+    expect<MockOS::FileDelete>(mock_os, 0, 0, "outfile.config");
+    expect<MockMessages::MsgError>(mock_messages, 0, LOG_ERR,
         "Failed writing INI file \"outfile.config\", deleting partially written file",
-        false));
+        false);
 
     CHECK(inifile_write_to_file(&ini, "outfile.config") == -1);
 
@@ -1206,15 +1206,15 @@ TEST_CASE_FIXTURE(InifileManipulationTestsFixture, "Message on failure to delete
 {
     CHECK(inifile_new_section(&ini, "section", 0) != nullptr);
 
-    mock_os->expect(new MockOS::FileNew(expected_os_write_fd, 0, "outfile.config"));
-    mock_os->expect(new MockOS::WriteFromBuffer(-1, EIO, false, 1, expected_os_write_fd));
-    mock_os->expect(new MockOS::FileClose(0, expected_os_write_fd));
-    mock_os->expect(new MockOS::FileDelete(-1, EIO, "outfile.config"));
-    mock_messages->expect(new MockMessages::MsgError(0, LOG_ERR,
+    expect<MockOS::FileNew>(mock_os, expected_os_write_fd, 0, "outfile.config");
+    expect<MockOS::WriteFromBuffer>(mock_os, -1, EIO, false, 1, expected_os_write_fd);
+    expect<MockOS::FileClose>(mock_os, 0, expected_os_write_fd);
+    expect<MockOS::FileDelete>(mock_os, -1, EIO, "outfile.config");
+    expect<MockMessages::MsgError>(mock_messages, 0, LOG_ERR,
         "Failed writing INI file \"outfile.config\", deleting partially written file",
-        false));
-    mock_messages->expect(new MockMessages::MsgError(EIO, LOG_ERR,
-        "Failed to delete incomplete file (Input/output error)", false));
+        false);
+    expect<MockMessages::MsgError>(mock_messages, EIO, LOG_ERR,
+        "Failed to delete incomplete file (Input/output error)", false);
 
     CHECK(inifile_write_to_file(&ini, "outfile.config") == -1);
 

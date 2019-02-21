@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -201,5 +201,21 @@ class MockExpectationsTemplate
         return next<T>(buffer);
     }
 };
+
+#if __cplusplus >= 201402L
+/*!
+ * Function template for adding expectations to mocks.
+ *
+ * We have put it in here at global scope so that mock objects don't need to
+ * implement their own versions. Mocks must, however, provide an expect()
+ * member function which accepts a std::unique_ptr<T>, where T is the type of
+ * the expectation to be added.
+ */
+template <typename T, typename MT, typename ... Args>
+static inline void expect(MT &mock, Args ... args)
+{
+    mock->expect(std::make_unique<T>(args...));
+}
+#endif /* C++14 */
 
 #endif /* !MOCK_EXPECTATION_HH */

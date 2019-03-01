@@ -57,7 +57,7 @@ class Maybe
 
     T &operator=(T &&value)
     {
-        value_ = value;
+        value_ = std::move(value);
         is_value_known_ = true;
         return value_;
     }

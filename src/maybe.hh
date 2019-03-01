@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2018  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2018, 2019  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -71,6 +71,9 @@ class Maybe
 
     void set_known() { is_value_known_ = true; }
     bool is_known() const { return is_value_known_; }
+
+    const T *operator->() const { return is_value_known_ ? &value_ : nullptr; }
+    T *operator->() { return is_value_known_ ? &value_ : nullptr; }
 
     const T &get() const { return value_; }
     T &get_rw() { return value_; }

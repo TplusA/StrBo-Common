@@ -30,9 +30,7 @@ class Maybe
 
   public:
     Maybe(const Maybe &) = default;
-    Maybe(Maybe &&) = default;
     Maybe &operator=(const Maybe &) = default;
-    Maybe &operator=(Maybe &&) = default;
 
     explicit Maybe():
         is_value_known_(false),
@@ -48,6 +46,26 @@ class Maybe
         is_value_known_(true),
         value_(std::move(value))
     {}
+
+    Maybe(Maybe &&src):
+        is_value_known_(src.is_value_known_),
+        value_(std::move(src.value_))
+    {
+        src.is_value_known_ = false;
+    }
+
+    Maybe &operator=(Maybe &&src)
+    {
+        is_value_known_ = src.is_value_known_;
+
+        if(src.is_value_known_)
+        {
+            value_ = std::move(src.value_);
+            src.is_value_known_ = false;
+        }
+
+        return *this;
+    }
 
     void set_unknown()
     {

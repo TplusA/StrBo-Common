@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -197,21 +197,20 @@ class XmlReporter: public doctest::IReporter
     std::vector<doctest::SubcaseSignature> subcases_stack;
 
     // caching pointers to objects of these types - safe to do
-    const doctest::ContextOptions *context_options_;
+    const doctest::ContextOptions &context_options_;
     const doctest::TestCaseData *test_case_data_;
 
     std::vector<std::string> failure_messages_;
     std::map<std::string, std::list<Result>> results_;
 
   public:
-    XmlReporter(std::ostream &o):
-        out(o)
+    XmlReporter(const doctest::ContextOptions &in):
+        out(*in.cerr),
+        context_options_(in)
     {}
 
-    void test_run_start(const doctest::ContextOptions &opts) override
-    {
-        context_options_ = &opts;
-    }
+    void report_query(const doctest::QueryData& in) override {}
+    void test_run_start() override {}
 
     void test_run_end(const doctest::TestRunStats &stats) override
     {
@@ -278,8 +277,8 @@ class XmlReporter: public doctest::IReporter
     void test_case_end(const doctest::CurrentTestCaseStats &stats) override
     {
         if(stats.failure_flags == 0)
-            return add_result(Result(test_case_data_->m_name, stats.seconds_so_far,
-                                     stats.numAssertsForCurrentTestCase));
+            return add_result(Result(test_case_data_->m_name, stats.seconds,
+                                     stats.numAssertsCurrentTest));
 
         for(int mask = 1; mask <= doctest::TestCaseFailureReason::CouldHaveFailedAndDid; mask <<= 1)
         {
@@ -290,15 +289,14 @@ class XmlReporter: public doctest::IReporter
                 break;
 
               case doctest::TestCaseFailureReason::Crash:
-                add_result(Result(test_case_data_->m_name, stats.seconds_so_far,
-                                  stats.numAssertsForCurrentTestCase, true,
+                add_result(Result(test_case_data_->m_name, stats.seconds,
+                                  stats.numAssertsCurrentTest, true,
                                   std::move(failure_messages_), reason));
                 return;
 
               case doctest::TestCaseFailureReason::Exception:
-                failure_messages_.emplace_back(stats.error_string.c_str());
-                add_result(Result(test_case_data_->m_name, stats.seconds_so_far,
-                                  stats.numAssertsForCurrentTestCase, false,
+                add_result(Result(test_case_data_->m_name, stats.seconds,
+                                  stats.numAssertsCurrentTest, false,
                                   std::move(failure_messages_), reason));
                 return;
 
@@ -310,18 +308,23 @@ class XmlReporter: public doctest::IReporter
               case doctest::TestCaseFailureReason::DidntFailExactlyNumTimes:
               case doctest::TestCaseFailureReason::FailedExactlyNumTimes:
               case doctest::TestCaseFailureReason::CouldHaveFailedAndDid:
-                add_result(Result(test_case_data_->m_name, stats.seconds_so_far,
-                                  stats.numAssertsForCurrentTestCase, false,
+                add_result(Result(test_case_data_->m_name, stats.seconds,
+                                  stats.numAssertsCurrentTest, false,
                                   std::move(failure_messages_), reason));
                 return;
             }
         }
 
         /* reached only if more failure flags have been added to doctest */
-        add_result(Result(test_case_data_->m_name, stats.seconds_so_far,
-                          stats.numAssertsForCurrentTestCase,
+        add_result(Result(test_case_data_->m_name, stats.seconds,
+                          stats.numAssertsCurrentTest,
                           std::move(failure_messages_),
                           static_cast<doctest::TestCaseFailureReason::Enum>(stats.failure_flags)));
+    }
+
+    void test_case_exception(const doctest::TestCaseException &e) override
+    {
+        failure_messages_.emplace_back(e.error_string.c_str());
     }
 
     void test_case_skipped(const doctest::TestCaseData &data) override
@@ -334,7 +337,7 @@ class XmlReporter: public doctest::IReporter
         subcases_stack.push_back(sig);
     }
 
-    void subcase_end(const doctest::SubcaseSignature &sig) override
+    void subcase_end() override
     {
         subcases_stack.pop_back();
     }
@@ -402,5 +405,4 @@ class XmlReporter: public doctest::IReporter
     }
 };
 
-static XmlReporter r(std::cerr);
-DOCTEST_REGISTER_REPORTER("xml", 1, r);
+DOCTEST_REGISTER_REPORTER("strboxml", 1, XmlReporter);

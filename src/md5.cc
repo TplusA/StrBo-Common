@@ -1,4 +1,13 @@
 /*
+ * Copyright (C) 2019  T+A elektroakustik GmbH & Co. KG
+ *
+ * Original code was modified for interfacing with C++ code.
+ *
+ * See below for the original licensing terms, which also apply to the changes
+ * made by T+A elektroakustik GmbH & Co. KG.
+ */
+
+/*
  * This is an OpenSSL-compatible implementation of the RSA Data Security, Inc.
  * MD5 Message-Digest Algorithm (RFC 1321).
  *
@@ -37,9 +46,13 @@
 
 #ifndef HAVE_OPENSSL
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <string.h>
 
-#include "md5.h"
+#include "md5.hh"
 
 /*
  * The basic MD5 functions.
@@ -79,16 +92,16 @@
  */
 #if defined(__i386__) || defined(__x86_64__) || defined(__vax__)
 #define SET(n) \
-	(*(MD5_u32plus *)&ptr[(n) * 4])
+	(*(MD5::u32plus *)&ptr[(n) * 4])
 #define GET(n) \
 	SET(n)
 #else
 #define SET(n) \
 	(ctx->block[(n)] = \
-	(MD5_u32plus)ptr[(n) * 4] | \
-	((MD5_u32plus)ptr[(n) * 4 + 1] << 8) | \
-	((MD5_u32plus)ptr[(n) * 4 + 2] << 16) | \
-	((MD5_u32plus)ptr[(n) * 4 + 3] << 24))
+	(MD5::u32plus)ptr[(n) * 4] | \
+	((MD5::u32plus)ptr[(n) * 4 + 1] << 8) | \
+	((MD5::u32plus)ptr[(n) * 4 + 2] << 16) | \
+	((MD5::u32plus)ptr[(n) * 4 + 3] << 24))
 #define GET(n) \
 	(ctx->block[(n)])
 #endif
@@ -97,18 +110,18 @@
  * This processes one or more 64-byte data blocks, but does NOT update the bit
  * counters.  There are no alignment requirements.
  */
-static const void *body(MD5_CTX *ctx, const void *data, unsigned long size)
+static const uint8_t *body(MD5::Context &ctx, const uint8_t *data, unsigned long size)
 {
-	const unsigned char *ptr;
-	MD5_u32plus a, b, c, d;
-	MD5_u32plus saved_a, saved_b, saved_c, saved_d;
+	const uint8_t *ptr;
+        MD5::u32plus a, b, c, d;
+	MD5::u32plus saved_a, saved_b, saved_c, saved_d;
 
-	ptr = (const unsigned char *)data;
+	ptr = data;
 
-	a = ctx->a;
-	b = ctx->b;
-	c = ctx->c;
-	d = ctx->d;
+	a = ctx.a;
+	b = ctx.b;
+	c = ctx.c;
+	d = ctx.d;
 
 	do {
 		saved_a = a;
@@ -196,34 +209,34 @@ static const void *body(MD5_CTX *ctx, const void *data, unsigned long size)
 		ptr += 64;
 	} while (size -= 64);
 
-	ctx->a = a;
-	ctx->b = b;
-	ctx->c = c;
-	ctx->d = d;
+	ctx.a = a;
+	ctx.b = b;
+	ctx.c = c;
+	ctx.d = d;
 
 	return ptr;
 }
 
-void MD5_Init(MD5_CTX *ctx)
+void MD5::init(MD5::Context &ctx)
 {
-	ctx->a = 0x67452301;
-	ctx->b = 0xefcdab89;
-	ctx->c = 0x98badcfe;
-	ctx->d = 0x10325476;
+	ctx.a = 0x67452301;
+	ctx.b = 0xefcdab89;
+	ctx.c = 0x98badcfe;
+	ctx.d = 0x10325476;
 
-	ctx->lo = 0;
-	ctx->hi = 0;
+	ctx.lo = 0;
+	ctx.hi = 0;
 }
 
-void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size)
+void MD5::update(MD5::Context &ctx, const uint8_t *data, size_t size)
 {
-	MD5_u32plus saved_lo;
-	unsigned long used, available;
+	MD5::u32plus saved_lo;
+	size_t used, available;
 
-	saved_lo = ctx->lo;
-	if ((ctx->lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
-		ctx->hi++;
-	ctx->hi += size >> 29;
+	saved_lo = ctx.lo;
+	if ((ctx.lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
+		ctx.hi++;
+	ctx.hi += size >> 29;
 
 	used = saved_lo & 0x3f;
 
@@ -231,14 +244,14 @@ void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size)
 		available = 64 - used;
 
 		if (size < available) {
-			memcpy(&ctx->buffer[used], data, size);
+			memcpy(&ctx.buffer[used], data, size);
 			return;
 		}
 
-		memcpy(&ctx->buffer[used], data, available);
-		data = (const unsigned char *)data + available;
+		memcpy(&ctx.buffer[used], data, available);
+		data = data + available;
 		size -= available;
-		body(ctx, ctx->buffer, 64);
+		body(ctx, ctx.buffer, 64);
 	}
 
 	if (size >= 64) {
@@ -246,7 +259,7 @@ void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size)
 		size &= 0x3f;
 	}
 
-	memcpy(ctx->buffer, data, size);
+	memcpy(ctx.buffer, data, size);
 }
 
 #define OUT(dst, src) \
@@ -255,37 +268,51 @@ void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size)
 	(dst)[2] = (unsigned char)((src) >> 16); \
 	(dst)[3] = (unsigned char)((src) >> 24);
 
-void MD5_Final(unsigned char *result, MD5_CTX *ctx)
+void MD5::finish(MD5::Context &ctx, MD5::Hash &hash)
 {
 	unsigned long used, available;
 
-	used = ctx->lo & 0x3f;
+	used = ctx.lo & 0x3f;
 
-	ctx->buffer[used++] = 0x80;
+	ctx.buffer[used++] = 0x80;
 
 	available = 64 - used;
 
 	if (available < 8) {
-		memset(&ctx->buffer[used], 0, available);
-		body(ctx, ctx->buffer, 64);
+		memset(&ctx.buffer[used], 0, available);
+		body(ctx, ctx.buffer, 64);
 		used = 0;
 		available = 64;
 	}
 
-	memset(&ctx->buffer[used], 0, available - 8);
+	memset(&ctx.buffer[used], 0, available - 8);
 
-	ctx->lo <<= 3;
-	OUT(&ctx->buffer[56], ctx->lo)
-	OUT(&ctx->buffer[60], ctx->hi)
+	ctx.lo <<= 3;
+	OUT(&ctx.buffer[56], ctx.lo)
+	OUT(&ctx.buffer[60], ctx.hi)
 
-	body(ctx, ctx->buffer, 64);
+	body(ctx, ctx.buffer, 64);
 
-	OUT(&result[0], ctx->a)
-	OUT(&result[4], ctx->b)
-	OUT(&result[8], ctx->c)
-	OUT(&result[12], ctx->d)
+	OUT(&hash[0], ctx.a)
+	OUT(&hash[4], ctx.b)
+	OUT(&hash[8], ctx.c)
+	OUT(&hash[12], ctx.d)
 
-	memset(ctx, 0, sizeof(*ctx));
+	memset(&ctx, 0, sizeof(ctx));
+}
+
+void MD5::to_string(const MD5::Hash &hash, std::string &hash_string)
+{
+    hash_string.clear();
+    hash_string.reserve(2 * hash.size() + 1);
+
+    static constexpr char nibble_chars[] = "0123456789abcdef";
+
+    for(uint8_t b : hash)
+    {
+        hash_string += nibble_chars[b >> 4];
+        hash_string += nibble_chars[b & 0x0f];
+    }
 }
 
 #endif

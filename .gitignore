@@ -6,5 +6,8 @@
 /configure
 /cscope.out
 /tags
-/*.taghl
+/GPATH
+/GRTAGS
+/GTAGS
+*.taghl
 Makefile.in

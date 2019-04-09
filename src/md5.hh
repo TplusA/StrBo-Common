@@ -35,12 +35,7 @@ namespace MD5
 {
     using Hash = std::array<uint8_t, 16>;
 
-    struct Context
-    {
-        uint32_t i[2];
-        uint32_t buf[4];
-        uint8_t in[64];
-    };
+    struct Context;
 
     void init(Context &ctx);
 

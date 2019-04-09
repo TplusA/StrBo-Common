@@ -231,17 +231,17 @@ void MD5::init(MD5::Context &ctx)
 void MD5::update(MD5::Context &ctx, const uint8_t *data, size_t size)
 {
 	MD5::u32plus saved_lo;
-	size_t used, available;
+	size_t used;
 
 	saved_lo = ctx.lo;
 	if ((ctx.lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
-		ctx.hi++;
+		++ctx.hi;
 	ctx.hi += size >> 29;
 
 	used = saved_lo & 0x3f;
 
 	if (used) {
-		available = 64 - used;
+		const size_t available = 64 - used;
 
 		if (size < available) {
 			memcpy(&ctx.buffer[used], data, size);

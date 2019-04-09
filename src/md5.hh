@@ -50,7 +50,7 @@ namespace MD5
 
     void init(Context &ctx);
 
-    void update(Context &ctx, const uint8_t *data, size_t data_size);
+    void update(Context &ctx, const uint8_t *data, size_t size);
 
     static inline void update(Context &ctx, const std::string &data)
     {

@@ -1,19 +1,24 @@
 /*
- * Copyright (C) 2015, 2017  T+A elektroakustik GmbH & Co. KG
+ * Copyright 2019  T+A elektroakustik GmbH & Co. KG
  *
- * This file is part of the T+A Streaming Board software stack ("StrBoWare").
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify,
+ * merge, publish, distribute, sublicense, and/or sell copies of the
+ * Software, and to permit persons to whom the Software is furnished to
+ * do so, subject to the following conditions:
  *
- * StrBoWare is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 3 as
- * published by the Free Software Foundation.
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
  *
- * StrBoWare is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with StrBoWare  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #ifndef MD5_HH
@@ -32,16 +37,20 @@ namespace MD5
 {
     using Hash = std::array<uint8_t, 16>;
 
+    /* Any 32-bit or wider unsigned integer data type will do */
+    using u32plus = unsigned int;
+
     struct Context
     {
-        uint32_t i[2];
-        uint32_t buf[4];
-        uint8_t in[64];
+        u32plus lo, hi;
+        u32plus a, b, c, d;
+        unsigned char buffer[64];
+        u32plus block[16];
     };
 
     void init(Context &ctx);
 
-    void update(Context &ctx, const uint8_t *data, size_t data_size);
+    void update(Context &ctx, const uint8_t *data, size_t size);
 
     static inline void update(Context &ctx, const std::string &data)
     {

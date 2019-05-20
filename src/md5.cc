@@ -97,13 +97,13 @@
 	SET(n)
 #else
 #define SET(n) \
-	(ctx->block[(n)] = \
+	(ctx.block[(n)] = \
 	(MD5::u32plus)ptr[(n) * 4] | \
 	((MD5::u32plus)ptr[(n) * 4 + 1] << 8) | \
 	((MD5::u32plus)ptr[(n) * 4 + 2] << 16) | \
 	((MD5::u32plus)ptr[(n) * 4 + 3] << 24))
 #define GET(n) \
-	(ctx->block[(n)])
+	(ctx.block[(n)])
 #endif
 
 /*

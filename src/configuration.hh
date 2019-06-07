@@ -143,10 +143,9 @@ class ConfigManager: public ConfigChanged<ValuesT>
     static std::vector<const char *> keys()
     {
         std::vector<const char *> result;
-
-        for(const auto &k : ValuesT::all_keys)
-            result.push_back(k.name_.c_str());
-
+        std::transform(ValuesT::all_keys.begin(), ValuesT::all_keys.end(),
+                       std::back_inserter(result),
+                       [] (const auto &k) { return k.name_.c_str(); });
         return result;
     }
 
@@ -156,17 +155,17 @@ class ConfigManager: public ConfigChanged<ValuesT>
             return GVariantWrapper(nullptr);
 
         const size_t requested_key_length(strlen(key));
-
-        for(const auto &k : ValuesT::all_keys)
-        {
-            if(k.name_.length() == requested_key_length &&
-               strcmp(k.name_.c_str(), key) == 0)
+        const auto &it(std::find_if(
+            ValuesT::all_keys.begin(), ValuesT::all_keys.end(),
+            [key, requested_key_length] (const auto &k)
             {
-                return k.box(settings_.values());
-            }
-        }
+                return k.name_.length() == requested_key_length &&
+                       strcmp(k.name_.c_str(), key) == 0;
+            }));
 
-        return GVariantWrapper(nullptr);
+        return it != ValuesT::all_keys.end()
+            ? it->box(settings_.values())
+            : GVariantWrapper(nullptr);
     }
 
     static bool to_local_key(const char *&key)

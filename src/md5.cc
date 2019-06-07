@@ -113,8 +113,7 @@
 static const uint8_t *body(MD5::Context &ctx, const uint8_t *data, unsigned long size)
 {
 	const uint8_t *ptr;
-        MD5::u32plus a, b, c, d;
-	MD5::u32plus saved_a, saved_b, saved_c, saved_d;
+	MD5::u32plus a, b, c, d;
 
 	ptr = data;
 
@@ -124,6 +123,7 @@ static const uint8_t *body(MD5::Context &ctx, const uint8_t *data, unsigned long
 	d = ctx.d;
 
 	do {
+		MD5::u32plus saved_a, saved_b, saved_c, saved_d;
 		saved_a = a;
 		saved_b = b;
 		saved_c = c;

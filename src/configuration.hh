@@ -26,6 +26,7 @@
 #include <vector>
 #include <functional>
 #include <cstring>
+#include <algorithm>
 
 #include "configuration_changed.hh"
 #include "gvariantwrapper.hh"

@@ -22,6 +22,11 @@
 #ifndef MESSAGES_H
 #define MESSAGES_H
 
+/*!
+ * Set to 0 to disable trace message.
+ */
+#define MSG_TRACE_ENABLED 1
+
 #include <stdbool.h>
 #include <syslog.h>
 
@@ -193,6 +198,7 @@ int msg_out_of_memory(const char *what);
 #define MSG_TRACE_FORMAT(FMT, ...) \
     MSG_PRTRACE_FORMAT(MSG_TRACE_PREFIX, FMT, __VA_ARGS__)
 
+#if MSG_TRACE_ENABLED
 #define MSG_PRTRACE(PREFIX) \
     do \
     { \
@@ -206,6 +212,10 @@ int msg_out_of_memory(const char *what);
         MSG_TRACE_FUNCTION(PREFIX "%s(%d): " FMT MSG_TRACE_SUFFIX, __func__, __LINE__, __VA_ARGS__); \
     } \
     while(0)
+#else /* !MSG_TRACE_ENABLED */
+#define MSG_PRTRACE(PREFIX)                     do {} while(0)
+#define MSG_PRTRACE_FORMAT(PREFIX, FMT, ...)    do {} while(0)
+#endif /* MSG_TRACE_ENABLED */
 
 #ifdef NDEBUG
 #define log_assert(EXPR) do {} while(0)

@@ -24,7 +24,8 @@ check_PROGRAMS = \
     test_inifile \
     test_md5 \
     test_gvariantwrapper \
-    test_stream_id
+    test_stream_id \
+    test_fixpoint
 
 TESTS = run_tests.sh
 
@@ -78,6 +79,11 @@ test_stream_id_LDADD = \
     $(top_builddir)/src/libgvariantwrapper.la
 test_stream_id_CFLAGS = $(AM_CFLAGS)
 test_stream_id_CXXFLAGS = $(AM_CXXFLAGS)
+
+test_fixpoint_SOURCES = test_fixpoint.cc ../src/fixpoint.hh
+test_fixpoint_LDADD = libtestrunner.la
+test_fixpoint_CFLAGS = $(AM_CFLAGS)
+test_fixpoint_CXXFLAGS = $(AM_CXXFLAGS)
 
 doctest: $(check_PROGRAMS)
 	for p in $(check_PROGRAMS); do ./$$p $(DOCTEST_EXTRA_OPTIONS); done

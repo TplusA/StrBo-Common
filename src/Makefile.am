@@ -41,6 +41,7 @@ EXTRA_DIST = \
     messages_dbus.c messages_dbus.h \
     configuration.cc configuration.hh configuration_base.hh \
     configuration_changed.hh configuration_settings.hh \
+    gerrorwrapper.hh \
     maybe.hh \
     os.c os.hh \
     hexdump.c hexdump.h \

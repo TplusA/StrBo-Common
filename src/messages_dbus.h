@@ -22,7 +22,7 @@
 #ifndef MESSAGES_DBUS_H
 #define MESSAGES_DBUS_H
 
-#include "debug_dbus.h"
+#include "de_tahifi_debug.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -226,7 +226,7 @@ class MockOs::Expectation
             os_write_from_buffer_callback_(nullptr),
             os_try_read_to_buffer_callback_(nullptr),
             arg_clk_id_(CLOCK_REALTIME_COARSE),
-            timespec_({0}),
+            timespec_{},
             os_clock_gettime_callback_(nullptr),
             foreach_item_data_(nullptr)
         {}

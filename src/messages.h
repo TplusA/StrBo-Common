@@ -178,6 +178,24 @@ int msg_out_of_memory(const char *what);
 
 #define BUG(...) msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__)
 
+#define BUG_IF(COND, ...) \
+    do \
+    { \
+        if(COND)\
+            msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__); \
+    } \
+    while(0)
+
+#define TODO(...) msg_error(0, LOG_CRIT, "TODO: " __VA_ARGS__)
+
+#define MSG_UNREACHABLE() \
+    msg_error(EFAULT, LOG_CRIT, "BUG: Reached unreachable code %s(%d)", \
+              __func__, __LINE__)
+
+#define MSG_NOT_IMPLEMENTED() \
+    msg_error(ENOSYS, LOG_CRIT, "TODO: Not implemented: %s(%d)", \
+              __func__, __LINE__)
+
 #define APPLIANCE_BUG(...) msg_error(0, LOG_CRIT, "APPLIANCE BUG: " __VA_ARGS__)
 
 #if !defined(MSG_TRACE_PREFIX)
@@ -197,6 +215,8 @@ int msg_out_of_memory(const char *what);
 
 #define MSG_TRACE_FORMAT(FMT, ...) \
     MSG_PRTRACE_FORMAT(MSG_TRACE_PREFIX, FMT, __VA_ARGS__)
+
+#define MSG_TRACE_THIS() MSG_TRACE_FORMAT("%p", this)
 
 #if MSG_TRACE_ENABLED
 #define MSG_PRTRACE(PREFIX) \

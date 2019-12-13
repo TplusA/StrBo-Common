@@ -42,7 +42,7 @@ EXTRA_DIST = \
     configuration.cc configuration.hh configuration_base.hh \
     configuration_changed.hh configuration_settings.hh \
     gerrorwrapper.hh \
-    maybe.hh \
+    maybe.hh guard.hh \
     os.c os.hh breakpoint.h \
     hexdump.c hexdump.h \
     actor_id.h

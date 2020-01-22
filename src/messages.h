@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -63,6 +63,11 @@ enum MessageVerboseLevel
  * Whether or not to make use of syslog.
  */
 void msg_enable_syslog(bool enable_syslog);
+
+/*!
+ * Whether or not to make use of colors on console output.
+ */
+void msg_enable_color_console(bool enable_colors);
 
 /*!
  * How much logging should be done.

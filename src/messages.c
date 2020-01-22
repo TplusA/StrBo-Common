@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -32,6 +32,7 @@
 #include "messages.h"
 
 static bool use_syslog;
+static bool use_colors = true;
 static enum MessageVerboseLevel current_verbosity;
 
 /*!
@@ -55,6 +56,11 @@ static const char *verbosity_level_names[] =
 void msg_enable_syslog(bool enable_syslog)
 {
     use_syslog = enable_syslog;
+}
+
+void msg_enable_color_console(bool enable_colors)
+{
+    use_colors = enable_colors;
 }
 
 void msg_set_verbose_level(enum MessageVerboseLevel level)
@@ -139,12 +145,63 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
             syslog(priority, "[end of long message]");
         }
     }
-    else
+    else if(!use_colors)
     {
         if(error_code == 0)
             fprintf(stderr, "Info: %s\n", buffer);
         else
             fprintf(stderr, "Error: %s\n", buffer);
+    }
+    else
+    {
+        enum Color
+        {
+            COLOR_OFF,
+            COLOR_INFO,
+            COLOR_ERROR,
+            COLOR_PRIO_TRACE,
+            COLOR_PRIO_DEBUG,
+            COLOR_PRIO_DIAG,
+            COLOR_PRIO_INFO,
+            COLOR_PRIO_NOTICE,
+            COLOR_PRIO_WARNING,
+            COLOR_PRIO_ERR,
+            COLOR_PRIO_CRIT,
+            COLOR_PRIO_ALERT,
+            COLOR_PRIO_EMERG,
+
+            LAST_COLOR = COLOR_PRIO_EMERG,
+        };
+
+        static const char *colors[LAST_COLOR + 1] =
+        {
+            [COLOR_OFF]          = "\x1b[0m",
+            [COLOR_INFO]         = "\x1b[38;5;2m",
+            [COLOR_ERROR]        = "\x1b[38;5;160m",
+            [COLOR_PRIO_TRACE]   = "\x1b[38;5;239m",
+            [COLOR_PRIO_DEBUG]   = "\x1b[38;5;242m",
+            [COLOR_PRIO_DIAG]    = "\x1b[38;5;245m",
+            [COLOR_PRIO_INFO]    = "\x1b[38;5;7m",
+            [COLOR_PRIO_NOTICE]  = "\x1b[38;5;15m",
+            [COLOR_PRIO_WARNING] = "\x1b[38;5;11m",
+            [COLOR_PRIO_ERR]     = "\x1b[38;5;202m",
+            [COLOR_PRIO_CRIT]    = "\x1b[38;5;9m",
+            [COLOR_PRIO_ALERT]   = "\x1b[38;5;1m",
+            [COLOR_PRIO_EMERG]   = "\x1b[38;5;201m",
+        };
+
+        enum Color color = (enum Color)(COLOR_PRIO_EMERG - priority);
+        if(priority == LOG_INFO && level > MESSAGE_LEVEL_NORMAL)
+            color -= level;
+
+        if(error_code == 0)
+            fprintf(stderr, "%sInfo:%s %s%s%s\n",
+                    colors[COLOR_INFO], colors[COLOR_OFF],
+                    colors[color], buffer, colors[COLOR_OFF]);
+        else
+            fprintf(stderr, "%sError:%s %s%s%s\n",
+                    colors[COLOR_ERROR], colors[COLOR_OFF],
+                    colors[color], buffer, colors[COLOR_OFF]);
     }
 }
 

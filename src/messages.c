@@ -114,7 +114,7 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
     if(level > current_verbosity)
         return;
 
-    char buffer[1024];
+    _Thread_local static char buffer[2048];
     size_t len = vsnprintf(buffer, sizeof(buffer), format_string, va);
 
     if(error_code != 0 && len < sizeof(buffer))

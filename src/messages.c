@@ -108,6 +108,31 @@ const char *const *msg_get_verbose_level_names(void)
     return verbosity_level_names;
 }
 
+static const char *generate_timestamp(void)
+{
+    _Thread_local static char tbuf[64];
+    struct timespec ts;
+
+    if(os_clock_gettime(CLOCK_REALTIME, &ts) < 0)
+    {
+        tbuf[0] = '\0';
+        return tbuf;
+    }
+
+    struct tm t;
+    const size_t len = localtime_r(&ts.tv_sec, &t) == NULL
+        ? 0
+        : strftime(tbuf, sizeof(tbuf), "%T", &t);
+
+    if(len > 0)
+        snprintf(tbuf + len, sizeof(tbuf) - len, ".%.9ld", ts.tv_nsec);
+    else
+        snprintf(tbuf, sizeof(tbuf),
+                 "%lld.%.9ld", (long long)ts.tv_sec, ts.tv_nsec);
+
+    return tbuf;
+}
+
 static void show_message(enum MessageVerboseLevel level, int error_code,
                          int priority, const char *format_string, va_list va)
 {
@@ -148,15 +173,16 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
     else if(!use_colors)
     {
         if(error_code == 0)
-            fprintf(stderr, "Info: %s\n", buffer);
+            fprintf(stderr, "%s - Info: %s\n", generate_timestamp(), buffer);
         else
-            fprintf(stderr, "Error: %s\n", buffer);
+            fprintf(stderr, "%s - Error: %s\n", generate_timestamp(), buffer);
     }
     else
     {
         enum Color
         {
             COLOR_OFF,
+            COLOR_TIME,
             COLOR_INFO,
             COLOR_ERROR,
             COLOR_PRIO_TRACE,
@@ -176,6 +202,7 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
         static const char *colors[LAST_COLOR + 1] =
         {
             [COLOR_OFF]          = "\x1b[0m",
+            [COLOR_TIME]         = "\x1b[38;5;28m",
             [COLOR_INFO]         = "\x1b[38;5;2m",
             [COLOR_ERROR]        = "\x1b[38;5;160m",
             [COLOR_PRIO_TRACE]   = "\x1b[38;5;239m",
@@ -195,11 +222,13 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
             color -= level;
 
         if(error_code == 0)
-            fprintf(stderr, "%sInfo:%s %s%s%s\n",
+            fprintf(stderr, "%s%s -%s %sInfo:%s %s%s%s\n",
+                    colors[COLOR_TIME], generate_timestamp(), colors[COLOR_OFF],
                     colors[COLOR_INFO], colors[COLOR_OFF],
                     colors[color], buffer, colors[COLOR_OFF]);
         else
-            fprintf(stderr, "%sError:%s %s%s%s\n",
+            fprintf(stderr, "%s%s -%s %sError:%s %s%s%s\n",
+                    colors[COLOR_TIME], generate_timestamp(), colors[COLOR_OFF],
                     colors[COLOR_ERROR], colors[COLOR_OFF],
                     colors[color], buffer, colors[COLOR_OFF]);
     }

@@ -1,11 +1,4 @@
 {
-   <_dl_init>
-   Memcheck:Leak
-   ...
-   fun:call_init
-   fun:_dl_init
-}
-{
    <g_type_register_static>
    Memcheck:Leak
    ...
@@ -22,4 +15,24 @@
    Memcheck:Leak
    ...
    fun:g_malloc0
+}
+{
+    <g_param_type_register_static>
+    Memcheck:Leak
+    ...
+    fun:g_param_type_register_static
+}
+{
+   <_dl_init>
+   Memcheck:Leak
+   ...
+   fun:call_init
+   fun:_dl_init
+}
+{
+   <_dl_init>
+   Memcheck:Leak
+   ...
+   fun:call_init.part.0
+   fun:_dl_init
 }

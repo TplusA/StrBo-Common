@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of the T+A Streaming Board software stack ("StrBoWare").
 #
@@ -30,7 +30,8 @@ check_PROGRAMS = \
 TESTS = run_tests.sh
 
 if WITH_VALGRIND
-AM_TESTS_ENVIRONMENT = VALGRIND="$(VALGRIND)"
+AM_TESTS_ENVIRONMENT =  VALGRIND="$(VALGRIND)"
+AM_TESTS_ENVIRONMENT += VALGRIND_OPTIONS="--suppressions=$(srcdir)/valgrind.suppressions"
 TESTS += valgrind.sh
 endif
 

@@ -27,10 +27,24 @@
  */
 #define MSG_TRACE_ENABLED 1
 
+/*!
+ * Set to 1 to enable backtraces in logs.
+ */
+#define MSG_BACKTRACE_ENABLED 0
+
+/*!
+ * Set to 1 to enable automatic backtrace logs for all bug logs.
+ */
+#define MSG_AUTOMATIC_BACKTRACE_ENABLED 0
+
 #include <stdbool.h>
 #include <syslog.h>
 
 #include "os.h"
+
+#if MSG_BACKTRACE_ENABLED
+#include "backtrace.h"
+#endif /* MSG_BACKTRACE_ENABLED */
 
 #ifdef __cplusplus
 extern "C" {
@@ -181,13 +195,49 @@ int msg_out_of_memory(const char *what);
 }
 #endif
 
-#define BUG(...) msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__)
+/*!
+ * Emit a bug message.
+ */
+#define BUG_MESSAGE(...) msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__)
+
+#if MSG_BACKTRACE_ENABLED
+/*!
+ * Emit a bug message followed by a backtrace.
+ */
+#define BUG_BT(...) \
+    do \
+    { \
+        BUG_MESSAGE(__VA_ARGS__); \
+        backtrace_log(0, "bug context"); \
+    } \
+    while(0)
+
+/*!
+ * Emit a bug message followed by a backtrace if \p COND evaluates to true.
+ */
+#define BUG_BT_IF(COND, ...) \
+    do \
+    { \
+        if(COND)\
+            BUG_BT(__VA_ARGS__); \
+    } \
+    while(0)
+#else /* !MSG_BACKTRACE_ENABLED */
+#define BUG_BT(...) BUG_MESSAGE(__VA_ARGS__)
+#define BUG_BT_IF(COND, ...) BUG_IF(COND, __VA_ARGS__)
+#endif /* MSG_BACKTRACE_ENABLED */
+
+#if MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED
+#define BUG(...) BUG_BT(__VA_ARGS__)
+#else /* !MSG_BACKTRACE_ENABLED || !MSG_AUTOMATIC_BACKTRACE_ENABLED */
+#define BUG(...) BUG_MESSAGE(__VA_ARGS__)
+#endif /* MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED */
 
 #define BUG_IF(COND, ...) \
     do \
     { \
         if(COND)\
-            msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__); \
+            BUG(__VA_ARGS__); \
     } \
     while(0)
 

@@ -47,6 +47,8 @@ noinst_LTLIBRARIES = libtestrunner.la
 
 libtestrunner_la_SOURCES = testrunner.cc
 
+EXTRA_DIST += mock_backtrace.hh mock_backtrace.cc
+
 test_inifile_SOURCES = \
     test_inifile.cc \
     mock_os.hh mock_os.cc \

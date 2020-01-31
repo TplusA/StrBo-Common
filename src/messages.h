@@ -241,7 +241,7 @@ int msg_out_of_memory(const char *what);
     } \
     while(0)
 
-#define TODO(...) msg_error(0, LOG_CRIT, "TODO: " __VA_ARGS__)
+#define TODO(TICKET, FMT, ...) msg_error(0, LOG_CRIT, "TODO [#%u]: " FMT, TICKET, ##__VA_ARGS__)
 
 #define MSG_UNREACHABLE() \
     msg_error(EFAULT, LOG_CRIT, "BUG: Reached unreachable code %s(%d)", \

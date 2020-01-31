@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2016, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -75,6 +75,10 @@ static void log_them_all(const gchar *log_domain, GLogLevelFlags log_level,
     const int syslog_prio = glib_log_level_to_syslog_priority(log_level);
 
     msg_error(0, syslog_prio, "From GLib (%s) %s", log_domain, message);
+
+#if MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED
+    backtrace_log(0, "GLib context");
+#endif /* MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED */
 }
 
 void msg_enable_glib_message_redirection(void)

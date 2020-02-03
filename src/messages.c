@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 
 #include "messages.h"
@@ -142,7 +143,7 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
     _Thread_local static char buffer[2048];
     size_t len = vsnprintf(buffer, sizeof(buffer), format_string, va);
 
-    if(error_code != 0 && len < sizeof(buffer))
+    if(error_code > 0 && len < sizeof(buffer))
         len += snprintf(buffer + len, sizeof(buffer) - len,
                         " (%s)", strerror(error_code));
 
@@ -209,7 +210,7 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
             [COLOR_PRIO_DEBUG]   = "\x1b[38;5;242m",
             [COLOR_PRIO_DIAG]    = "\x1b[38;5;245m",
             [COLOR_PRIO_INFO]    = "\x1b[38;5;7m",
-            [COLOR_PRIO_NOTICE]  = "\x1b[38;5;15m",
+            [COLOR_PRIO_NOTICE]  = "\x1b[38;5;45m",
             [COLOR_PRIO_WARNING] = "\x1b[38;5;11m",
             [COLOR_PRIO_ERR]     = "\x1b[38;5;202m",
             [COLOR_PRIO_CRIT]    = "\x1b[38;5;9m",
@@ -218,8 +219,13 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
         };
 
         enum Color color = (enum Color)(COLOR_PRIO_EMERG - priority);
-        if(priority == LOG_INFO && level > MESSAGE_LEVEL_NORMAL)
-            color -= level;
+        if(priority == LOG_INFO)
+        {
+            if(level > MESSAGE_LEVEL_NORMAL)
+                color -= level;
+            else if(level < MESSAGE_LEVEL_NORMAL)
+                color = COLOR_PRIO_NOTICE;
+        }
 
         if(error_code == 0)
             fprintf(stderr, "%s%s -%s %sInfo:%s %s%s%s\n",
@@ -266,7 +272,8 @@ void msg_error(int error_code, int priority, const char *error_format, ...)
 
     va_start(va, error_format);
     show_message(map_syslog_prio_to_verbose_level(priority),
-                 error_code, priority, error_format, va);
+                 error_code != 0 ? error_code : INT_MIN,
+                 priority, error_format, va);
     va_end(va);
 }
 

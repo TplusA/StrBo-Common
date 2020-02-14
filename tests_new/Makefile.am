@@ -53,6 +53,7 @@ test_inifile_SOURCES = \
     test_inifile.cc \
     mock_os.hh mock_os.cc \
     mock_messages.hh mock_messages.cc \
+    mock_backtrace.hh mock_backtrace.cc \
     mock_expectation.hh
 test_inifile_LDADD = \
     libtestrunner.la \

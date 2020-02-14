@@ -25,17 +25,23 @@
 /*!
  * Set to 0 to disable trace message.
  */
+#ifndef MSG_TRACE_ENABLED
 #define MSG_TRACE_ENABLED 1
+#endif /* !MSG_TRACE_ENABLED */
 
 /*!
- * Set to 1 to enable backtraces in logs.
+ * Set to 0 to disable backtraces in logs.
  */
-#define MSG_BACKTRACE_ENABLED 0
+#ifndef MSG_BACKTRACE_ENABLED
+#define MSG_BACKTRACE_ENABLED 1
+#endif /* MSG_BACKTRACE_ENABLED */
 
 /*!
- * Set to 1 to enable automatic backtrace logs for all bug logs.
+ * Set to 0 to disable automatic backtrace logs for all bug logs.
  */
-#define MSG_AUTOMATIC_BACKTRACE_ENABLED 0
+#ifndef MSG_AUTOMATIC_BACKTRACE_ENABLED
+#define MSG_AUTOMATIC_BACKTRACE_ENABLED 1
+#endif /* !MSG_AUTOMATIC_BACKTRACE_ENABLED */
 
 #include <stdbool.h>
 #include <syslog.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015--2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015--2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -144,6 +144,10 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,
 
 void os_abort(void)
 {
+#if MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED
+    backtrace_log(0, "abort context");
+#endif /* MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED */
+
     abort();
 }
 

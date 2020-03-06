@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -217,7 +217,7 @@ class MockExpectationsTemplate
 template <typename T, typename MT, typename ... Args>
 static inline void expect(MT &mock, Args ... args)
 {
-    mock->expect(std::make_unique<T>(args...));
+    mock->expect(std::make_unique<T>(std::forward<Args>(args)...));
 }
 #endif /* C++14 */
 

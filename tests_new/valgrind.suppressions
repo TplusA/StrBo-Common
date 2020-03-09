@@ -23,6 +23,12 @@
     fun:g_param_type_register_static
 }
 {
+    <g_variant_type_info_get>
+    Memcheck:Leak
+    ...
+    fun:g_variant_type_info_get
+}
+{
    <_dl_init>
    Memcheck:Leak
    ...

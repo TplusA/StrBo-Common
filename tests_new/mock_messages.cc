@@ -207,6 +207,17 @@ void msg_error(int error_code, int priority, const char *error_format, ...)
     {
         va_end(va);
         MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" << error_format << "\"");
+
+        va_list va2;
+        va_start(va2, error_format);
+        thread_local static char buffer[2048];
+        size_t len = std::vsnprintf(buffer, sizeof(buffer), error_format, va2);
+        if(error_code != 0 && len < sizeof(buffer))
+            std::snprintf(buffer + len, sizeof(buffer) - len,
+                          " (%s)", strerror(error_code));
+        MESSAGE("Unexpected error message: \"" << buffer << "\"");
+        va_end(va2);
+
         throw;
     }
 
@@ -232,6 +243,14 @@ void msg_info(const char *format_string, ...)
     {
         va_end(va);
         MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" << format_string << "\"");
+
+        va_list va2;
+        va_start(va2, format_string);
+        thread_local static char buffer[2048];
+        std::vsnprintf(buffer, sizeof(buffer), format_string, va2);
+        MESSAGE("Unexpected info message: \"" << buffer << "\"");
+        va_end(va2);
+
         throw;
     }
 
@@ -257,6 +276,14 @@ void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
     {
         va_end(va);
         MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" << format_string << "\"");
+
+        va_list va2;
+        va_start(va2, format_string);
+        thread_local static char buffer[2048];
+        std::vsnprintf(buffer, sizeof(buffer), format_string, va2);
+        MESSAGE("Unexpected info message: \"" << buffer << "\"");
+        va_end(va2);
+
         throw;
     }
 

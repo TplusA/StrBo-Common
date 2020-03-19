@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -329,13 +329,13 @@ template <typename ValuesT, typename Traits>
 static void serialize_value(char *dest, size_t dest_size, const ValuesT &v)
 {
     ::Configuration::default_serialize(dest, dest_size, v.*Traits::field);
-};
+}
 
 template <typename ValuesT, typename Traits>
 static bool deserialize_value(ValuesT &v, const char *value)
 {
     return ::Configuration::default_deserialize(v.*Traits::field, value);
-};
+}
 
 template <typename ValuesT, typename Traits>
 static GVariantWrapper box_value(const ValuesT &v)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -41,6 +41,11 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
 void os_abort(void)
 {
     MockOS::singleton->check_next<MockOS::Abort>();
+}
+
+enum os_path_type os_path_get_type(const char *path)
+{
+    return MockOS::singleton->check_next<MockOS::PathGetType>(path);
 }
 
 int os_file_new(const char *filename)

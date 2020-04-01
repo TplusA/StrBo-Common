@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -240,6 +240,29 @@ class WriteFromBuffer: public Expectation
 
         errno = ret_errno_;
 
+        return retval_;
+    }
+};
+
+class PathGetType: public Expectation
+{
+  private:
+    const enum os_path_type retval_;
+    const int ret_errno_;
+    const std::string pathname_;
+
+  public:
+    explicit PathGetType(enum os_path_type retval, int ret_errno, const char *pathname):
+        retval_(retval),
+        ret_errno_(ret_errno),
+        pathname_(pathname)
+    {}
+
+    enum os_path_type check(const char *pathname) const
+    {
+        REQUIRE(pathname != nullptr);
+        CHECK(pathname == pathname_);
+        errno = ret_errno_;
         return retval_;
     }
 };

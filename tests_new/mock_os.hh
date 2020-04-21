@@ -26,6 +26,7 @@
 #include "mock_expectation.hh"
 
 #include <string>
+#include <cstring>
 #include <functional>
 
 namespace MockOS
@@ -117,6 +118,29 @@ class Abort: public Expectation
     explicit Abort(int ret_errno): ret_errno_(ret_errno) {}
     virtual ~Abort() {}
     void check() const { errno = ret_errno_; }
+};
+
+class ResolveSymlink: public Expectation
+{
+  private:
+    const std::string retval_;
+    const int ret_errno_;
+    const std::string link_;
+
+  public:
+    explicit ResolveSymlink(const char *retval, int ret_errno, const char *link):
+        retval_(retval),
+        ret_errno_(ret_errno),
+        link_(link)
+    {}
+
+    char *check(const char *link) const
+    {
+        REQUIRE(link != nullptr);
+        CHECK(link == link_);
+        errno = ret_errno_;
+        return retval_.empty() ? nullptr : strdup(retval_.c_str());
+    }
 };
 
 class MapFileToMemory: public Expectation

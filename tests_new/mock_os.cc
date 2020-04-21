@@ -43,6 +43,11 @@ void os_abort(void)
     MockOS::singleton->check_next<MockOS::Abort>();
 }
 
+char *os_resolve_symlink(const char *link)
+{
+    return MockOS::singleton->check_next<MockOS::ResolveSymlink>(link);
+}
+
 enum os_path_type os_path_get_type(const char *path)
 {
     return MockOS::singleton->check_next<MockOS::PathGetType>(path);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -123,7 +123,7 @@ static const char *failure_reason_to_string(doctest::TestCaseFailureReason::Enum
     }
 
     return "UNSUPPORTED";
-};
+}
 
 /*!
  * Little helper class for buffer-less escaping of data for XML character data

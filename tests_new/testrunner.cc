@@ -179,9 +179,7 @@ static void emit_failures(std::ostream &out, unsigned int indentation,
                           const char *tag, const Result &result,
                           bool is_failure_known = true)
 {
-    char indent[indentation + 1];
-    std::fill(indent, indent + sizeof(indent) - 1, ' ');
-    indent[sizeof(indent) - 1] = '\0';
+    const std::string indent(indentation, ' ');
 
     for(const auto &msg : result.failure_messages_)
     {

@@ -23,8 +23,11 @@
 #include <config.h>
 #endif
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
+#pragma GCC diagnostic pop
 
 #include <vector>
 #include <list>

@@ -30,6 +30,13 @@
 #endif /* !MSG_TRACE_ENABLED */
 
 /*!
+ * Set to 1 to include the thread ID in each log message.
+ */
+#ifndef MSG_WITH_THREAD_ID
+#define MSG_WITH_THREAD_ID 0
+#endif /* !MSG_WITH_THREAD_ID */
+
+/*!
  * Set to 0 for no specific action on #BUG() and #BUG_IF().
  * Set to 1 to dump a backtrace on #BUG() and #BUG_IF().
  * Set to 2 to call os_abort() on #BUG() and #BUG_IF().

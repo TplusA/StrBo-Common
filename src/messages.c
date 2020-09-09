@@ -32,6 +32,10 @@
 
 #include "messages.h"
 
+#if MSG_WITH_THREAD_ID
+#include <pthread.h>
+#endif /* MSG_WITH_THREAD_ID */
+
 static bool use_syslog;
 static bool use_colors = true;
 static enum MessageVerboseLevel current_verbosity;
@@ -140,20 +144,36 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
     if(level > current_verbosity)
         return;
 
-    _Thread_local static char buffer[2048];
-    size_t len = vsnprintf(buffer, sizeof(buffer), format_string, va);
+#if MSG_WITH_THREAD_ID
+    _Thread_local static char complete_buffer[2048];
+    _Thread_local static char *buffer;
+    _Thread_local static size_t buffer_size;
 
-    if(error_code > 0 && len < sizeof(buffer))
-        len += snprintf(buffer + len, sizeof(buffer) - len,
+    if(buffer == NULL)
+    {
+        buffer = &complete_buffer[snprintf(complete_buffer, sizeof(complete_buffer),
+                                           "[%lx] ", pthread_self())];
+        buffer_size = sizeof(complete_buffer) - (buffer - complete_buffer);
+    }
+#else /* !MSG_WITH_THREAD_ID */
+#define complete_buffer buffer
+#define buffer_size sizeof(buffer)
+    _Thread_local static char buffer[2048];
+#endif /* MSG_WITH_THREAD_ID */
+
+    size_t len = vsnprintf(buffer, buffer_size, format_string, va);
+
+    if(error_code > 0 && len < buffer_size)
+        len += snprintf(buffer + len, buffer_size - len,
                         " (%s)", strerror(error_code));
 
-    if(len > sizeof(buffer))
-        len = sizeof(buffer);
+    if(len > buffer_size)
+        len = buffer_size;
 
     if(use_syslog)
     {
         if(len <= 256)
-            syslog(priority, "%s", buffer);
+            syslog(priority, "%s", complete_buffer);
         else
         {
             int part = 1;
@@ -163,7 +183,7 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
 
             while(i < len)
             {
-                syslog(priority, "[part %d] %.256s", part, &buffer[i]);
+                syslog(priority, "[part %d] %.256s", part, &complete_buffer[i]);
                 ++part;
                 i += 256;
             }
@@ -174,9 +194,9 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
     else if(!use_colors)
     {
         if(error_code == 0)
-            fprintf(stderr, "%s - Info: %s\n", generate_timestamp(), buffer);
+            fprintf(stderr, "%s - Info: %s\n", generate_timestamp(), complete_buffer);
         else
-            fprintf(stderr, "%s - Error: %s\n", generate_timestamp(), buffer);
+            fprintf(stderr, "%s - Error: %s\n", generate_timestamp(), complete_buffer);
     }
     else
     {
@@ -231,12 +251,12 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
             fprintf(stderr, "%s%s -%s %sInfo:%s %s%s%s\n",
                     colors[COLOR_TIME], generate_timestamp(), colors[COLOR_OFF],
                     colors[COLOR_INFO], colors[COLOR_OFF],
-                    colors[color], buffer, colors[COLOR_OFF]);
+                    colors[color], complete_buffer, colors[COLOR_OFF]);
         else
             fprintf(stderr, "%s%s -%s %sError:%s %s%s%s\n",
                     colors[COLOR_TIME], generate_timestamp(), colors[COLOR_OFF],
                     colors[COLOR_ERROR], colors[COLOR_OFF],
-                    colors[color], buffer, colors[COLOR_OFF]);
+                    colors[color], complete_buffer, colors[COLOR_OFF]);
     }
 }
 

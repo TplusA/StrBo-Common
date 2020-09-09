@@ -44,6 +44,10 @@
 #include "os.h"
 #include "messages.h"
 
+#if MSG_ACTION_ON_ABORT == 1
+#include "backtrace.h"
+#endif
+
 #define SAVE_ERRNO(VAR)         const int VAR = errno
 #define RESTORE_ERRNO(VAR)      errno = VAR
 
@@ -144,9 +148,9 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,
 
 void os_abort(void)
 {
-#if MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED
+#if MSG_ACTION_ON_ABORT == 1
     backtrace_log(0, "abort context");
-#endif /* MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED */
+#endif /* MSG_ACTION_ON_ABORT */
 
     abort();
 }

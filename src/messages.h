@@ -63,6 +63,23 @@
 #define MSG_ACTION_ON_NOT_IMPLEMENTED 0
 #endif /* !MSG_ACTION_ON_NOT_IMPLEMENTED */
 
+/*!
+ * Set to 0 for no specific action on GLib failure.
+ * Set to 1 to dump a backtrace on GLib failure.
+ * Set to 2 to call os_abort() on GLib failure.
+ */
+#ifndef MSG_ACTION_ON_GLIB_FAILURE
+#define MSG_ACTION_ON_GLIB_FAILURE 0
+#endif /* MSG_ACTION_ON_GLIB_FAILURE */
+
+/*!
+ * Set to 0 for no specific action on #os_abort().
+ * Set to 1 to dump a backtrace on #os_abort().
+ */
+#ifndef MSG_ACTION_ON_ABORT
+#define MSG_ACTION_ON_ABORT 0
+#endif /* MSG_ACTION_ON_ABORT */
+
 #include <stdbool.h>
 #include <syslog.h>
 

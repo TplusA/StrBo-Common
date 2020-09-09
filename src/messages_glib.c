@@ -28,6 +28,10 @@
 #include "messages_glib.h"
 #include "messages.h"
 
+#if MSG_ACTION_ON_GLIB_FAILURE == 1
+#include "backtrace.h"
+#endif
+
 static inline int glib_log_level_to_syslog_priority(GLogLevelFlags log_level)
 {
     switch((GLogLevelFlags)(log_level & G_LOG_LEVEL_MASK))
@@ -76,9 +80,11 @@ static void log_them_all(const gchar *log_domain, GLogLevelFlags log_level,
 
     msg_error(0, syslog_prio, "From GLib (%s) %s", log_domain, message);
 
-#if MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED
+#if MSG_ACTION_ON_GLIB_FAILURE == 1
     backtrace_log(0, "GLib context");
-#endif /* MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED */
+#elif MSG_ACTION_ON_GLIB_FAILURE == 2
+    os_abort();
+#endif /* MSG_ACTION_ON_GLIB_FAILURE */
 }
 
 void msg_enable_glib_message_redirection(void)

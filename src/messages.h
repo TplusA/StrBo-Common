@@ -30,27 +30,40 @@
 #endif /* !MSG_TRACE_ENABLED */
 
 /*!
- * Set to 0 to disable backtraces in logs.
+ * Set to 0 for no specific action on #BUG() and #BUG_IF().
+ * Set to 1 to dump a backtrace on #BUG() and #BUG_IF().
+ * Set to 2 to call os_abort() on #BUG() and #BUG_IF().
  */
-#ifndef MSG_BACKTRACE_ENABLED
-#define MSG_BACKTRACE_ENABLED 1
-#endif /* MSG_BACKTRACE_ENABLED */
+#ifndef MSG_ACTION_ON_BUG
+#define MSG_ACTION_ON_BUG 0
+#endif /* !MSG_ACTION_ON_BUG */
 
 /*!
- * Set to 0 to disable automatic backtrace logs for all bug logs.
+ * Set to 0 for no specific action on #MSG_UNREACHABLE().
+ * Set to 1 to dump a backtrace on #MSG_UNREACHABLE().
+ * Set to 2 to call os_abort() on #MSG_UNREACHABLE().
  */
-#ifndef MSG_AUTOMATIC_BACKTRACE_ENABLED
-#define MSG_AUTOMATIC_BACKTRACE_ENABLED 1
-#endif /* !MSG_AUTOMATIC_BACKTRACE_ENABLED */
+#ifndef MSG_ACTION_ON_UNREACHABLE
+#define MSG_ACTION_ON_UNREACHABLE 0
+#endif /* !MSG_ACTION_ON_UNREACHABLE */
+
+/*!
+ * Set to 0 for no specific action on #MSG_NOT_IMPLEMENTED().
+ * Set to 1 to dump a backtrace on #MSG_NOT_IMPLEMENTED().
+ * Set to 2 to call os_abort() on #MSG_NOT_IMPLEMENTED().
+ */
+#ifndef MSG_ACTION_ON_NOT_IMPLEMENTED
+#define MSG_ACTION_ON_NOT_IMPLEMENTED 0
+#endif /* !MSG_ACTION_ON_NOT_IMPLEMENTED */
 
 #include <stdbool.h>
 #include <syslog.h>
 
 #include "os.h"
 
-#if MSG_BACKTRACE_ENABLED
+#if MSG_ACTION_ON_BUG == 1 || MSG_ACTION_ON_UNREACHABLE == 1 || MSG_ACTION_ON_NOT_IMPLEMENTED == 1
 #include "backtrace.h"
-#endif /* MSG_BACKTRACE_ENABLED */
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -201,44 +214,28 @@ int msg_out_of_memory(const char *what);
 }
 #endif
 
+#if MSG_ACTION_ON_BUG == 1
+#define MSG_BUG_ACTION_() backtrace_log(0, "bug context")
+#elif MSG_ACTION_ON_BUG == 2
+#define MSG_BUG_ACTION_() os_abort()
+#else
+#define MSG_BUG_ACTION_() do {} while(0)
+#endif /* MSG_ACTION_ON_BUG */
+
 /*!
  * Emit a bug message.
  */
-#define BUG_MESSAGE(...) msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__)
-
-#if MSG_BACKTRACE_ENABLED
-/*!
- * Emit a bug message followed by a backtrace.
- */
-#define BUG_BT(...) \
+#define BUG(...) \
     do \
     { \
-        BUG_MESSAGE(__VA_ARGS__); \
-        backtrace_log(0, "bug context"); \
+        msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__); \
+        MSG_BUG_ACTION_(); \
     } \
     while(0)
 
 /*!
- * Emit a bug message followed by a backtrace if \p COND evaluates to true.
+ * Emit a bug message if \p COND evaluates to true.
  */
-#define BUG_BT_IF(COND, ...) \
-    do \
-    { \
-        if(COND)\
-            BUG_BT(__VA_ARGS__); \
-    } \
-    while(0)
-#else /* !MSG_BACKTRACE_ENABLED */
-#define BUG_BT(...) BUG_MESSAGE(__VA_ARGS__)
-#define BUG_BT_IF(COND, ...) BUG_IF(COND, __VA_ARGS__)
-#endif /* MSG_BACKTRACE_ENABLED */
-
-#if MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED
-#define BUG(...) BUG_BT(__VA_ARGS__)
-#else /* !MSG_BACKTRACE_ENABLED || !MSG_AUTOMATIC_BACKTRACE_ENABLED */
-#define BUG(...) BUG_MESSAGE(__VA_ARGS__)
-#endif /* MSG_BACKTRACE_ENABLED && MSG_AUTOMATIC_BACKTRACE_ENABLED */
-
 #define BUG_IF(COND, ...) \
     do \
     { \
@@ -247,15 +244,42 @@ int msg_out_of_memory(const char *what);
     } \
     while(0)
 
-#define TODO(TICKET, FMT, ...) msg_error(0, LOG_CRIT, "TODO [#%u]: " FMT, TICKET, ##__VA_ARGS__)
+#define TODO(TICKET, FMT, ...) \
+    msg_error(0, LOG_CRIT, "TODO [#%u]: " FMT, TICKET, ##__VA_ARGS__)
+
+#if MSG_ACTION_ON_UNREACHABLE == 1
+#define MSG_UNREACHABLE_ACTION_() backtrace_log(0, "unreachable context")
+#elif MSG_ACTION_ON_UNREACHABLE == 2
+#define MSG_UNREACHABLE_ACTION_() os_abort()
+#else
+#define MSG_UNREACHABLE_ACTION_() do {} while(0)
+#endif /* MSG_ACTION_ON_UNREACHABLE */
 
 #define MSG_UNREACHABLE() \
-    msg_error(EFAULT, LOG_CRIT, "BUG: Reached unreachable code %s(%d)", \
-              __func__, __LINE__)
+    do \
+    { \
+        msg_error(EFAULT, LOG_CRIT, "BUG: Reached unreachable code %s(%d)", \
+                  __func__, __LINE__); \
+        MSG_UNREACHABLE_ACTION_(); \
+    } \
+    while(0)
+
+#if MSG_ACTION_ON_NOT_IMPLEMENTED == 1
+#define MSG_NOT_IMPLEMENTED_ACTION_() backtrace_log(0, "not implemented context")
+#elif MSG_ACTION_ON_NOT_IMPLEMENTED == 2
+#define MSG_NOT_IMPLEMENTED_ACTION_() os_abort()
+#else
+#define MSG_NOT_IMPLEMENTED_ACTION_() do {} while(0)
+#endif /* MSG_ACTION_ON_NOT_IMPLEMENTED */
 
 #define MSG_NOT_IMPLEMENTED() \
-    msg_error(ENOSYS, LOG_CRIT, "TODO: Not implemented: %s(%d)", \
-              __func__, __LINE__)
+    do \
+    { \
+        msg_error(ENOSYS, LOG_CRIT, "TODO: Not implemented: %s(%d)", \
+                  __func__, __LINE__); \
+        MSG_NOT_IMPLEMENTED_ACTION_(); \
+    } \
+    while(0)
 
 #define APPLIANCE_BUG(...) msg_error(0, LOG_CRIT, "APPLIANCE BUG: " __VA_ARGS__)
 

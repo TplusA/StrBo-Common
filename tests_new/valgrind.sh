@@ -13,6 +13,7 @@ do
     ${VALGRIND} \
         --xml=yes --xml-file="${t}.valgrind.xml" \
         --leak-check=full --show-reachable=yes --error-limit=no \
+        --num-callers=25 \
         ${VALGRIND_OPTIONS} \
         $t
     test $? -eq 0 || RET=1

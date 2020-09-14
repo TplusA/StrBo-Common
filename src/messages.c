@@ -50,6 +50,7 @@ static enum MessageVerboseLevel current_verbosity;
 static const char *verbosity_level_names[] =
 {
     "quiet",
+    "bad",
     "important",
     "normal",
     "diag",
@@ -234,8 +235,8 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
             [COLOR_PRIO_WARNING] = "\x1b[38;5;11m",
             [COLOR_PRIO_ERR]     = "\x1b[38;5;202m",
             [COLOR_PRIO_CRIT]    = "\x1b[38;5;9m",
-            [COLOR_PRIO_ALERT]   = "\x1b[38;5;1m",
-            [COLOR_PRIO_EMERG]   = "\x1b[38;5;201m",
+            [COLOR_PRIO_ALERT]   = "\x1b[38;5;201m",
+            [COLOR_PRIO_EMERG]   = "\x1b[38;5;207m\x1b[48;5;52m",
         };
 
         enum Color color = (enum Color)(COLOR_PRIO_EMERG - priority);
@@ -244,7 +245,9 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
             if(level > MESSAGE_LEVEL_NORMAL)
                 color -= level;
             else if(level < MESSAGE_LEVEL_NORMAL)
-                color = COLOR_PRIO_NOTICE;
+                color = (level != MESSAGE_LEVEL_BAD_NEWS)
+                    ? COLOR_PRIO_NOTICE
+                    : COLOR_PRIO_EMERG;
         }
 
         if(error_code == 0)
@@ -270,6 +273,8 @@ static enum MessageVerboseLevel map_syslog_prio_to_verbose_level(int priority)
         return MESSAGE_LEVEL_QUIET;
 
       case LOG_ERR:
+        return MESSAGE_LEVEL_BAD_NEWS;
+
       case LOG_WARNING:
         return MESSAGE_LEVEL_IMPORTANT;
 

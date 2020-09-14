@@ -99,7 +99,8 @@ extern "C" {
 enum MessageVerboseLevel
 {
     /* message levels for filtering messages by importance */
-    MESSAGE_LEVEL_QUIET      = -2,
+    MESSAGE_LEVEL_QUIET      = -3,
+    MESSAGE_LEVEL_BAD_NEWS   = -2,
     MESSAGE_LEVEL_IMPORTANT  = -1,
     MESSAGE_LEVEL_NORMAL     =  0,
     MESSAGE_LEVEL_DIAG       =  1,
@@ -109,11 +110,11 @@ enum MessageVerboseLevel
     /* stable names for special values */
     MESSAGE_LEVEL_MIN        = MESSAGE_LEVEL_QUIET,
     MESSAGE_LEVEL_MAX        = MESSAGE_LEVEL_TRACE,
-    MESSAGE_LEVEL_INFO_MIN   = MESSAGE_LEVEL_IMPORTANT,
+    MESSAGE_LEVEL_INFO_MIN   = MESSAGE_LEVEL_BAD_NEWS,
     MESSAGE_LEVEL_INFO_MAX   = MESSAGE_LEVEL_TRACE,
 
     /* do not use, value is used internally */
-    MESSAGE_LEVEL_IMPOSSIBLE = -3,
+    MESSAGE_LEVEL_IMPOSSIBLE = -4,
 };
 
 /*!

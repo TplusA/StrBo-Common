@@ -68,9 +68,15 @@ class Guard
             {
                 fn_();
             }
+            catch(const std::exception &e)
+            {
+                /* catch 'em all, ignore 'em all */
+                BUG("Unhandled exception in Guard: %s", e.what());
+            }
             catch(...)
             {
                 /* catch 'em all, ignore 'em all */
+                BUG("Unhandled exception in Guard");
             }
         }
     }

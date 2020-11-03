@@ -308,22 +308,26 @@ void default_serialize(char *dest, size_t dest_size, const std::string &src);
 void default_serialize(char *dest, size_t dest_size, uint16_t value);
 void default_serialize(char *dest, size_t dest_size, uint32_t value);
 void default_serialize(char *dest, size_t dest_size, uint64_t value);
+void default_serialize(char *dest, size_t dest_size, bool value);
 
 GVariantWrapper default_box(const char *src);
 GVariantWrapper default_box(const std::string &src);
 GVariantWrapper default_box(uint16_t value);
 GVariantWrapper default_box(uint32_t value);
 GVariantWrapper default_box(uint64_t value);
+GVariantWrapper default_box(bool value);
 
 bool default_deserialize(std::string &dest, const char *src);
 bool default_deserialize(uint16_t &value, const char *src);
 bool default_deserialize(uint32_t &value, const char *src);
 bool default_deserialize(uint64_t &value, const char *src);
+bool default_deserialize(bool &value, const char *src);
 
 bool default_unbox(std::string &dest, GVariantWrapper &&src);
 bool default_unbox(uint16_t &value, GVariantWrapper &&src);
 bool default_unbox(uint32_t &value, GVariantWrapper &&src);
 bool default_unbox(uint64_t &value, GVariantWrapper &&src);
+bool default_unbox(bool &value, GVariantWrapper &&src);
 
 template <typename ValuesT, typename Traits>
 static void serialize_value(char *dest, size_t dest_size, const ValuesT &v)

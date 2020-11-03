@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2020  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -51,7 +51,8 @@ void Configuration::default_serialize(char *dest, size_t dest_size,
     dest[len] = '\0';
 }
 
-void Configuration::default_serialize(char *dest, size_t dest_size, const std::string &src)
+void Configuration::default_serialize(char *dest, size_t dest_size,
+                                      const std::string &src)
 {
     if(dest == nullptr || dest_size == 0)
         return;
@@ -92,6 +93,11 @@ GVariantWrapper Configuration::default_box(uint64_t value)
     return GVariantWrapper(g_variant_new_uint64(value));
 }
 
+GVariantWrapper Configuration::default_box(bool value)
+{
+    return GVariantWrapper(g_variant_new_boolean(value));
+}
+
 bool Configuration::default_unbox(std::string &dest, GVariantWrapper &&src)
 {
     if(!g_variant_is_of_type(GVariantWrapper::get(src), G_VARIANT_TYPE_STRING))
@@ -125,6 +131,15 @@ bool Configuration::default_unbox(uint64_t &value, GVariantWrapper &&src)
         return false;
 
     value = g_variant_get_uint64(GVariantWrapper::get(src));
+    return true;
+}
+
+bool Configuration::default_unbox(bool &value, GVariantWrapper &&src)
+{
+    if(!g_variant_is_of_type(GVariantWrapper::get(src), G_VARIANT_TYPE_BOOLEAN))
+        return false;
+
+    value = g_variant_get_boolean(GVariantWrapper::get(src));
     return true;
 }
 
@@ -182,6 +197,28 @@ void Configuration::default_serialize(char *dest, size_t dest_size, uint64_t val
 bool Configuration::default_deserialize(uint64_t &value, const char *src)
 {
     return deserialize_uint(value, src);
+}
+
+void Configuration::default_serialize(char *dest, size_t dest_size, bool value)
+{
+    if(value)
+        default_serialize(dest, dest_size, "true");
+    else
+        default_serialize(dest, dest_size, "false");
+}
+
+bool Configuration::default_deserialize(bool &value, const char *src)
+{
+    std::string dest;
+
+    if(!default_deserialize(dest, src))
+    {
+        value = false;
+        return false;
+    }
+
+    value = dest == "true";
+    return true;
 }
 
 size_t Configuration::find_varname_offset_in_keyname(const char *key)

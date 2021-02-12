@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2019--2021  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -326,7 +326,7 @@ int msg_out_of_memory(const char *what);
 #define MSG_TRACE_FORMAT(FMT, ...) \
     MSG_PRTRACE_FORMAT(MSG_TRACE_PREFIX, FMT, __VA_ARGS__)
 
-#define MSG_TRACE_THIS() MSG_TRACE_FORMAT("%p", this)
+#define MSG_TRACE_THIS() MSG_TRACE_FORMAT("%p", static_cast<const void *>(this))
 
 #if MSG_TRACE_ENABLED
 #define MSG_PRTRACE(PREFIX) \

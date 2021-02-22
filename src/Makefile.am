@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015--2020  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2015--2021  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of the T+A Streaming Board software stack ("StrBoWare").
 #
@@ -42,7 +42,7 @@ EXTRA_DIST = \
     configuration.cc configuration.hh configuration_base.hh \
     configuration_changed.hh configuration_settings.hh \
     gerrorwrapper.hh \
-    maybe.hh guard.hh error_thrower.hh \
+    maybe.hh guard.hh error_thrower.hh logged_lock.hh \
     os.c os.hh breakpoint.h backtrace.c backtrace.h \
     hexdump.c hexdump.h \
     actor_id.h

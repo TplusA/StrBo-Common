@@ -58,6 +58,11 @@ namespace LoggedLock
 
 #if LOGGED_LOCKS_ENABLED
 
+extern bool log_messages_enabled;
+
+static inline void enable_log_messages() { log_messages_enabled = true; }
+static inline void disable_log_messages() { log_messages_enabled = false; }
+
 #if LOGGED_LOCKS_THREAD_CONTEXTS
 
 /*!
@@ -100,8 +105,10 @@ class Context
         if(name != nullptr && name[0] != '\0')
         {
             snprintf(thread_name_, sizeof(thread_name_), "%s", name);
-            msg_info("Thread ID <%08lx> is now known as \"%s\"",
-                     pthread_self(), thread_name_);
+
+            if(log_messages_enabled)
+                msg_info("Thread ID <%08lx> is now known as \"%s\"",
+                        pthread_self(), thread_name_);
         }
         else
             snprintf(thread_name_, sizeof(thread_name_), "%08lx", pthread_self());
@@ -231,27 +238,33 @@ class Mutex
 
     void lock()
     {
-        msg_vinfo(log_level_, "<%s> Mutex %s: lock", get_context_hints().c_str(), name_);
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Mutex %s: lock", get_context_hints().c_str(), name_);
 
         about_to_lock(true);
         lock_.lock();
         set_owner();
-        msg_vinfo(log_level_, "<%s> Mutex %s: locked", get_context_hints().c_str(), name_);
+
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Mutex %s: locked", get_context_hints().c_str(), name_);
     }
 
     bool try_lock()
     {
-        msg_vinfo(log_level_, "<%s> Mutex %s: try lock", get_context_hints().c_str(), name_);
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Mutex %s: try lock", get_context_hints().c_str(), name_);
 
         const bool is_locked = lock_.try_lock();
 
         if(is_locked)
         {
             set_owner();
-            msg_vinfo(log_level_, "<%s> Mutex %s: locked on try",
-                      get_context_hints().c_str(), name_);
+
+            if(log_messages_enabled)
+                msg_vinfo(log_level_, "<%s> Mutex %s: locked on try",
+                          get_context_hints().c_str(), name_);
         }
-        else
+        else if(log_messages_enabled)
             msg_vinfo(log_level_, "<%s> Mutex %s: try locking failed (%s)",
                       get_context_hints().c_str(), name_,
                       owner_ == pthread_self() ? "avoided deadlock" : "different owner");
@@ -267,7 +280,7 @@ class Mutex
 
     std::mutex &get_raw_mutex(bool log_this = true)
     {
-        if(log_this)
+        if(log_messages_enabled && log_this)
             msg_vinfo(log_level_, "<%s> Mutex %s: get raw mutex",
                       get_context_hints().c_str(), name_);
 
@@ -285,7 +298,8 @@ class Mutex
 
     void clear_owner()
     {
-        msg_vinfo(log_level_, "<%s> Mutex %s: unlock", get_context_hints().c_str(), name_);
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Mutex %s: unlock", get_context_hints().c_str(), name_);
 
         if(owner_ == 0)
             LOGGED_LOCK_BUG("Mutex %s: <%s> clearing unowned",
@@ -343,7 +357,7 @@ class RecMutex
 
     void about_to_lock(bool is_direct) const
     {
-        if(owner_ == pthread_self())
+        if(owner_ == pthread_self() && log_messages_enabled)
             msg_vinfo(log_level_,
                       "<%s> RecMutex %s: re-lock, lock count %zu (%sdirect)",
                       get_context_hints().c_str(), name_, lock_count_,
@@ -352,17 +366,21 @@ class RecMutex
 
     void lock()
     {
-        msg_vinfo(log_level_, "<%s> RecMutex %s: lock", get_context_hints().c_str(), name_);
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> RecMutex %s: lock", get_context_hints().c_str(), name_);
 
         about_to_lock(true);
         lock_.lock();
         ref_owner();
-        msg_vinfo(log_level_, "<%s> RecMutex %s: locked", get_context_hints().c_str(), name_);
+
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> RecMutex %s: locked", get_context_hints().c_str(), name_);
     }
 
     bool try_lock()
     {
-        msg_vinfo(log_level_, "<%s> RecMutex %s: try lock", get_context_hints().c_str(), name_);
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> RecMutex %s: try lock", get_context_hints().c_str(), name_);
 
         const bool is_locked = lock_.try_lock();
 
@@ -374,13 +392,16 @@ class RecMutex
                                 name_, get_context_hints().c_str());
 
             ref_owner();
-            msg_vinfo(log_level_, "<%s> RecMutex %s: locked",
-                      get_context_hints().c_str(), name_);
+
+            if(log_messages_enabled)
+                msg_vinfo(log_level_, "<%s> RecMutex %s: locked",
+                          get_context_hints().c_str(), name_);
         }
         else
         {
-            msg_vinfo(log_level_, "<%s> RecMutex %s: locking failed",
-                      get_context_hints().c_str(), name_);
+            if(log_messages_enabled)
+                msg_vinfo(log_level_, "<%s> RecMutex %s: locking failed",
+                          get_context_hints().c_str(), name_);
 
             if(lock_count_ == 0 || owner_ == pthread_self())
                 LOGGED_LOCK_BUG("RecMutex %s: lock attempt by <%s> "
@@ -400,7 +421,7 @@ class RecMutex
 
     std::recursive_mutex &get_raw_mutex(bool log_this = true)
     {
-        if(log_this)
+        if(log_messages_enabled && log_this)
             msg_vinfo(log_level_, "<%s> RecMutex %s: get raw mutex",
                       get_context_hints().c_str(), name_);
 
@@ -432,9 +453,10 @@ class RecMutex
 
     void unref_owner()
     {
-        msg_vinfo(log_level_, "<%s> RecMutex %s: unlock, lock count %zu -> %zu",
-                  get_context_hints().c_str(), name_,
-                  lock_count_, lock_count_ - 1);
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> RecMutex %s: unlock, lock count %zu -> %zu",
+                      get_context_hints().c_str(), name_,
+                      lock_count_, lock_count_ - 1);
 
         if(owner_ == 0)
             LOGGED_LOCK_BUG("RecMutex %s: <%s> clearing unowned, "
@@ -453,8 +475,10 @@ class RecMutex
 
         if(lock_count_ == 0)
         {
-            msg_vinfo(log_level_, "<%s> RecMutex %s: unlocked, drop owner <%08lx>",
-                      get_context_hints().c_str(), name_, owner_);
+            if(log_messages_enabled)
+                msg_vinfo(log_level_, "<%s> RecMutex %s: unlocked, drop owner <%08lx>",
+                          get_context_hints().c_str(), name_, owner_);
+
             owner_ = 0;
         }
     }
@@ -532,10 +556,11 @@ class UniqueLock
         lock_name_(logged_mutex_.get_name()),
         moved_from_(false)
     {
-        msg_vinfo(logged_mutex_.get_log_level(),
-                  "<%s> UniqueLock %p: create, attempt to lock %s",
-                  get_context_hints().c_str(),
-                  static_cast<const void *>(this), lock_name_);
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(),
+                      "<%s> UniqueLock %p: create, attempt to lock %s",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this), lock_name_);
         lock();
     }
 
@@ -545,10 +570,11 @@ class UniqueLock
         lock_name_(logged_mutex_.get_name()),
         moved_from_(false)
     {
-        msg_vinfo(logged_mutex_.get_log_level(),
-                  "<%s> UniqueLock %p: created with unlocked %s",
-                  get_context_hints().c_str(),
-                  static_cast<const void *>(this), lock_name_);
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(),
+                      "<%s> UniqueLock %p: created with unlocked %s",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this), lock_name_);
     }
 
     explicit UniqueLock(MutexType &mutex, std::try_to_lock_t t):
@@ -557,11 +583,12 @@ class UniqueLock
         lock_name_(logged_mutex_.get_name()),
         moved_from_(false)
     {
-        msg_vinfo(logged_mutex_.get_log_level(),
-                  "<%s> UniqueLock %p: created, tried to lock and %s, %s",
-                  get_context_hints().c_str(),
-                  static_cast<const void *>(this),
-                  lock_.owns_lock() ? "succeeded" : "failed", lock_name_);
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(),
+                      "<%s> UniqueLock %p: created, tried to lock and %s, %s",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this),
+                      lock_.owns_lock() ? "succeeded" : "failed", lock_name_);
 
         if(lock_.owns_lock())
             MTraits::set_owner(logged_mutex_);
@@ -575,9 +602,11 @@ class UniqueLock
         moved_from_(src.moved_from_)
     {
         src.moved_from_ = true;
-        msg_vinfo(logged_mutex_.get_log_level(), "<%s> UniqueLock %p: moved to %p",
-                  get_context_hints().c_str(), static_cast<const void *>(&src),
-                  static_cast<const void *>(this));
+
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(), "<%s> UniqueLock %p: moved to %p",
+                      get_context_hints().c_str(), static_cast<const void *>(&src),
+                      static_cast<const void *>(this));
     }
 
     ~UniqueLock()
@@ -585,10 +614,11 @@ class UniqueLock
         if(moved_from_)
             return;
 
-        msg_vinfo(logged_mutex_.get_log_level(),
-                  "<%s> UniqueLock %p: destroy with %s owned by <%08lx>",
-                  get_context_hints().c_str(), static_cast<const void *>(this),
-                  lock_name_, get_mutex_owner());
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(),
+                      "<%s> UniqueLock %p: destroy with %s owned by <%08lx>",
+                      get_context_hints().c_str(), static_cast<const void *>(this),
+                      lock_name_, get_mutex_owner());
 
         if(lock_.owns_lock())
             MTraits::destroy_owned(logged_mutex_);
@@ -610,35 +640,43 @@ class UniqueLock
 
     void lock()
     {
-        msg_vinfo(logged_mutex_.get_log_level(),
-                  "<%s> UniqueLock %p: lock %s",
-                  get_context_hints().c_str(),
-                  static_cast<const void *>(this), lock_name_);
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(),
+                      "<%s> UniqueLock %p: lock %s",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this), lock_name_);
+
         logged_mutex_.about_to_lock(false);
         lock_.lock();
         MTraits::set_owner(logged_mutex_);
-        msg_vinfo(logged_mutex_.get_log_level(),
-                  "<%s> UniqueLock %p: locked %s",
-                  get_context_hints().c_str(),
-                  static_cast<const void *>(this), lock_name_);
+
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(),
+                      "<%s> UniqueLock %p: locked %s",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this), lock_name_);
     }
 
     void unlock()
     {
-        msg_vinfo(logged_mutex_.get_log_level(),
-                  "<%s> UniqueLock %p: unlock %s",
-                  get_context_hints().c_str(),
-                  static_cast<const void *>(this), lock_name_);
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(),
+                      "<%s> UniqueLock %p: unlock %s",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this), lock_name_);
+
         MTraits::clear_owner(logged_mutex_);
         lock_.unlock();
     }
 
     std::unique_lock<std::mutex> &get_raw_unique_lock()
     {
-        msg_vinfo(logged_mutex_.get_log_level(),
-                  "<%s> UniqueLock %p: get raw unique_lock for %s",
-                  get_context_hints().c_str(),
-                  static_cast<const void *>(this), lock_name_);
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get_log_level(),
+                      "<%s> UniqueLock %p: get raw unique_lock for %s",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this), lock_name_);
+
         return lock_;
     }
 
@@ -679,13 +717,17 @@ class ConditionVariable
                             "owned by <%08lx>",
                             name_, get_context_hints().c_str(), lock.get_mutex_owner());
 
-        msg_vinfo(log_level_, "<%s> Cond %s: wait for %s",
-                  get_context_hints().c_str(), name_, lock.get_mutex_name());
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Cond %s: wait for %s",
+                      get_context_hints().c_str(), name_, lock.get_mutex_name());
+
         lock.clear_mutex_owner();
         var_.wait(lock.get_raw_unique_lock(), pred);
         lock.set_mutex_owner();
-        msg_vinfo(log_level_, "<%s> Cond %s: waited for %s",
-                  get_context_hints().c_str(), name_, lock.get_mutex_name());
+
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Cond %s: waited for %s",
+                      get_context_hints().c_str(), name_, lock.get_mutex_name());
     }
 
     template <class Rep, class Period, class Predicate>
@@ -698,28 +740,37 @@ class ConditionVariable
                             "owned by <%08lx> with timeout",
                             name_, get_context_hints().c_str(), lock.get_mutex_owner());
 
-        msg_vinfo(log_level_, "<%s> Cond %s: wait for %s with timeout",
-                  get_context_hints().c_str(), name_, lock.get_mutex_name());
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Cond %s: wait for %s with timeout",
+                      get_context_hints().c_str(), name_, lock.get_mutex_name());
+
         lock.clear_mutex_owner();
         const bool result = var_.wait_for(lock.get_raw_unique_lock(), rel_time, pred);
         lock.set_mutex_owner();
-        msg_vinfo(log_level_, "<%s> Cond %s: waited for %s with timeout -> %s",
-                  get_context_hints().c_str(), name_, lock.get_mutex_name(),
-                  result ? "OK" : "timed out");
+
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Cond %s: waited for %s with timeout -> %s",
+                      get_context_hints().c_str(), name_, lock.get_mutex_name(),
+                      result ? "OK" : "timed out");
+
         return result;
     }
 
     void notify_all()
     {
-        msg_vinfo(log_level_, "<%s> Cond %s: notify all",
-                  get_context_hints().c_str(), name_);
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Cond %s: notify all",
+                      get_context_hints().c_str(), name_);
+
         var_.notify_all();
     }
 
     void notify_one()
     {
-        msg_vinfo(log_level_, "<%s> Cond %s: notify one",
-                  get_context_hints().c_str(), name_);
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> Cond %s: notify one",
+                      get_context_hints().c_str(), name_);
+
         var_.notify_one();
     }
 
@@ -824,6 +875,9 @@ static inline void configure(LoggedLock::UniqueLock<T> &lk, std::string &&name)
 }
 
 #else /* /!LOGGED_LOCKS_ENABLED */
+
+static inline void enable_log_messages() {}
+static inline void disable_log_messages() {}
 
 static inline void set_context_name(const char *name) {}
 #define LOGGED_LOCK_CONTEXT_HINT            do {} while(0)

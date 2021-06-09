@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2020, 2021  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -77,4 +77,24 @@ int os_map_file_to_memory(struct os_mapped_file_data *mapped,
 void os_unmap_file(struct os_mapped_file_data *mapped)
 {
     MockOS::singleton->check_next<MockOS::UnmapFile>(mapped);
+}
+
+int os_foreach_in_path(const char *path,
+                       int (*callback)(const char *path, unsigned char dtype,
+                                       void *user_data),
+                       void *user_data)
+{
+    FAIL("Not implemented yet");
+    return -1;
+}
+
+void os_sync_dir(const char *path)
+{
+    FAIL("Not implemented yet");
+}
+
+int os_system_formatted(bool is_verbose, const char *format_string, ...)
+{
+    FAIL("Not implemented yet");
+    return -1;
 }

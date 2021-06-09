@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2020, 2021  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -28,6 +28,7 @@
 #include <memory>
 #include <cstdio>
 #include <cstdarg>
+#include <vector>
 #include <utility>
 #include <typeinfo>
 #include <typeindex>
@@ -196,12 +197,13 @@ class MockExpectationsTemplate
 
         va_copy(copy, va);
         auto len = std::vsnprintf(nullptr, 0, format_string, copy);
-        char buffer[len + 1];
+        std::vector<char> buffer;
+        buffer.resize(len + 1);
 
         va_copy(copy, va);
-        std::vsnprintf(buffer, sizeof(buffer), format_string, copy);
+        std::vsnprintf(buffer.data(), buffer.size(), format_string, copy);
 
-        return next<T>(buffer);
+        return next<T>(buffer.data());
     }
 };
 

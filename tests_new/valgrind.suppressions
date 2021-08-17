@@ -29,6 +29,15 @@
     fun:g_variant_type_info_get
 }
 {
+    <g_error_new_valist>
+    Memcheck:Leak
+    fun:malloc
+    ...
+    fun:g_rw_lock_reader_lock
+    ...
+    fun:g_error_new_valist
+}
+{
    <_dl_init>
    Memcheck:Leak
    ...

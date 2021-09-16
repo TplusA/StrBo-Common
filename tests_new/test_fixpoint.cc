@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2021  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of DCPD.
  *
@@ -573,7 +573,7 @@ static void check_back_and_forth_conversions_are_stable(double dbl)
 {
     const auto value = FixPoint(dbl);
     const auto dbl_result = value.to_double();
-    const auto dbl_again = FixPoint(dbl_result).to_double();;
+    const auto dbl_again = FixPoint(dbl_result).to_double();
 
     expect_equal_doubles(dbl_again, dbl, dbl_result);
 

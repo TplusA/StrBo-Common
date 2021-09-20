@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2019, 2021  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -68,12 +68,12 @@ class GErrorWrapper
             what = "<UNKNOWN>";
 
         if(gerror_->message != nullptr)
-            msg_error(0, LOG_EMERG, "%s: Got %s error: %s",
-                      what, g_quark_to_string(gerror_->domain),
+            msg_error(0, LOG_EMERG, "%s: Got %s error %d: %s",
+                      what, g_quark_to_string(gerror_->domain), gerror_->code,
                       gerror_->message);
         else
-            msg_error(0, LOG_EMERG, "%s: Got %s error without any message",
-                      what, g_quark_to_string(gerror_->domain));
+            msg_error(0, LOG_EMERG, "%s: Got %s error %d without any message",
+                      what, g_quark_to_string(gerror_->domain), gerror_->code);
 
         noticed();
 

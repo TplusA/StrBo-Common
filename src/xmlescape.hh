@@ -22,6 +22,9 @@
 #ifndef XMLESCAPE_HH
 #define XMLESCAPE_HH
 
+#include <string>
+#include <ostream>
+
 /*!
  * Little helper class for buffer-less escaping of data for XML character data
  * while generating XML.

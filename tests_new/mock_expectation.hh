@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019, 2020, 2021  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018--2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -77,7 +77,7 @@ class MockExpectationsTemplate
         FAIL("Too many expectations for " << mock_id_);
     }
 
-    void add(std::unique_ptr<E> expectation)
+    size_t add(std::unique_ptr<E> expectation)
     {
         expectations_.emplace_back(std::move(expectation));
 
@@ -93,6 +93,8 @@ class MockExpectationsTemplate
 
             next_checked_expectation_needs_initialization_ = false;
         }
+
+        return expectations_.size() - 1;
     }
 
     template <typename T>
@@ -177,6 +179,18 @@ class MockExpectationsTemplate
             next_checked_expectation_needs_initialization_ = true;
 
         return ptr->check(args...);
+    }
+
+    template <typename T>
+    const T &get(size_t idx)
+    {
+        REQUIRE_MESSAGE(idx < expectations_.size(),
+                        "Expectation index " << idx << " out of bounds");
+        const T *temp = dynamic_cast<const T *>(expectations_[idx].get());
+        REQUIRE_MESSAGE(temp != nullptr,
+                        "Requested expectation at index " << idx <<
+                        " has unexpected type");
+        return *temp;
     }
 
     template <typename T>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -29,7 +29,6 @@ template <typename E>
 class MockExpectationsTemplate
 {
   private:
-
     std::vector<E> expectations_;
     size_t next_checked_expectation_;
 

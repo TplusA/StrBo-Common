@@ -164,7 +164,7 @@ class MockExpectationsTemplate
             FAIL("Missing expectations for " << mock_id_ << ": " << typeid(T).name());
         }
 
-        const auto *ptr = dynamic_cast<const T *>(next_checked_expectation_->get());
+        auto *ptr = dynamic_cast<T *>(next_checked_expectation_->get());
 
         if(ptr == nullptr)
         {

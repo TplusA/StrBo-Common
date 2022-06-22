@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2016, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -103,5 +103,8 @@ typedef uint16_t stream_id_t;
 
 /*! Stream source: Roon Ready. */
 #define STREAM_ID_SOURCE_ROON_READY     STREAM_ID_MAKE_SOURCE(3)
+
+/*! Stream source: Wishlist Daemon. */
+#define STREAM_ID_SOURCE_WISHLIST       STREAM_ID_MAKE_SOURCE(4)
 
 #endif /* !STREAM_ID_H */

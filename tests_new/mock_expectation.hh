@@ -74,7 +74,7 @@ class MockExpectationsTemplate
         MESSAGE(mock_id_ << ": Having " << total_count <<
                 " expectation" << plural_s << ", but only " <<
                 checked_count << " " << was_were << " checked");
-        FAIL("Too many expectations for " << mock_id_);
+        FAIL_CHECK("Too many expectations for " << mock_id_);
     }
 
     size_t add(std::unique_ptr<E> expectation)

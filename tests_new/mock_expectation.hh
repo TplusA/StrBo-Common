@@ -77,7 +77,7 @@ class MockExpectationsTemplate
         FAIL_CHECK("Too many expectations for " << mock_id_);
     }
 
-    size_t add(std::unique_ptr<E> expectation)
+    E *add(std::unique_ptr<E> expectation)
     {
         expectations_.emplace_back(std::move(expectation));
 
@@ -94,7 +94,7 @@ class MockExpectationsTemplate
             next_checked_expectation_needs_initialization_ = false;
         }
 
-        return expectations_.size() - 1;
+        return expectations_.rbegin()->get();
     }
 
     template <typename T>
@@ -179,18 +179,6 @@ class MockExpectationsTemplate
             next_checked_expectation_needs_initialization_ = true;
 
         return ptr->check(args...);
-    }
-
-    template <typename T>
-    const T &get(size_t idx)
-    {
-        REQUIRE_MESSAGE(idx < expectations_.size(),
-                        "Expectation index " << idx << " out of bounds");
-        const T *temp = dynamic_cast<const T *>(expectations_[idx].get());
-        REQUIRE_MESSAGE(temp != nullptr,
-                        "Requested expectation at index " << idx <<
-                        " has unexpected type");
-        return *temp;
     }
 
     template <typename T>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2020, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -30,10 +30,12 @@ MockBacktrace::Mock *MockBacktrace::singleton = nullptr;
 
 void backtrace_log(size_t depth, const char *message)
 {
+    REQUIRE(MockBacktrace::singleton != nullptr);
     MockBacktrace::singleton->check_next<MockBacktrace::Log>(depth, message);
 }
 
 void backtrace_dump(size_t depth, const char *message)
 {
+    REQUIRE(MockBacktrace::singleton != nullptr);
     MockBacktrace::singleton->check_next<MockBacktrace::Dump>(depth, message);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -134,16 +134,19 @@ void msg_enable_syslog(bool enable_syslog) {}
 
 void msg_set_verbose_level(enum MessageVerboseLevel level)
 {
+    REQUIRE(MockMessages::singleton != nullptr);
     MockMessages::singleton->set_verbose_level(level);
 }
 
 enum MessageVerboseLevel msg_get_verbose_level(void)
 {
+    REQUIRE(MockMessages::singleton != nullptr);
     return MockMessages::singleton->get_verbose_level();
 }
 
 bool msg_is_verbose(enum MessageVerboseLevel level)
 {
+    REQUIRE(MockMessages::singleton != nullptr);
     return MockMessages::singleton->check_next<MockMessages::MsgIsVerbose>(level);
 }
 
@@ -186,6 +189,7 @@ const char *msg_verbose_level_to_level_name(enum MessageVerboseLevel level)
 
 void msg_error(int error_code, int priority, const char *error_format, ...)
 {
+    REQUIRE(MockMessages::singleton != nullptr);
     if(MockMessages::singleton->ignore_all_)
         return;
 
@@ -226,6 +230,7 @@ void msg_error(int error_code, int priority, const char *error_format, ...)
 
 void msg_info(const char *format_string, ...)
 {
+    REQUIRE(MockMessages::singleton != nullptr);
     if(MockMessages::singleton->ignore_all_)
         return;
 
@@ -259,6 +264,7 @@ void msg_info(const char *format_string, ...)
 
 void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
 {
+    REQUIRE(MockMessages::singleton != nullptr);
     if(MockMessages::singleton->ignore_all_)
         return;
 
@@ -292,6 +298,7 @@ void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
 
 int msg_out_of_memory(const char *what)
 {
+    REQUIRE(MockMessages::singleton != nullptr);
     if(MockMessages::singleton->ignore_all_)
         return -1;
 

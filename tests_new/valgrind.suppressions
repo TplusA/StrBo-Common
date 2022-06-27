@@ -1,20 +1,20 @@
 {
-   <g_type_register_static>
-   Memcheck:Leak
-   ...
-   fun:g_type_register_static
+    <g_type_register_static>
+    Memcheck:Leak
+    ...
+    fun:g_type_register_static
 }
 {
-   <g_type_register_static>
-   Memcheck:Leak
-   ...
-   fun:g_type_register_fundamental
+    <g_type_register_static>
+    Memcheck:Leak
+    ...
+    fun:g_type_register_fundamental
 }
 {
-   <g_type_register_static>
-   Memcheck:Leak
-   ...
-   fun:g_malloc0
+    <g_type_register_static>
+    Memcheck:Leak
+    ...
+    fun:g_malloc0
 }
 {
     <g_param_type_register_static>
@@ -38,16 +38,16 @@
     fun:g_error_new_valist
 }
 {
-   <_dl_init>
-   Memcheck:Leak
-   ...
-   fun:call_init
-   fun:_dl_init
+    <_dl_init>
+    Memcheck:Leak
+    ...
+    fun:call_init
+    fun:_dl_init
 }
 {
-   <_dl_init>
-   Memcheck:Leak
-   ...
-   fun:call_init.part.0
-   fun:_dl_init
+    <_dl_init>
+    Memcheck:Leak
+    ...
+    fun:call_init.part.0
+    fun:_dl_init
 }

@@ -7,6 +7,12 @@ fi
 
 RET=0
 
+$(find ${srcdir} -name '*.suppressions') | \
+while read -r supp
+do
+    VALGRIND_OPTIONS="${VALGRIND_OPTIONS} --suppressions=\"${supp}\""
+done
+
 for t in $(find . -maxdepth 1 -executable -name 'test_*')
 do
     echo "Valgrind $t"

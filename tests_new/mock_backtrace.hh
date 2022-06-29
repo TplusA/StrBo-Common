@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2020, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -31,13 +31,23 @@ namespace MockBacktrace
 /*! Base class for expectations. */
 class Expectation
 {
+  private:
+    std::string name_;
+    unsigned int sequence_serial_;
+
   public:
     Expectation(const Expectation &) = delete;
     Expectation(Expectation &&) = default;
     Expectation &operator=(const Expectation &) = delete;
     Expectation &operator=(Expectation &&) = default;
-    Expectation() {}
+    Expectation(std::string &&name):
+        name_(std::move(name)),
+        sequence_serial_(std::numeric_limits<unsigned int>::max())
+    {}
     virtual ~Expectation() {}
+    const std::string &get_name() const { return name_; }
+    void set_sequence_serial(unsigned int ss) { sequence_serial_ = ss; }
+    unsigned int get_sequence_serial() const { return sequence_serial_; }
 };
 
 class Mock
@@ -103,7 +113,8 @@ class LogOrDump: public Expectation
     const std::string message_;
 
   protected:
-    explicit LogOrDump(size_t depth, const char *message):
+    explicit LogOrDump(std::string &&name, size_t depth, const char *message):
+        Expectation(std::move(name)),
         requested_depth_(depth),
         message_(message != nullptr ? message : "")
     {}
@@ -124,7 +135,7 @@ class Log: public LogOrDump
 {
   public:
     explicit Log(size_t depth = 0, const char *message = "bug context"):
-        LogOrDump(depth, message)
+        LogOrDump("Log", depth, message)
     {}
 };
 
@@ -132,7 +143,7 @@ class Dump: public LogOrDump
 {
   public:
     explicit Dump(size_t depth = 0, const char *message = "bug context"):
-        LogOrDump(depth, message)
+        LogOrDump("Dump", depth, message)
     {}
 };
 

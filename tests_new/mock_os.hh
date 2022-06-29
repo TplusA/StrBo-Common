@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2020, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -35,13 +35,23 @@ namespace MockOS
 /*! Base class for expectations. */
 class Expectation
 {
+  private:
+    std::string name_;
+    unsigned int sequence_serial_;
+
   public:
     Expectation(const Expectation &) = delete;
     Expectation(Expectation &&) = default;
     Expectation &operator=(const Expectation &) = delete;
     Expectation &operator=(Expectation &&) = default;
-    Expectation() {}
+    Expectation(std::string &&name):
+        name_(std::move(name)),
+        sequence_serial_(std::numeric_limits<unsigned int>::max())
+    {}
     virtual ~Expectation() {}
+    const std::string &get_name() const { return name_; }
+    void set_sequence_serial(unsigned int ss) { sequence_serial_ = ss; }
+    unsigned int get_sequence_serial() const { return sequence_serial_; }
 };
 
 class Mock
@@ -115,7 +125,7 @@ class Abort: public Expectation
     const int ret_errno_;
 
   public:
-    explicit Abort(int ret_errno): ret_errno_(ret_errno) {}
+    explicit Abort(int ret_errno): Expectation("Abort"), ret_errno_(ret_errno) {}
     virtual ~Abort() {}
     void check() const { errno = ret_errno_; }
 };
@@ -129,6 +139,7 @@ class ResolveSymlink: public Expectation
 
   public:
     explicit ResolveSymlink(const char *retval, int ret_errno, const char *link):
+        Expectation("ResolveSymlink"),
         retval_(retval),
         ret_errno_(ret_errno),
         link_(link)
@@ -156,6 +167,7 @@ class MapFileToMemory: public Expectation
     explicit MapFileToMemory(int retval, int ret_errno,
                              const struct os_mapped_file_data *mapped,
                              const char *filename):
+        Expectation("MapFileToMemory"),
         retval_(retval),
         ret_errno_(ret_errno),
         mapped_template_(mapped),
@@ -165,6 +177,7 @@ class MapFileToMemory: public Expectation
 
     explicit MapFileToMemory(int retval, int ret_errno,
                              bool expect_null_pointer, const char *filename):
+        Expectation("MapFileToMemory"),
         retval_(retval),
         ret_errno_(ret_errno),
         mapped_template_(nullptr),
@@ -212,6 +225,7 @@ class WriteFromBuffer: public Expectation
 
   public:
     explicit WriteFromBuffer(int ret_errno, const Callback &fn):
+        Expectation("WriteFromBuffer"),
         retval_(-5),
         ret_errno_(ret_errno),
         src_(nullptr),
@@ -223,6 +237,7 @@ class WriteFromBuffer: public Expectation
 
     explicit WriteFromBuffer(int retval, int ret_errno,
                              const void *src, size_t count, int fd):
+        Expectation("WriteFromBuffer"),
         retval_(retval),
         ret_errno_(ret_errno),
         src_(src),
@@ -233,6 +248,7 @@ class WriteFromBuffer: public Expectation
 
     explicit WriteFromBuffer(int retval, int ret_errno,
                              bool expect_null_pointer, size_t count, int fd):
+        Expectation("WriteFromBuffer"),
         retval_(retval),
         ret_errno_(ret_errno),
         src_(nullptr),
@@ -277,6 +293,7 @@ class PathGetType: public Expectation
 
   public:
     explicit PathGetType(enum os_path_type retval, int ret_errno, const char *pathname):
+        Expectation("PathGetType"),
         retval_(retval),
         ret_errno_(ret_errno),
         pathname_(pathname)
@@ -300,6 +317,7 @@ class FileNew: public Expectation
 
   public:
     explicit FileNew(int retval, int ret_errno, const char *filename):
+        Expectation("FileNew"),
         retval_(retval),
         ret_errno_(ret_errno),
         filename_(filename)
@@ -322,6 +340,7 @@ class FileClose: public Expectation
 
   public:
     explicit FileClose(int ret_errno, int fd):
+        Expectation("FileClose"),
         ret_errno_(ret_errno),
         fd_(fd)
     {}
@@ -342,6 +361,7 @@ class FileDelete: public Expectation
 
   public:
     explicit FileDelete(int retval, int ret_errno, const char *filename):
+        Expectation("FileDelete"),
         retval_(retval),
         ret_errno_(ret_errno),
         filename_(filename)
@@ -364,6 +384,7 @@ class UnmapFile: public Expectation
 
   public:
     explicit UnmapFile(int ret_errno, const struct os_mapped_file_data *mapped):
+        Expectation("UnmapFile"),
         ret_errno_(ret_errno),
         mapped_(mapped)
     {}

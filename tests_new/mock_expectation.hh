@@ -33,6 +33,101 @@
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
+#include <limits>
+
+class MockExpectationSequence
+{
+  private:
+    const std::string eseq_id_;
+    unsigned int next_assigned_serial_;
+    unsigned int next_checked_serial_;
+    std::list<std::string> names_;
+
+  public:
+    MockExpectationSequence(const MockExpectationSequence &) = delete;
+    MockExpectationSequence(MockExpectationSequence &&) = default;
+    MockExpectationSequence &operator=(const MockExpectationSequence &) = delete;
+    MockExpectationSequence &operator=(MockExpectationSequence &&) = default;
+
+    explicit MockExpectationSequence(std::string &&eseq_id = "Expectation Sequence"):
+        eseq_id_(std::move(eseq_id)),
+        next_assigned_serial_(0),
+        next_checked_serial_(0)
+    {}
+
+    void reset()
+    {
+        next_assigned_serial_ = 0;
+        next_checked_serial_ = 0;
+        names_.clear();
+    }
+
+    void done()
+    {
+        CHECK(next_assigned_serial_ == names_.size());
+
+        if(next_checked_serial_ == names_.size())
+        {
+            reset();
+            return;
+        }
+
+        const char *plural_s = (next_assigned_serial_ == 1 ? "" : "s");
+        const char *was_were = (next_checked_serial_ == 1 ? "was" : "were");
+
+        MESSAGE(eseq_id_ << ": Having sequence of " << next_assigned_serial_ <<
+                " expectation" << plural_s << ", but only " <<
+                next_checked_serial_ << " " << was_were << " checked");
+        show_missing_expectations(next_assigned_serial_);
+        FAIL_CHECK("Too many expectations in " << eseq_id_);
+
+        reset();
+    }
+
+    unsigned int make_serial(std::string &&name)
+    {
+        names_.emplace_back(std::move(name));
+        return next_assigned_serial_++;
+    }
+
+    void check(unsigned int serial, const std::string &name)
+    {
+        if(serial == next_checked_serial_)
+        {
+            ++next_checked_serial_;
+            return;
+        }
+
+        if(next_checked_serial_ < names_.size())
+        {
+            FAIL_CHECK(eseq_id_ << ": observed unexpected " << name <<
+                       " with serial " << serial << ", but expected serial " <<
+                       next_checked_serial_);
+            show_missing_expectations(serial);
+        }
+        else
+            FAIL_CHECK(
+                eseq_id_ << ": expected no more expectations, but observed " <<
+                name << " with serial " << serial);
+
+        CHECK(serial < names_.size());
+        FAIL(eseq_id_ << ": out of sync");
+    }
+
+  private:
+    void show_missing_expectations(unsigned int up_to_serial)
+    {
+        REQUIRE(next_checked_serial_ < up_to_serial);
+
+        auto it(std::next(names_.begin(), next_checked_serial_));
+        for(unsigned int i = next_checked_serial_; i < up_to_serial; ++i, ++it)
+            MESSAGE("Expected serial " << i << ": " << *it);
+    }
+};
+
+#ifdef MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON
+extern std::shared_ptr<MockExpectationSequence> mock_expectation_sequence_singleton;
+#endif /* MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON */
 
 template <typename E>
 class MockExpectationsTemplate
@@ -47,17 +142,25 @@ class MockExpectationsTemplate
 
     std::unordered_map<std::type_index, std::unique_ptr<E>> ignored_;
 
+    std::shared_ptr<MockExpectationSequence> eseq_;
+
   public:
     MockExpectationsTemplate(const MockExpectationsTemplate &) = delete;
     MockExpectationsTemplate(MockExpectationsTemplate &&) = default;
     MockExpectationsTemplate &operator=(const MockExpectationsTemplate &) = delete;
     MockExpectationsTemplate &operator=(MockExpectationsTemplate &&) = default;
 
-    explicit MockExpectationsTemplate(std::string &&mock_id):
+    explicit MockExpectationsTemplate(std::string &&mock_id,
+                                      std::shared_ptr<MockExpectationSequence> eseq = nullptr):
         mock_id_(mock_id),
         next_checked_expectation_(expectations_.begin()),
         next_checked_expectation_needs_initialization_(true),
-        next_checked_is_front_(true)
+        next_checked_is_front_(true),
+#ifdef MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON
+        eseq_(eseq != nullptr ? std::move(eseq) : mock_expectation_sequence_singleton)
+#else /* !MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON */
+        eseq_(std::move(eseq))
+#endif /* MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON */
     {}
 
     void done() const
@@ -79,6 +182,10 @@ class MockExpectationsTemplate
 
     E *add(std::unique_ptr<E> expectation)
     {
+        if(eseq_ != nullptr)
+            expectation->set_sequence_serial(eseq_->make_serial(
+                            mock_id_ + "." + expectation->get_name()));
+
         expectations_.emplace_back(std::move(expectation));
 
         if(next_checked_expectation_needs_initialization_)
@@ -177,6 +284,10 @@ class MockExpectationsTemplate
 
         if(next_checked_expectation_ == expectations_.end())
             next_checked_expectation_needs_initialization_ = true;
+
+        if(eseq_ != nullptr)
+            eseq_->check(ptr->get_sequence_serial(),
+                         mock_id_ + "." + ptr->get_name());
 
         return ptr->check(args...);
     }

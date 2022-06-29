@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -31,13 +31,23 @@ namespace MockMessages
 /*! Base class for expectations. */
 class Expectation
 {
+  private:
+    std::string name_;
+    unsigned int sequence_serial_;
+
   public:
     Expectation(const Expectation &) = delete;
     Expectation(Expectation &&) = default;
     Expectation &operator=(const Expectation &) = delete;
     Expectation &operator=(Expectation &&) = default;
-    Expectation() {}
+    Expectation(std::string &&name):
+        name_(std::move(name)),
+        sequence_serial_(std::numeric_limits<unsigned int>::max())
+    {}
     virtual ~Expectation() {}
+    const std::string &get_name() const { return name_; }
+    void set_sequence_serial(unsigned int ss) { sequence_serial_ = ss; }
+    unsigned int get_sequence_serial() const { return sequence_serial_; }
 };
 
 class Mock
@@ -71,6 +81,12 @@ class Mock
     void expect(Expectation *expectation)
     {
         expectations_.add(std::unique_ptr<Expectation>(expectation));
+    }
+
+    template <typename T, typename ... Args>
+    T &expect(Args ... args)
+    {
+        return *static_cast<T *>(expectations_.add(std::make_unique<T>(args...)));
     }
 
     template <typename T>
@@ -124,6 +140,7 @@ class MsgIsVerbose: public Expectation
 
   public:
     explicit MsgIsVerbose(bool retval, MessageVerboseLevel level):
+        Expectation("MsgIsVerbose"),
         retval_(retval),
         level_(level)
     {}
@@ -147,16 +164,19 @@ class Message: public Expectation
     const MessageVerboseLevel level_;
 
   protected:
-    explicit Message(std::string &&msg, bool is_format_string,
-                     MessageVerboseLevel level):
+    explicit Message(std::string &&name, std::string &&msg,
+                     bool is_format_string, MessageVerboseLevel level):
+        Expectation(std::move(name)),
         msg_(std::move(msg)),
         is_format_string_(is_format_string),
         is_complete_string_(true),
         level_(level)
     {}
 
-    explicit Message(std::string &&prefix, std::string &&suffix,
+    explicit Message(std::string &&name, std::string &&prefix,
+                     std::string &&suffix,
                      bool is_format_string, MessageVerboseLevel level):
+        Expectation(std::move(name)),
         msg_(std::move(prefix)),
         msg_end_(std::move(suffix)),
         is_format_string_(is_format_string),
@@ -172,13 +192,15 @@ class MsgVinfo: public Message
 {
   public:
     explicit MsgVinfo(MessageVerboseLevel level,
-                      const char *msg, bool is_format_string):
-        Message(msg, is_format_string, level)
+                      const char *msg, bool is_format_string,
+                      std::string &&name = "MsgVinfo"):
+        Message(std::move(name), msg, is_format_string, level)
     {}
 
     explicit MsgVinfo(MessageVerboseLevel level, const char *prefix,
-                      const char *suffix, bool is_format_string):
-        Message(prefix, suffix, is_format_string, level)
+                      const char *suffix, bool is_format_string,
+                      std::string &&name = "MsgVinfo"):
+        Message(std::move(name), prefix, suffix, is_format_string, level)
     {}
 
     void check(MessageVerboseLevel level, const char *format_string, va_list va) const
@@ -191,12 +213,12 @@ class MsgInfo: public MsgVinfo
 {
   public:
     explicit MsgInfo(const char *msg, bool is_format_string):
-        MsgVinfo(MESSAGE_LEVEL_NORMAL, msg, is_format_string)
+        MsgVinfo(MESSAGE_LEVEL_NORMAL, msg, is_format_string, "MsgInfo")
     {}
 
     explicit MsgInfo(const char *prefix, const char *suffix,
                      bool is_format_string):
-        MsgVinfo(MESSAGE_LEVEL_NORMAL, prefix, suffix, is_format_string)
+        MsgVinfo(MESSAGE_LEVEL_NORMAL, prefix, suffix, is_format_string, "MsgInfo")
     {}
 
     void check(const char *format_string, va_list va) const
@@ -238,8 +260,9 @@ class MsgError: public Message
     const int priority_;
 
     explicit MsgError(int error_code, int priority,
-                      const char *msg, bool is_format_string):
-        Message(msg, is_format_string,
+                      const char *msg, bool is_format_string,
+                      std::string &&name = "MsgError"):
+        Message(std::move(name), msg, is_format_string,
                 map_syslog_prio_to_verbose_level(priority)),
         error_code_(error_code),
         priority_(priority)
@@ -247,8 +270,9 @@ class MsgError: public Message
 
     explicit MsgError(int error_code, int priority,
                       const char *prefix, const char *suffix,
-                      bool is_format_string):
-        Message(prefix, suffix, is_format_string,
+                      bool is_format_string,
+                      std::string &&name = "MsgError"):
+        Message(std::move(name), prefix, suffix, is_format_string,
                 map_syslog_prio_to_verbose_level(priority)),
         error_code_(error_code),
         priority_(priority)
@@ -268,7 +292,7 @@ class MsgOOM: public MsgError
 {
   public:
     explicit MsgOOM(const char *msg):
-        MsgError(ENOMEM, LOG_EMERG, msg, false)
+        MsgError(ENOMEM, LOG_EMERG, msg, false, "MsgOOM")
     {}
 
     void check(const char *msg) const

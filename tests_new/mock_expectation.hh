@@ -114,6 +114,21 @@ class MockExpectationSequence
         FAIL(eseq_id_ << ": out of sync");
     }
 
+    void dump_last_checked()
+    {
+        if(next_assigned_serial_ == 0 || next_checked_serial_ == 0)
+            return;
+
+        static constexpr unsigned int DEPTH = 5;
+
+        const unsigned int first =
+            next_checked_serial_ > DEPTH ? next_checked_serial_ - DEPTH : 0;
+
+        auto it(std::next(names_.begin(), first));
+        for(unsigned int i = first; i < next_checked_serial_; ++i, ++it)
+            MESSAGE("Already checked serial " << i << ": " << *it);
+    }
+
   private:
     void show_missing_expectations(unsigned int up_to_serial)
     {
@@ -267,6 +282,9 @@ class MockExpectationsTemplate
                 MESSAGE(mock_id_ << ": There is only 1 expectation defined.");
             else
                 MESSAGE("There are only " << n << " expectations defined.");
+
+            if(eseq_ != nullptr)
+                eseq_->dump_last_checked();
 
             FAIL("Missing expectations for " << mock_id_ << ": " << typeid(T).name());
         }

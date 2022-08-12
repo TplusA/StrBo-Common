@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015--2021  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2015--2022  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of the T+A Streaming Board software stack ("StrBoWare").
 #
@@ -18,6 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA  02110-1301, USA.
 #
+
+SUBDIRS = dbus
 
 ACLOCAL_AMFLAGS = -I ../m4
 

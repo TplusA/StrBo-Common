@@ -1,4 +1,4 @@
-dnl Copyright (C) 2015, 2017, 2019  T+A elektroakustik GmbH & Co. KG
+dnl Copyright (C) 2015, 2017, 2019, 2022  T+A elektroakustik GmbH & Co. KG
 dnl
 dnl This file is part of the T+A Streaming Board software stack ("StrBoWare").
 dnl
@@ -105,7 +105,7 @@ AM_CONDITIONAL([WITH_CUTTER], [test "x$ac_cv_use_cutter" = "xyes"])
 AM_CONDITIONAL([WITH_DOCTEST], [test "x$ac_cv_header_doctest_h" = "xyes"])
 AM_CONDITIONAL([WITH_VALGRIND], [test "x$enable_valgrind" = "xyes"])
 
-AC_CONFIG_FILES([Makefile src/Makefile tests_new/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile src/dbus/Makefile tests_new/Makefile tests/Makefile])
 AC_CONFIG_FILES([tests/run_test.sh], [chmod +x tests/run_test.sh])
 AC_CONFIG_FILES([tests/valgrind.sh], [chmod +x tests/valgrind.sh])
 AC_OUTPUT

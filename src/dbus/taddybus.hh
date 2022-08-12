@@ -198,12 +198,13 @@ class Iface: public IfaceBase
      *     Handler traits declaring the D-Bus method handler.
      */
     template <typename Tag, typename MHTraits = MethodHandlerTraits<Tag>>
-    void connect_default_method_handler()
+    Iface &connect_default_method_handler()
     {
         static_assert(std::is_same<typename MHTraits::IfaceType, T>::value,
                       "Handler is not meant to be used with this interface");
         g_signal_connect(iface_, MHTraits::glib_signal_name(),
                          G_CALLBACK(MHTraits::method_handler), this);
+        return *this;
     }
 
     /*!
@@ -233,8 +234,8 @@ class Iface: public IfaceBase
      */
     template <typename Tag, typename... UserDataT,
               typename MHTraits = MethodHandlerTraits<Tag>>
-    void connect_method_handler(typename MHTraits::template HandlerType<UserDataT...> fn,
-                                UserDataT &&... user_data)
+    Iface &connect_method_handler(typename MHTraits::template HandlerType<UserDataT...> fn,
+                                  UserDataT &&... user_data)
     {
         static_assert(std::is_same<typename MHTraits::IfaceType, T>::value,
                       "Handler is not meant to be used with this interface");
@@ -244,6 +245,7 @@ class Iface: public IfaceBase
                     *this, std::forward<UserDataT>(user_data)...),
             delete_handler_data<Tag, UserDataT...>,
             GConnectFlags(0));
+        return *this;
     }
 
     /*!
@@ -530,12 +532,13 @@ class Proxy: public ProxyBase
      * signals and using #TDBus::SignalHandlerTraits.
      */
     template <typename Tag, typename SHTraits = SignalHandlerTraits<Tag>>
-    void connect_default_signal_handler()
+    Proxy &connect_default_signal_handler()
     {
         static_assert(std::is_same<typename SHTraits::IfaceType, T>::value,
                       "Handler is not meant to be used with this interface");
         g_signal_connect(proxy_, SHTraits::glib_signal_name(),
                          G_CALLBACK(SHTraits::signal_handler), this);
+        return *this;
     }
 
     /*!
@@ -546,8 +549,8 @@ class Proxy: public ProxyBase
      */
     template <typename Tag, typename... UserDataT,
               typename SHTraits = SignalHandlerTraits<Tag>>
-    void connect_signal_handler(typename SHTraits::template HandlerType<UserDataT...> fn,
-                                UserDataT &&... user_data)
+    Proxy &connect_signal_handler(typename SHTraits::template HandlerType<UserDataT...> fn,
+                                  UserDataT &&... user_data)
     {
         static_assert(std::is_same<typename SHTraits::IfaceType, T>::value,
                       "Handler is not meant to be used with this interface");
@@ -557,6 +560,7 @@ class Proxy: public ProxyBase
                     *this, std::forward<UserDataT>(user_data)...),
             delete_handler_data<Tag, UserDataT...>,
             GConnectFlags(0));
+        return *this;
     }
 
     template <typename Tag, typename... Args,

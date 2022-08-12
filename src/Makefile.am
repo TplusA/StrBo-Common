@@ -41,6 +41,7 @@ EXTRA_DIST = \
     messages.c \
     messages_glib.c messages_glib.h \
     messages_dbus.c messages_dbus.h \
+    debug_levels.cc \
     configuration.cc configuration.hh configuration_base.hh \
     configuration_changed.hh configuration_settings.hh \
     gerrorwrapper.hh xmlescape.hh \

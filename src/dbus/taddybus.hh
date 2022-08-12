@@ -249,6 +249,23 @@ class Iface: public IfaceBase
     }
 
     /*!
+     * Connect D-Bus method invocations to a handler function.
+     *
+     * Use this version of this function to connect to a method handler
+     * function which won't make use of the user data passed from GLib. The
+     * pointer will always be \c nullptr if connecting through this function.
+     */
+    template <typename Tag, typename MHTraits = MethodHandlerTraits<Tag>>
+    Iface &connect_method_handler(typename MHTraits::ClassicHandlerType fn)
+    {
+        static_assert(std::is_same<typename MHTraits::IfaceType, T>::value,
+                      "Handler is not meant to be used with this interface");
+        g_signal_connect(iface_, MHTraits::glib_signal_name(),
+                         G_CALLBACK(fn), nullptr);
+        return *this;
+    }
+
+    /*!
      * Complete handling a D-Bus method call.
      *
      * This function is called from D-Bus method handlers, either directly
@@ -560,6 +577,23 @@ class Proxy: public ProxyBase
                     *this, std::forward<UserDataT>(user_data)...),
             delete_handler_data<Tag, UserDataT...>,
             GConnectFlags(0));
+        return *this;
+    }
+
+    /*!
+     * Connect D-Bus signal reception to a handler function.
+     *
+     * Use this version of this function to connect to a signal handler
+     * function which won't make use of the user data passed from GLib. The
+     * pointer will always be \c nullptr if connecting through this function.
+     */
+    template <typename Tag, typename SHTraits = SignalHandlerTraits<Tag>>
+    Proxy &connect_signal_handler(typename SHTraits::ClassicHandlerType fn)
+    {
+        static_assert(std::is_same<typename SHTraits::IfaceType, T>::value,
+                      "Handler is not meant to be used with this interface");
+        g_signal_connect(proxy_, SHTraits::glib_signal_name(),
+                         G_CALLBACK(fn), nullptr);
         return *this;
     }
 

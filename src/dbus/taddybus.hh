@@ -756,6 +756,12 @@ template <typename T>
 Proxy<T> &get_singleton();
 
 /*!
+ * Return a singleton interface object for given interface type \p T.
+ */
+template <typename T>
+Iface<T> &get_exported_iface();
+
+/*!
  * Observe presence of a specific name on a D-Bus connection.
  *
  * While it is perfectly possible to use watchers directly in client code,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2019, 2021  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2019, 2021, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -34,7 +34,7 @@ class XmlEscape
   public:
     const char *const src_;
 
-    XmlEscape(const XmlEscape &) = delete;
+    XmlEscape(const XmlEscape &) = default;
     XmlEscape &operator=(const XmlEscape &) = delete;
 
     explicit XmlEscape(const char *src): src_(src) {}

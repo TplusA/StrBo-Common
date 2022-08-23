@@ -47,7 +47,7 @@ class MockExpectationSequence
     MockExpectationSequence(const MockExpectationSequence &) = delete;
     MockExpectationSequence(MockExpectationSequence &&) = default;
     MockExpectationSequence &operator=(const MockExpectationSequence &) = delete;
-    MockExpectationSequence &operator=(MockExpectationSequence &&) = default;
+    MockExpectationSequence &operator=(MockExpectationSequence &&) = delete;
 
     explicit MockExpectationSequence(std::string &&eseq_id = "Expectation Sequence"):
         eseq_id_(std::move(eseq_id)),

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2020, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -24,7 +24,9 @@
 #endif
 
 #pragma GCC diagnostic push
+#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
 #pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif /* gcc */
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
 #pragma GCC diagnostic pop
@@ -55,7 +57,7 @@ class Result
     Result(const Result &) = delete;
     Result(Result &&) = default;
     Result &operator=(const Result &) = delete;
-    Result &operator=(Result &&) = default;
+    Result &operator=(Result &&) = delete;
 
   private:
     explicit Result(const char *name, double time, unsigned int assertions,
@@ -201,7 +203,6 @@ class XmlReporter: public doctest::IReporter
     std::vector<doctest::SubcaseSignature> subcases_stack;
 
     // caching pointers to objects of these types - safe to do
-    const doctest::ContextOptions &context_options_;
     const doctest::TestCaseData *test_case_data_;
 
     std::vector<std::string> failure_messages_;
@@ -209,8 +210,7 @@ class XmlReporter: public doctest::IReporter
 
   public:
     XmlReporter(const doctest::ContextOptions &in):
-        out(*in.cerr),
-        context_options_(in)
+        out(*in.cerr)
     {}
 
     void report_query(const doctest::QueryData& in) override {}

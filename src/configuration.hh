@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2020, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -153,7 +153,7 @@ class ConfigManager: public ConfigChanged<ValuesT>
     GVariantWrapper lookup_boxed(const char *key) const
     {
         if(!to_local_key(key))
-            return GVariantWrapper(nullptr);
+            return GVariantWrapper();
 
         const size_t requested_key_length(strlen(key));
         const auto &it(std::find_if(
@@ -166,7 +166,7 @@ class ConfigManager: public ConfigChanged<ValuesT>
 
         return it != ValuesT::all_keys.end()
             ? it->box(settings_.values())
-            : GVariantWrapper(nullptr);
+            : GVariantWrapper();
     }
 
     static bool to_local_key(const char *&key)

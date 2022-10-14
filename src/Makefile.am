@@ -48,4 +48,5 @@ EXTRA_DIST = \
     maybe.hh guard.hh error_thrower.hh logged_lock.hh \
     os.c os.hh breakpoint.h backtrace.c backtrace.h \
     hexdump.c hexdump.h \
+    pointer_log.cc pointer_log.hh \
     actor_id.h

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019, 2021  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2021, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of DCPD.
  *
@@ -24,6 +24,9 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <doctest.h>
+
+#include <array>
+#include <tuple>
 #include <iomanip>
 #include <random>
 

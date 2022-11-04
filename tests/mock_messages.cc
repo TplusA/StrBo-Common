@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -26,6 +26,7 @@
 #include <cppcutter.h>
 #include <algorithm>
 
+#include <array>
 #include <vector>
 #include <string>
 #include <memory>

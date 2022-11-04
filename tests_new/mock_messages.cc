@@ -27,6 +27,7 @@
 
 #include "mock_messages.hh"
 
+#include <array>
 #include <iostream>
 #include <algorithm>
 #include <cstring>

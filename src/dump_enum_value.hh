@@ -26,13 +26,19 @@
 #include <sstream>
 
 template <typename T, size_t N>
+static const char *
+enum_to_string(const std::array<const char *const, N> &names, const T val)
+{
+    static_assert(N == size_t(T::LAST_VALUE) + 1, "Wrong array size");
+    return size_t(val) < names.size() ? names[size_t(val)] : "***INVALID***";
+}
+
+template <typename T, size_t N>
 static std::ostream &dump_enum_value(std::ostream &os,
                                      const std::array<const char *const, N> &names,
                                      const char *const prefix, const T val)
 {
-    static_assert(N == size_t(T::LAST_VALUE) + 1, "Wrong array size");
-    os << prefix << "::"
-       << (size_t(val) < names.size() ? names[size_t(val)] : "***INVALID***");
+    os << prefix << "::" << enum_to_string<T, N>(names, val);
     return os;
 }
 

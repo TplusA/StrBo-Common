@@ -32,13 +32,14 @@
 
 #include <gio/gio.h>
 
+#include "gerrorwrapper.hh"
+
 /*!
  * T+A D-Bus (wrapping GDBus into a sensible C++ interface).
  */
 namespace TDBus
 {
 
-bool log_dbus_error(GError **error, const char *what);
 void log_connect_proxy_bug(const char *object_path, const char *name);
 void log_method_done_exception_bug(const char *what);
 void log_async_user_data_ptr(bool should_be_null, const char *fn);
@@ -70,10 +71,10 @@ class IfaceBase
      */
     bool export_interface(GDBusConnection *connection) const
     {
-        GError *error = nullptr;
+        GErrorWrapper error;
         if(g_dbus_interface_skeleton_export(get_interface_skeleton(),
                                             connection, object_path_.c_str(),
-                                            &error))
+                                            error.await()))
             return true;
 
         /* TODO: handle error */
@@ -458,11 +459,11 @@ class Proxy: public ProxyBase
                   typename MCTraits = MethodCallerTraits<Tag>>
         bool finish(Proxy &proxy, Args &&... args)
         {
-            GError *error = nullptr;
+            GErrorWrapper error;
             MCTraits::finish(proxy.proxy_, std::forward<Args>(args)...,
-                             result_, &error);
+                             result_, error.await());
             result_ = nullptr;
-            return log_dbus_error(&error, "Async D-Bus call");
+            return !error.log_failure("Async D-Bus call");
         }
 
         GCancellable *get_cancellable() const { return cancellable_; }
@@ -697,9 +698,9 @@ class Proxy: public ProxyBase
     static void connect_done(GObject *source_object, GAsyncResult *res,
                              gpointer user_data)
     {
-        GError *error = nullptr;
-        auto proxy = (*Traits::proxy_new_finish_fn())(res, &error);
-        const bool result = log_dbus_error(&error, "Create D-Bus proxy");
+        GErrorWrapper error;
+        auto proxy = (*Traits::proxy_new_finish_fn())(res, error.await());
+        const bool result = !error.log_failure("Create D-Bus proxy");
         static_cast<Proxy *>(user_data)->ready(proxy, result);
     }
 

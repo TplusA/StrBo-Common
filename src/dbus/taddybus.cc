@@ -25,27 +25,7 @@
 
 #include "taddybus.hh"
 #include "messages.h"
-
-bool TDBus::log_dbus_error(GError **error, const char *what)
-{
-    if(error == nullptr || *error == nullptr)
-        return true;
-
-    if(what == nullptr)
-        what = "<UNKNOWN>";
-
-    if((*error)->message != nullptr)
-        msg_error(0, LOG_EMERG,
-                  "%s: Got D-Bus error: %s", what, (*error)->message);
-    else
-        msg_error(0, LOG_EMERG,
-                  "%s: Got D-Bus error without any message", what);
-
-    g_error_free(*error);
-    *error = nullptr;
-
-    return false;
-}
+#include "gerrorwrapper.hh"
 
 void TDBus::log_connect_proxy_bug(const char *object_path, const char *name)
 {

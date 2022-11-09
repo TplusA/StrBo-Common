@@ -628,6 +628,22 @@ class Proxy: public ProxyBase
         pending_calls_.emplace(cptr, std::move(c));
     }
 
+    template <typename Tag, typename... Args,
+              typename MCTraits = MethodCallerTraits<Tag>>
+    bool call_sync(Args &&... args)
+    {
+        static_assert(std::is_same<typename MCTraits::IfaceType, T>::value,
+                      "Call is not meant to be used with this interface");
+
+        if(proxy_ == nullptr)
+            return false;
+
+        GErrorWrapper error;
+        MCTraits::invoke_sync(proxy_, std::forward<Args>(args)...,
+                              nullptr, error.await());
+        return !error.log_failure("Sync D-Bus call");
+    }
+
     /*!
      * DO NOT CALL FROM PRODUCTION CODE. This is for unit tests only.
      *

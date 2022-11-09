@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -71,12 +71,12 @@ class Guard
             catch(const std::exception &e)
             {
                 /* catch 'em all, ignore 'em all */
-                BUG("Unhandled exception in Guard: %s", e.what());
+                MSG_BUG("Unhandled exception in Guard: %s", e.what());
             }
             catch(...)
             {
                 /* catch 'em all, ignore 'em all */
-                BUG("Unhandled exception in Guard");
+                MSG_BUG("Unhandled exception in Guard");
             }
         }
     }

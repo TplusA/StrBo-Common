@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -94,7 +94,7 @@ GVariantWrapper::GVariantWrapper(void *variant, GVariantWrapper::Transfer transf
         break;
 
       case Transfer::JUST_MOVE:
-        log_assert(is_full_reference(variant));
+        msg_log_assert(is_full_reference(variant));
         break;
     }
 }

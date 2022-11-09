@@ -109,7 +109,7 @@ class Settings
 
     void changes_processed_notification()
     {
-        log_assert(has_pending_changes_);
+        msg_log_assert(has_pending_changes_);
         has_pending_changes_ = false;
         changed_.fill(false);
     }

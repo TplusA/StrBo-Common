@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2019--2021  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2019--2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -37,9 +37,9 @@
 #endif /* !MSG_WITH_THREAD_ID */
 
 /*!
- * Set to 0 for no specific action on #BUG() and #BUG_IF().
- * Set to 1 to dump a backtrace on #BUG() and #BUG_IF().
- * Set to 2 to call os_abort() on #BUG() and #BUG_IF().
+ * Set to 0 for no specific action on #MSG_BUG() and #MSG_BUG_IF().
+ * Set to 1 to dump a backtrace on #MSG_BUG() and #MSG_BUG_IF().
+ * Set to 2 to call os_abort() on #MSG_BUG() and #MSG_BUG_IF().
  */
 #ifndef MSG_ACTION_ON_BUG
 #define MSG_ACTION_ON_BUG 0
@@ -250,7 +250,7 @@ int msg_out_of_memory(const char *what);
 /*!
  * Emit a bug message.
  */
-#define BUG(...) \
+#define MSG_BUG(...) \
     do \
     { \
         msg_error(0, LOG_CRIT, "BUG: " __VA_ARGS__); \
@@ -261,15 +261,15 @@ int msg_out_of_memory(const char *what);
 /*!
  * Emit a bug message if \p COND evaluates to true.
  */
-#define BUG_IF(COND, ...) \
+#define MSG_BUG_IF(COND, ...) \
     do \
     { \
         if(COND)\
-            BUG(__VA_ARGS__); \
+            MSG_BUG(__VA_ARGS__); \
     } \
     while(0)
 
-#define TODO(TICKET, FMT, ...) \
+#define MSG_TODO(TICKET, FMT, ...) \
     msg_error(0, LOG_CRIT, "TODO [#%u]: " FMT, TICKET, ##__VA_ARGS__)
 
 #if MSG_ACTION_ON_UNREACHABLE == 1
@@ -306,7 +306,7 @@ int msg_out_of_memory(const char *what);
     } \
     while(0)
 
-#define APPLIANCE_BUG(...) msg_error(0, LOG_CRIT, "APPLIANCE BUG: " __VA_ARGS__)
+#define MSG_APPLIANCE_BUG(...) msg_error(0, LOG_CRIT, "APPLIANCE BUG: " __VA_ARGS__)
 
 #if !defined(MSG_TRACE_PREFIX)
 #define MSG_TRACE_PREFIX "*** "
@@ -348,9 +348,9 @@ int msg_out_of_memory(const char *what);
 #endif /* MSG_TRACE_ENABLED */
 
 #ifdef NDEBUG
-#define log_assert(EXPR) do {} while(0)
+#define msg_log_assert(EXPR) do {} while(0)
 #else /* !NDEBUG */
-#define log_assert(EXPR) \
+#define msg_log_assert(EXPR) \
     do \
     { \
         if(!(EXPR)) \
@@ -362,5 +362,13 @@ int msg_out_of_memory(const char *what);
     } \
     while(0)
 #endif /* NDEBUG */
+
+#ifdef MSG_ENABLE_LEGACY_MACROS
+#define BUG(...)                MSG_BUG(__VA_ARGS__)
+#define BUG_IF(COND, ...)       MSG_BUG_IF(__VA_ARGS__)
+#define TODO(TICKET, FMT, ...)  MSG_TODO(TICKET, FMT, __VA_ARGS__)
+#define APPLIANCE_BUG(...)      MSG_APPLIANCE_BUG(__VA_ARGS__)
+#define log_assert(EXPR)        msg_log_assert(EXPR)
+#endif /* MSG_ENABLE_LEGACY_MACROS */
 
 #endif /* !MESSAGES_H */

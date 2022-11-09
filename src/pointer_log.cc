@@ -85,7 +85,7 @@ void PointerLog::add_untyped(const void *vp, const char *name, const char *ctx,
 
     if(vp == nullptr)
     {
-        BUG("Tried to add nullptr to PointerLog at %s:%s(%d)", file, fn, line);
+        MSG_BUG("Tried to add nullptr to PointerLog at %s:%s(%d)", file, fn, line);
         return;
     }
 
@@ -113,7 +113,7 @@ void PointerLog::remove_untyped(const void *vp, const char *ctx,
 
     if(vp == nullptr)
     {
-        BUG("Tried to remove nullptr from PointerLog at %s:%s(%d)", file, fn, line);
+        MSG_BUG("Tried to remove nullptr from PointerLog at %s:%s(%d)", file, fn, line);
         return;
     }
 

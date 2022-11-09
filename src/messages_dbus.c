@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2016, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -96,8 +96,8 @@ void msg_dbus_handle_global_debug_level_changed(GDBusProxy *proxy,
 
     if(strcmp(signal_name, "GlobalDebugLevelChanged") == 0)
     {
-        log_assert(g_variant_type_is_tuple(g_variant_get_type(parameters)));
-        log_assert(g_variant_n_children(parameters) == 1);
+        msg_log_assert(g_variant_type_is_tuple(g_variant_get_type(parameters)));
+        msg_log_assert(g_variant_n_children(parameters) == 1);
 
         const gchar *new_level_name;
         g_variant_get(parameters, "(&s)", &new_level_name);

@@ -48,12 +48,12 @@
 #define LOGGED_LOCK_BUG(...) \
     do \
     { \
-        BUG(__VA_ARGS__); \
+        MSG_BUG(__VA_ARGS__); \
         abort(); \
     } \
     while(0)
 #else /* !LOGGED_LOCKS_ABORT_ON_BUG */
-#define LOGGED_LOCK_BUG(...) BUG(__VA_ARGS__)
+#define LOGGED_LOCK_BUG(...) MSG_BUG(__VA_ARGS__)
 #endif /* LOGGED_LOCKS_ABORT_ON_BUG */
 
 #endif /* LOGGED_LOCKS_ENABLED */

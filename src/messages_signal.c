@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016, 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2016, 2018, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -85,7 +85,7 @@ void msg_install_extra_handler(unsigned int relative_signum,
 
     if(signum > SIGRTMAX)
     {
-        BUG("Relative signal number %u > %d", relative_signum, SIGRTMAX);
+        MSG_BUG("Relative signal number %u > %d", relative_signum, SIGRTMAX);
         return;
     }
 
@@ -95,7 +95,7 @@ void msg_install_extra_handler(unsigned int relative_signum,
         .sa_flags = SA_SIGINFO | SA_RESTART,
     };
 
-    log_assert(handler != NULL);
+    msg_log_assert(handler != NULL);
     extra_handlers[relative_signum] = handler;
 
     sigemptyset(&action.sa_mask);

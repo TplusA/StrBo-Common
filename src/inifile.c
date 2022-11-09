@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2018, 2019, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -63,7 +63,7 @@ struct parser_data
 
 void inifile_new(struct ini_file *inifile)
 {
-    log_assert(inifile != NULL);
+    msg_log_assert(inifile != NULL);
 
     inifile->sections_head = NULL;
     inifile->sections_tail = NULL;
@@ -81,7 +81,7 @@ static inline char peek_character(const struct parser_data *data)
  */
 static enum skip_result enter_next_line(struct parser_data *data)
 {
-    log_assert(peek_character(data) == '\n');
+    msg_log_assert(peek_character(data) == '\n');
 
     ++data->pos;
     ++data->line;
@@ -203,7 +203,7 @@ static enum skip_result skip_line(struct parser_data *data)
  */
 static int parse_section_begin(struct parser_data *data)
 {
-    log_assert(data->state == STATE_EXPECT_SECTION_BEGIN);
+    msg_log_assert(data->state == STATE_EXPECT_SECTION_BEGIN);
 
     switch(skip_spaces(data))
     {
@@ -240,7 +240,7 @@ static int parse_section_begin(struct parser_data *data)
  */
 static int parse_section_name(struct parser_data *data)
 {
-    log_assert(data->state == STATE_EXPECT_SECTION_NAME);
+    msg_log_assert(data->state == STATE_EXPECT_SECTION_NAME);
 
     const size_t start_of_name = data->pos;
 
@@ -316,7 +316,7 @@ static int parse_key_or_value(struct parser_data *data, size_t start_of_token,
     --data->pos;
 
     (void)skip_spaces_reverse(data);
-    log_assert(data->pos >= start_of_token);
+    msg_log_assert(data->pos >= start_of_token);
 
     *length_of_token = data->pos + 1 - start_of_token;
 
@@ -335,7 +335,7 @@ static int parse_nonempty_value(struct parser_data *const data,
     switch(skipped)
     {
       case SKIP_RESULT_EOL:
-        BUG("Unexpected skip result");
+        MSG_BUG("Unexpected skip result");
         return 1;
 
       case SKIP_RESULT_OK:
@@ -383,8 +383,8 @@ static int insert_empty_value_for_key(struct parser_data *const data,
  */
 static int parse_assignment(struct parser_data *data)
 {
-    log_assert(data->state == STATE_EXPECT_ASSIGNMENT);
-    log_assert(data->current_section != NULL);
+    msg_log_assert(data->state == STATE_EXPECT_ASSIGNMENT);
+    msg_log_assert(data->current_section != NULL);
 
     switch(skip_spaces(data))
     {
@@ -478,8 +478,8 @@ static int parse_memory(struct parser_data *data)
 
 int inifile_parse_from_file(struct ini_file *inifile, const char *filename)
 {
-    log_assert(inifile != NULL);
-    log_assert(filename != NULL);
+    msg_log_assert(inifile != NULL);
+    msg_log_assert(filename != NULL);
 
     struct os_mapped_file_data mapped;
 
@@ -500,8 +500,8 @@ int inifile_parse_from_file(struct ini_file *inifile, const char *filename)
 int inifile_parse_from_memory(struct ini_file *inifile, const char *source,
                               const char *content, size_t size)
 {
-    log_assert(inifile != NULL);
-    log_assert(content != NULL);
+    msg_log_assert(inifile != NULL);
+    msg_log_assert(content != NULL);
 
     inifile_new(inifile);
 
@@ -587,7 +587,7 @@ struct ini_section *inifile_new_section(struct ini_file *inifile,
         inifile->sections_head = section;
     else
     {
-        log_assert(inifile->sections_tail != NULL);
+        msg_log_assert(inifile->sections_tail != NULL);
         inifile->sections_tail->next = section;
     }
 
@@ -675,7 +675,7 @@ static void remove_section(struct ini_file *inifile,
 {
     if(preceding != NULL)
     {
-        log_assert(section == preceding->next);
+        msg_log_assert(section == preceding->next);
 
         preceding->next = section->next;
 
@@ -684,7 +684,7 @@ static void remove_section(struct ini_file *inifile,
     }
     else
     {
-        log_assert(section == inifile->sections_head);
+        msg_log_assert(section == inifile->sections_head);
 
         if(section->next != NULL)
             inifile->sections_head = section->next;
@@ -701,7 +701,7 @@ static void remove_section(struct ini_file *inifile,
 bool inifile_remove_section(struct ini_file *inifile,
                             struct ini_section *section)
 {
-    log_assert(inifile != NULL);
+    msg_log_assert(inifile != NULL);
 
     if(section == NULL)
         return false;
@@ -722,8 +722,8 @@ bool inifile_remove_section_by_name(struct ini_file *inifile,
                                     const char *section_name,
                                     size_t section_name_length)
 {
-    log_assert(inifile != NULL);
-    log_assert(section_name != NULL);
+    msg_log_assert(inifile != NULL);
+    msg_log_assert(section_name != NULL);
 
     struct ini_section *preceding;
     struct ini_section *s = find_section_by_name(inifile, section_name,
@@ -741,8 +741,8 @@ struct ini_section *inifile_find_section(const struct ini_file *inifile,
                                          const char *section_name,
                                          size_t section_name_length)
 {
-    log_assert(inifile != NULL);
-    log_assert(section_name != NULL);
+    msg_log_assert(inifile != NULL);
+    msg_log_assert(section_name != NULL);
 
     return find_section_by_name(inifile, section_name, section_name_length,
                                 NULL);
@@ -751,8 +751,8 @@ struct ini_section *inifile_find_section(const struct ini_file *inifile,
 int inifile_write_to_file(const struct ini_file *inifile,
                           const char *filename)
 {
-    log_assert(inifile != NULL);
-    log_assert(filename != NULL);
+    msg_log_assert(inifile != NULL);
+    msg_log_assert(filename != NULL);
 
     int fd = os_file_new(filename);
 
@@ -805,7 +805,7 @@ error_exit:
 
 void inifile_free(struct ini_file *inifile)
 {
-    log_assert(inifile != NULL);
+    msg_log_assert(inifile != NULL);
 
     struct ini_section *s = inifile->sections_head;
 
@@ -855,7 +855,7 @@ do_store_value(struct ini_section *section,
                 section->values_head = kv;
             else
             {
-                log_assert(section->values_tail != NULL);
+                msg_log_assert(section->values_tail != NULL);
                 section->values_tail->next = kv;
             }
 
@@ -877,9 +877,9 @@ inifile_section_store_value(struct ini_section *section,
                             const char *key, size_t key_length,
                             const char *value, size_t value_length)
 {
-    log_assert(section != NULL);
-    log_assert(key != NULL);
-    log_assert(value != NULL);
+    msg_log_assert(section != NULL);
+    msg_log_assert(key != NULL);
+    msg_log_assert(value != NULL);
 
     if(key_length == 0)
         key_length = strlen(key);
@@ -900,8 +900,8 @@ struct ini_key_value_pair *
 inifile_section_store_empty_value(struct ini_section *section,
                                   const char *key, size_t key_length)
 {
-    log_assert(section != NULL);
-    log_assert(key != NULL);
+    msg_log_assert(section != NULL);
+    msg_log_assert(key != NULL);
 
     if(key_length == 0)
         key_length = strlen(key);
@@ -915,8 +915,8 @@ inifile_section_store_empty_value(struct ini_section *section,
 bool inifile_section_remove_value(struct ini_section *section,
                                   const char *key, size_t key_length)
 {
-    log_assert(section != NULL);
-    log_assert(key != NULL);
+    msg_log_assert(section != NULL);
+    msg_log_assert(key != NULL);
 
     if(key_length == 0)
         key_length = strlen(key);
@@ -950,8 +950,8 @@ struct ini_key_value_pair *
 inifile_section_lookup_kv_pair(const struct ini_section *section,
                                const char *key, size_t key_length)
 {
-    log_assert(section != NULL);
-    log_assert(key != NULL);
+    msg_log_assert(section != NULL);
+    msg_log_assert(key != NULL);
 
     if(key_length == 0)
         key_length = strlen(key);

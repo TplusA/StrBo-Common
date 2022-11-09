@@ -49,30 +49,30 @@ bool TDBus::log_dbus_error(GError **error, const char *what)
 
 void TDBus::log_connect_proxy_bug(const char *object_path, const char *name)
 {
-    BUG("Cannot create proxy for D-Bus object %s at %s while busy",
-        object_path, name);
+    MSG_BUG("Cannot create proxy for D-Bus object %s at %s while busy",
+            object_path, name);
 }
 
 void TDBus::log_method_done_exception_bug(const char *what)
 {
-    BUG("Exception thrown by method done handler: %s\n"
-        "Method result is lost", what);
+    MSG_BUG("Exception thrown by method done handler: %s\n"
+            "Method result is lost", what);
 }
 
 void TDBus::log_async_user_data_ptr(bool should_be_null, const char *fn)
 {
-    BUG("AsyncCall user data is %snullptr, but should %sbe (%s())",
-        should_be_null ? "not " : "", should_be_null ? "" : "not ", fn);
+    MSG_BUG("AsyncCall user data is %snullptr, but should %sbe (%s())",
+            should_be_null ? "not " : "", should_be_null ? "" : "not ", fn);
 }
 
 void TDBus::log_bad_async_user_data_ptr()
 {
-    BUG("AsyncCall user data pointer does not match passed user data");
+    MSG_BUG("AsyncCall user data pointer does not match passed user data");
 }
 
 void TDBus::log_async_result_leak()
 {
-    BUG("Leaking async D-Bus result");
+    MSG_BUG("Leaking async D-Bus result");
 }
 
 TDBus::Bus::Bus(const char *object_name, Type t):

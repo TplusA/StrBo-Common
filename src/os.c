@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015--2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015--2020, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -89,7 +89,7 @@ int os_write_from_buffer(const void *src, size_t count, int fd)
             return -1;
         }
 
-        log_assert((size_t)len <= count);
+        msg_log_assert((size_t)len <= count);
 
         src_ptr += len;
         count -= len;
@@ -134,7 +134,7 @@ int os_try_read_to_buffer(void *dest, size_t count, size_t *dest_pos, int fd,
             break;
         }
 
-        log_assert((size_t)len <= count);
+        msg_log_assert((size_t)len <= count);
 
         dest_ptr += len;
         count -= len;
@@ -190,7 +190,7 @@ int os_system(bool is_verbose, const char *command)
         return -WTERMSIG(ret);
     }
 
-    BUG("Bogus exit code %d from external command", ret);
+    MSG_BUG("Bogus exit code %d from external command", ret);
 
     return ret;
 }
@@ -225,8 +225,8 @@ int os_foreach_in_path(const char *path,
                                        void *user_data),
                        void *user_data)
 {
-    log_assert(path != NULL);
-    log_assert(callback != NULL);
+    msg_log_assert(path != NULL);
+    msg_log_assert(callback != NULL);
 
     errno = 0;
 
@@ -376,7 +376,7 @@ int os_stat(const char *path, struct stat *buf)
 
 char *os_resolve_symlink(const char *link)
 {
-    log_assert(link != NULL);
+    msg_log_assert(link != NULL);
 
     char dummy;
 
@@ -416,7 +416,7 @@ bool os_mkdir_hierarchy(const char *path, bool must_not_exist)
 {
     static const char failed_err[] = "Failed creating directory hierarchy %s";
 
-    log_assert(path != NULL);
+    msg_log_assert(path != NULL);
 
     errno = 0;
 
@@ -458,7 +458,7 @@ bool os_mkdir_hierarchy(const char *path, bool must_not_exist)
 
 bool os_mkdir(const char *path, bool must_not_exist)
 {
-    log_assert(path != NULL);
+    msg_log_assert(path != NULL);
 
     errno = 0;
 
@@ -486,7 +486,7 @@ bool os_mkdir(const char *path, bool must_not_exist)
 
 bool os_rmdir(const char *path, bool must_exist)
 {
-    log_assert(path != NULL);
+    msg_log_assert(path != NULL);
 
     errno = 0;
 
@@ -561,7 +561,7 @@ void os_file_close(int fd)
 
 int os_file_delete(const char *filename)
 {
-    log_assert(filename != NULL);
+    msg_log_assert(filename != NULL);
 
     errno = 0;
     const int ret = unlink(filename);
@@ -619,8 +619,8 @@ bool os_link_new(const char *oldpath, const char *newpath)
 int os_map_file_to_memory(struct os_mapped_file_data *mapped,
                           const char *filename)
 {
-    log_assert(mapped != NULL);
-    log_assert(filename != NULL);
+    msg_log_assert(mapped != NULL);
+    msg_log_assert(filename != NULL);
 
     errno = 0;
 
@@ -697,7 +697,7 @@ error_exit:
 
 void os_unmap_file(struct os_mapped_file_data *mapped)
 {
-    log_assert(mapped != NULL);
+    msg_log_assert(mapped != NULL);
 
     if(mapped->fd < 0)
     {
@@ -715,7 +715,7 @@ void os_unmap_file(struct os_mapped_file_data *mapped)
 
 void os_sync_dir(const char *path)
 {
-    log_assert(path != NULL);
+    msg_log_assert(path != NULL);
 
     errno = 0;
 

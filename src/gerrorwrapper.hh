@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019, 2021  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2019, 2021, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -89,10 +89,10 @@ class GErrorWrapper
             return;
 
         if(!is_noticed_)
-            BUG("Unhandled error %s ('%s', %d): %s",
-                from_dtor ? "went out of scope" : "overwritten",
-                g_quark_to_string(gerror_->domain), gerror_->code,
-                gerror_->message);
+            MSG_BUG("Unhandled error %s ('%s', %d): %s",
+                    from_dtor ? "went out of scope" : "overwritten",
+                    g_quark_to_string(gerror_->domain), gerror_->code,
+                    gerror_->message);
 
         g_error_free(gerror_);
     }

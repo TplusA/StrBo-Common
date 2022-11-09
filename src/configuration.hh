@@ -120,7 +120,7 @@ class ConfigManager: public ConfigChanged<ValuesT>
 
     bool load()
     {
-        log_assert(!is_updating_);
+        msg_log_assert(!is_updating_);
 
         ValuesT loaded(default_settings_);
 
@@ -134,7 +134,7 @@ class ConfigManager: public ConfigChanged<ValuesT>
 
     void reset_to_defaults()
     {
-        log_assert(!is_updating_);
+        msg_log_assert(!is_updating_);
         settings_.put(default_settings_);
     }
 
@@ -193,13 +193,13 @@ class ConfigManager: public ConfigChanged<ValuesT>
 
     void update_begin() final override
     {
-        log_assert(!is_updating_);
+        msg_log_assert(!is_updating_);
         is_updating_ = true;
     }
 
     void update_done(const char *origin) final override
     {
-        log_assert(is_updating_);
+        msg_log_assert(is_updating_);
         is_updating_ = false;
 
         if(settings_.is_changed())
@@ -298,7 +298,7 @@ class ConfigManager: public ConfigChanged<ValuesT>
 
     bool store()
     {
-        log_assert(!is_updating_);
+        msg_log_assert(!is_updating_);
         return try_store(configuration_file_, settings_.values());
     }
 };

@@ -119,6 +119,32 @@ template <typename T> struct MethodCallerTraits;
  */
 template <typename T> struct SignalHandlerTraits;
 
+/* Some special trace macros so that the logged context makes more sense. */
+#if MSG_TRACE_ENABLED
+#define MSG_TRACE_DBUS_SIGNAL() \
+    MSG_TRACE_FUNCTION(MSG_TRACE_PREFIX "%s(%d) [%s]" MSG_TRACE_SUFFIX, \
+                       signal_type_name(), __LINE__, dbus_signal_name())
+
+#define MSG_TRACE_DBUS_SIGNAL_FORMAT(FMT, ...) \
+    MSG_TRACE_FUNCTION(MSG_TRACE_PREFIX "%s(%d) [%s]: " FMT MSG_TRACE_SUFFIX, \
+                       signal_type_name(), __LINE__, dbus_signal_name(), \
+                       __VA_ARGS__)
+
+#define MSG_TRACE_DBUS_METHOD() \
+    MSG_TRACE_FUNCTION(MSG_TRACE_PREFIX "%s(%d) [%s]" MSG_TRACE_SUFFIX, \
+                       method_type_name(), __LINE__, dbus_method_name())
+
+#define MSG_TRACE_DBUS_METHOD_FORMAT(FMT, ...) \
+    MSG_TRACE_FUNCTION(MSG_TRACE_PREFIX "%s(%d) [%s]: " FMT MSG_TRACE_SUFFIX, \
+                       method_type_name(), __LINE__, dbus_method_name(), \
+                       __VA_ARGS__)
+#else /*! MSG_TRACE_ENABLED */
+#define MSG_TRACE_DBUS_SIGNAL()                 MSG_TRACE()
+#define MSG_TRACE_DBUS_SIGNAL_FORMAT(FMT, ...)  MSG_TRACE_FORMAT(FMT, __VA_ARGS__)
+#define MSG_TRACE_DBUS_METHOD()                 MSG_TRACE()
+#define MSG_TRACE_DBUS_METHOD_FORMAT(FMT, ...)  MSG_TRACE_FORMAT(FMT, __VA_ARGS__)
+#endif /* MSG_TRACE_ENABLED */
+
 /*!
  * Template for server-side D-Bus interfaces implementations.
  *

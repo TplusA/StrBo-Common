@@ -44,7 +44,7 @@ EXTRA_DIST = \
     debug_levels.cc \
     configuration.cc configuration.hh configuration_base.hh \
     configuration_changed.hh configuration_settings.hh \
-    gerrorwrapper.hh xmlescape.hh dump_enum_value.hh \
+    gerrorwrapper.hh xmlescape.hh dump_enum_value.hh timebase.hh \
     maybe.hh guard.hh error_thrower.hh logged_lock.hh \
     os.c os.hh breakpoint.h backtrace.c backtrace.h \
     hexdump.c hexdump.h \

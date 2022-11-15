@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015--2017, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+# Copyright (C) 2015--2017, 2019, 2020, 2022  T+A elektroakustik GmbH & Co. KG
 #
 # This file is part of the T+A Streaming Board software stack ("StrBoWare").
 #
@@ -75,7 +75,7 @@ CLEANFILES = test_report.xml test_report_junit.xml valgrind.xml
 
 EXTRA_DIST = cutter2junit.xslt
 EXTRA_DIST += cutter-1_2_4.supp
-EXTRA_DIST += mock_backtrace.hh mock_backtrace.cc
+EXTRA_DIST += mock_backtrace.hh mock_backtrace.cc mock_timebase.hh
 
 check-local: check-TESTS
 	@if $(GREP) -w cutter $(TEST_LOGS); then \

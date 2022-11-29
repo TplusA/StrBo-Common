@@ -34,7 +34,11 @@ class MockTimebase: public Timebase
     MockTimebase(const MockTimebase &) = delete;
     MockTimebase &operator=(const MockTimebase &) = delete;
 
-    explicit MockTimebase() {}
+    explicit MockTimebase():
+        now_(time_point(std::chrono::milliseconds::zero())),
+        auto_increment_(std::chrono::milliseconds::zero())
+    {}
+
     virtual ~MockTimebase() {}
 
     time_point now() const override

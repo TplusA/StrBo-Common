@@ -22,6 +22,8 @@
 #ifndef GUARD_HH
 #define GUARD_HH
 
+#include "messages.h"
+
 #include <functional>
 
 /*!

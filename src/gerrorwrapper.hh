@@ -34,9 +34,24 @@ class GErrorWrapper
 
   public:
     GErrorWrapper(const GErrorWrapper &) = delete;
-    GErrorWrapper(GErrorWrapper &&) = delete;
     GErrorWrapper &operator=(const GErrorWrapper &) = delete;
-    GErrorWrapper &operator=(GErrorWrapper &&) = delete;
+
+    GErrorWrapper(GErrorWrapper &&src):
+        gerror_(src.gerror_),
+        is_noticed_(src.is_noticed_)
+    {
+        src.gerror_ = nullptr;
+        src.is_noticed_ = false;
+    }
+
+    GErrorWrapper &operator=(GErrorWrapper &&src)
+    {
+        gerror_ = src.gerror_;
+        is_noticed_ = src.is_noticed_;
+        src.gerror_ = nullptr;
+        src.is_noticed_ = false;
+        return *this;
+    }
 
     explicit GErrorWrapper():
         gerror_(nullptr),

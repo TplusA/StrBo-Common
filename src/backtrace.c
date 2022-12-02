@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2020, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -29,7 +29,7 @@
 #include <execinfo.h>
 #include <stdio.h>
 
-static inline void **gather_backtrace(size_t depth, size_t *size)
+static inline void **gather_backtrace(size_t depth, int *size)
 {
 #ifdef __cplusplus
     thread_local
@@ -43,44 +43,55 @@ static inline void **gather_backtrace(size_t depth, size_t *size)
         : sizeof(buffer) / sizeof(buffer[0]);
 
     *size = backtrace(buffer, depth);
+
+    if(*size < 0)
+        *size = 0;
+
+    if(*size == 0)
+    {
+        static bool warning_printed;
+
+        if(!warning_printed)
+        {
+            warning_printed = true;
+            msg_error(0, LOG_ERR,
+                      "Backtrace empty; please recompile with required options");
+        }
+    }
+
     return buffer;
 }
 
 void backtrace_dump(size_t depth, const char *message)
 {
-    size_t size;
-    void **buffer = gather_backtrace(depth, &size);
-
     if(message != NULL)
         fprintf(stderr, "--- Stack trace -- %s ---\n", message);
     else
         fprintf(stderr, "--- Stack trace ---\n");
 
-    if(buffer == NULL)
-        fprintf(stderr, "<OUT OF MEMORY>");
-    else
-        backtrace_symbols_fd(buffer, size, STDERR_FILENO);
+    int size;
+    void *const *buffer = gather_backtrace(depth, &size);
+    backtrace_symbols_fd(buffer, size, STDERR_FILENO);
 
     fprintf(stderr, "-----------------\n");
 }
 
 void backtrace_log(size_t depth, const char *message)
 {
-    size_t size;
-    void **buffer = gather_backtrace(depth, &size);
-
     if(message != NULL)
         msg_error(0, LOG_WARNING, "--- Stack trace -- %s ---", message);
     else
         msg_error(0, LOG_WARNING, "--- Stack trace ---");
 
+    int size;
+    void *const *buffer = gather_backtrace(depth, &size);
     char **symbols = backtrace_symbols(buffer, size);
 
     if(symbols == NULL)
         msg_out_of_memory("backtrace");
     else
     {
-        for(size_t i = 0; i < size; ++i)
+        for(int i = 0; i < size; ++i)
             msg_error(0, LOG_WARNING, "%s", symbols[i]);
 
         free(symbols);

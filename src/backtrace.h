@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2020, 2022  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -28,7 +28,48 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/*
+ * --- NOTE --- NOTE --- NOTE --- NOTE --- NOTE --- NOTE --- NOTE --- NOTE ---
+ *
+ * To make this work well with gcc, you need to
+ *   - pass -g and -funwind-tables to the compiler, and
+ *   - pass -g and -rdynamic to the linker.
+ *
+ * It is also a good idea to disable compiler optimizations (-Og or -O0) as
+ * well as linker optimizations (-Wl,-O0) to enable more meaningful traces.
+ *
+ * --- NOTE --- NOTE --- NOTE --- NOTE --- NOTE --- NOTE --- NOTE --- NOTE ---
+ */
+
+/*!
+ * Dump stack trace to \c stderr.
+ *
+ * Use this function in unit tests where necessary to avoid messing with log
+ * message expectations.
+ *
+ * Do not keep any calls of this function in production code!
+ *
+ * \param depth
+ *     Maximum number of lines in the stack trace. Pass 0 to dump as many lines
+ *     as possible.
+ *
+ * \param message
+ *     Stack trace header.
+ */
 void backtrace_dump(size_t depth, const char *message);
+
+/*!
+ * Dump stack trace to system log.
+ *
+ * Do not keep any calls of this function in production code!
+ *
+ * \param depth
+ *     Maximum number of lines in the stack trace. Pass 0 to dump as many lines
+ *     as possible.
+ *
+ * \param message
+ *     Stack trace header.
+ */
 void backtrace_log(size_t depth, const char *message);
 #ifdef __cplusplus
 }

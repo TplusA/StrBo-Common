@@ -81,7 +81,8 @@ static void log_them_all(const gchar *log_domain, GLogLevelFlags log_level,
     msg_error(0, syslog_prio, "From GLib (%s) %s", log_domain, message);
 
 #if MSG_ACTION_ON_GLIB_FAILURE == 1
-    backtrace_log(0, "GLib context");
+    if(msg_is_verbose(syslog_prio))
+        backtrace_log(0, "GLib context");
 #elif MSG_ACTION_ON_GLIB_FAILURE == 2
     os_abort();
 #endif /* MSG_ACTION_ON_GLIB_FAILURE */

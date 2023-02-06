@@ -51,3 +51,9 @@
     fun:call_init.part.0
     fun:_dl_init
 }
+{
+    <gst_init>
+    Memcheck:Leak
+    ...
+    fun:gst_init
+}

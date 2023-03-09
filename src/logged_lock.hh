@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016, 2017, 2019--2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2016, 2017, 2019--2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -337,6 +337,130 @@ class Mutex
 };
 
 /*!
+ * Wrapper around \c std::timed_mutex.
+ */
+class TMutex
+{
+  private:
+    std::timed_mutex lock_;
+    const char *name_;
+    std::string name_buffer_;
+    pthread_t owner_;
+    MessageVerboseLevel log_level_;
+
+  public:
+    TMutex(const TMutex &) = delete;
+    TMutex &operator=(const TMutex &) = delete;
+
+    explicit TMutex():
+        name_("(unnamed)"),
+        owner_(0),
+        log_level_(MESSAGE_LEVEL_NORMAL)
+    {}
+
+    void about_to_lock(bool is_direct) const
+    {
+        if(owner_ == pthread_self())
+            LOGGED_LOCK_BUG("TMutex %s: DEADLOCK for <%s> (%sdirect)",
+                            name_, get_context_hints().c_str(), is_direct ? "" : "in");
+    }
+
+    void lock()
+    {
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> TMutex %s: lock", get_context_hints().c_str(), name_);
+
+        about_to_lock(true);
+        lock_.lock();
+        set_owner();
+
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> TMutex %s: locked", get_context_hints().c_str(), name_);
+    }
+
+    bool try_lock()
+    {
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> TMutex %s: try lock", get_context_hints().c_str(), name_);
+
+        const bool is_locked = lock_.try_lock();
+
+        if(is_locked)
+        {
+            set_owner();
+
+            if(log_messages_enabled)
+                msg_vinfo(log_level_, "<%s> TMutex %s: locked on try",
+                          get_context_hints().c_str(), name_);
+        }
+        else if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> TMutex %s: try locking failed (%s)",
+                      get_context_hints().c_str(), name_,
+                      owner_ == pthread_self() ? "avoided deadlock" : "different owner");
+
+        return is_locked;
+    }
+
+    void unlock()
+    {
+        clear_owner();
+        lock_.unlock();
+    }
+
+    std::timed_mutex &get_raw_mutex(bool log_this = true)
+    {
+        if(log_messages_enabled && log_this)
+            msg_vinfo(log_level_, "<%s> TMutex %s: get raw mutex",
+                      get_context_hints().c_str(), name_);
+
+        return lock_;
+    }
+
+    void set_owner()
+    {
+        if(owner_ != 0)
+            LOGGED_LOCK_BUG("TMutex %s: replace owner <%08lx> by <%08lx> <%s>",
+                            name_, owner_, pthread_self(), get_context_hints().c_str());
+
+        owner_ = pthread_self();
+    }
+
+    void clear_owner()
+    {
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> TMutex %s: unlock", get_context_hints().c_str(), name_);
+
+        if(owner_ == 0)
+            LOGGED_LOCK_BUG("TMutex %s: <%s> clearing unowned",
+                            name_, get_context_hints().c_str());
+        else if(owner_ != pthread_self())
+            LOGGED_LOCK_BUG("TMutex %s: <%s> stealing from owner <%08lx>",
+                            name_, get_context_hints().c_str(), owner_);
+
+        owner_ = 0;
+    }
+
+    pthread_t get_owner() const { return owner_; }
+
+    void configure(const char *name, MessageVerboseLevel log_level)
+    {
+        name_ = name;
+        log_level_ = log_level;
+    }
+
+    void configure(std::string &&name, MessageVerboseLevel log_level)
+    {
+        name_buffer_ = std::move(name);
+        name_ = name_buffer_.c_str();
+        log_level_ = log_level;
+    }
+
+    const char *get_name() const { return name_; }
+
+    MessageVerboseLevel get_log_level() const { return log_level_; }
+};
+
+/*!
  * Wrapper around \c std::recursive_mutex.
  */
 class RecMutex
@@ -509,6 +633,179 @@ class RecMutex
     MessageVerboseLevel get_log_level() const { return log_level_; }
 };
 
+/*!
+ * Wrapper around \c std::recursive_timed_mutex.
+ */
+class RecTMutex
+{
+  private:
+    std::recursive_timed_mutex lock_;
+    size_t lock_count_;
+    const char *name_;
+    std::string name_buffer_;
+    pthread_t owner_;
+    MessageVerboseLevel log_level_;
+
+  public:
+    RecTMutex(const RecTMutex &) = delete;
+    RecTMutex &operator=(const RecTMutex &) = delete;
+
+    explicit RecTMutex():
+        lock_count_(0),
+        name_("(unnamed)"),
+        owner_(0),
+        log_level_(MESSAGE_LEVEL_NORMAL)
+    {}
+
+    void about_to_lock(bool is_direct) const
+    {
+        if(owner_ == pthread_self() && log_messages_enabled)
+            msg_vinfo(log_level_,
+                      "<%s> RecTMutex %s: re-lock, lock count %zu (%sdirect)",
+                      get_context_hints().c_str(), name_, lock_count_,
+                      is_direct ? "" : "in");
+    }
+
+    void lock()
+    {
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> RecTMutex %s: lock", get_context_hints().c_str(), name_);
+
+        about_to_lock(true);
+        lock_.lock();
+        ref_owner();
+
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> RecTMutex %s: locked", get_context_hints().c_str(), name_);
+    }
+
+    bool try_lock()
+    {
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> RecTMutex %s: try lock", get_context_hints().c_str(), name_);
+
+        const bool is_locked = lock_.try_lock();
+
+        if(is_locked)
+        {
+            if(lock_count_ > 0 && owner_ != pthread_self())
+                LOGGED_LOCK_BUG("RecTMutex %s: lock attempt by <%s> "
+                                "succeeded, but shouldn't have",
+                                name_, get_context_hints().c_str());
+
+            ref_owner();
+
+            if(log_messages_enabled)
+                msg_vinfo(log_level_, "<%s> RecTMutex %s: locked",
+                          get_context_hints().c_str(), name_);
+        }
+        else
+        {
+            if(log_messages_enabled)
+                msg_vinfo(log_level_, "<%s> RecTMutex %s: locking failed",
+                          get_context_hints().c_str(), name_);
+
+            if(lock_count_ == 0 || owner_ == pthread_self())
+                LOGGED_LOCK_BUG("RecTMutex %s: lock attempt by <%s> "
+                                "should have succeeded "
+                                "(owner <%08lx>, lock count %zu)",
+                                name_, get_context_hints().c_str(), owner_, lock_count_);
+        }
+
+        return is_locked;
+    }
+
+    void unlock()
+    {
+        unref_owner();
+        lock_.unlock();
+    }
+
+    std::recursive_timed_mutex &get_raw_mutex(bool log_this = true)
+    {
+        if(log_messages_enabled && log_this)
+            msg_vinfo(log_level_, "<%s> RecTMutex %s: get raw mutex",
+                      get_context_hints().c_str(), name_);
+
+        return lock_;
+    }
+
+    void ref_owner()
+    {
+        ++lock_count_;
+
+        if(owner_ == pthread_self())
+        {
+            if(lock_count_ <= 1)
+                LOGGED_LOCK_BUG("RecTMutex %s: <%s> sets owner for "
+                                "lock count %zu",
+                                name_, get_context_hints().c_str(), lock_count_);
+
+            return;
+        }
+
+        if(owner_ != 0)
+            LOGGED_LOCK_BUG("RecTMutex %s: replace owner <%08lx> by <%08lx> <%s>, "
+                            "lock count %zu",
+                            name_, owner_, pthread_self(),
+                            get_context_hints().c_str(), lock_count_);
+
+        owner_ = pthread_self();
+    }
+
+    void unref_owner()
+    {
+        if(log_messages_enabled)
+            msg_vinfo(log_level_, "<%s> RecTMutex %s: unlock, lock count %zu -> %zu",
+                      get_context_hints().c_str(), name_,
+                      lock_count_, lock_count_ - 1);
+
+        if(owner_ == 0)
+            LOGGED_LOCK_BUG("RecTMutex %s: <%s> clearing unowned, "
+                            "lock count %zu",
+                            name_, get_context_hints().c_str(), lock_count_);
+        else if(owner_ != pthread_self())
+            LOGGED_LOCK_BUG("RecTMutex %s: <%s> stealing from owner "
+                            "<%08lx>, lock count %zu",
+                            name_, get_context_hints().c_str(), owner_, lock_count_);
+        else if(lock_count_ == 0)
+            LOGGED_LOCK_BUG("RecTMutex %s: <%s> unref with lock count 0, "
+                            "owner <%08lx>",
+                            name_, get_context_hints().c_str(), owner_);
+
+        --lock_count_;
+
+        if(lock_count_ == 0)
+        {
+            if(log_messages_enabled)
+                msg_vinfo(log_level_, "<%s> RecTMutex %s: unlocked, drop owner <%08lx>",
+                          get_context_hints().c_str(), name_, owner_);
+
+            owner_ = 0;
+        }
+    }
+
+    pthread_t get_owner() const { return owner_; }
+
+    void configure(const char *name, MessageVerboseLevel log_level)
+    {
+        name_buffer_.clear();
+        name_ = name;
+        log_level_ = log_level;
+    }
+
+    void configure(std::string &&name, MessageVerboseLevel log_level)
+    {
+        name_buffer_ = std::move(name);
+        name_ = name_buffer_.c_str();
+        log_level_ = log_level;
+    }
+
+    const char *get_name() const { return name_; }
+
+    MessageVerboseLevel get_log_level() const { return log_level_; }
+};
+
 template <typename MutexType> struct MutexTraits;
 
 template <>
@@ -525,6 +822,19 @@ struct MutexTraits<::LoggedLock::Mutex>
 };
 
 template <>
+struct MutexTraits<::LoggedLock::TMutex>
+{
+    using StdMutexType = std::timed_mutex;
+
+    static TMutex dummy_for_default_ctor_;
+
+    static void set_owner(TMutex &m) { m.set_owner(); }
+    static void clear_owner(TMutex &m) { m.clear_owner(); }
+    static pthread_t get_owner(const TMutex &m) { return m.get_owner(); }
+    static void destroy_owned(TMutex &m) { m.clear_owner(); }
+};
+
+template <>
 struct MutexTraits<::LoggedLock::RecMutex>
 {
     using StdMutexType = std::recursive_mutex;
@@ -535,6 +845,19 @@ struct MutexTraits<::LoggedLock::RecMutex>
     static void clear_owner(RecMutex &m) { m.unref_owner(); }
     static pthread_t get_owner(const RecMutex &m) { return m.get_owner(); }
     static void destroy_owned(RecMutex &m) { m.unref_owner(); }
+};
+
+template <>
+struct MutexTraits<::LoggedLock::RecTMutex>
+{
+    using StdMutexType = std::recursive_timed_mutex;
+
+    static RecTMutex dummy_for_default_ctor_;
+
+    static void set_owner(RecTMutex &m) { m.ref_owner(); }
+    static void clear_owner(RecTMutex &m) { m.unref_owner(); }
+    static pthread_t get_owner(const RecTMutex &m) { return m.get_owner(); }
+    static void destroy_owned(RecTMutex &m) { m.unref_owner(); }
 };
 
 /*!
@@ -700,6 +1023,45 @@ class UniqueLock
                       "<%s> UniqueLock %p: locked %s",
                       get_context_hints().c_str(),
                       static_cast<const void *>(this), lock_name_);
+    }
+
+    template <class Rep, class Period>
+    bool try_lock_for(const std::chrono::duration<Rep, Period> &timeout_duration)
+    {
+        if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get().get_log_level(),
+                      "<%s> UniqueLock %p: try lock %s for %lld",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this), lock_name_,
+                      static_cast<long long int>(timeout_duration.count()));
+
+        if(&logged_mutex_.get() == &MTraits::dummy_for_default_ctor_)
+            LOGGED_LOCK_BUG("<%s> UniqueLock %p: tried to take "
+                            "default-constructed lock (no associated mutex)",
+                            get_context_hints().c_str(),
+                            static_cast<const void *>(this));
+
+        logged_mutex_.get().about_to_lock(false);
+        bool is_locked = lock_.try_lock_for(timeout_duration);
+
+        if(is_locked)
+        {
+            MTraits::set_owner(logged_mutex_.get());
+
+            if(log_messages_enabled)
+                msg_vinfo(logged_mutex_.get().get_log_level(),
+                        "<%s> UniqueLock %p: locked %s",
+                        get_context_hints().c_str(),
+                        static_cast<const void *>(this), lock_name_);
+        }
+        else if(log_messages_enabled)
+            msg_vinfo(logged_mutex_.get().get_log_level(),
+                      "<%s> UniqueLock %p: timed out (%s), owned by <%08lx>",
+                      get_context_hints().c_str(),
+                      static_cast<const void *>(this), lock_name_,
+                      get_mutex_owner());
+
+        return is_locked;
     }
 
     void unlock()
@@ -885,6 +1247,29 @@ static inline void configure(T &object,
 }
 
 /*!
+ * Throw bug message in case the lock is not locked.
+ */
+template <typename T>
+static inline void assert_is_locked(T &lock_object)
+{
+    if(lock_object.get_owner() == 0)
+        LOGGED_LOCK_BUG("Mutex %s: asserted to be locked, but isn't",
+                        lock_object.get_name());
+}
+
+/*!
+ * Throw bug message in case the lock is locked.
+ */
+template <typename T>
+static inline void assert_is_unlocked(T &lock_object)
+{
+    if(lock_object.get_owner() != 0)
+        LOGGED_LOCK_BUG("Mutex %s: asserted to be unlocked, "
+                        "but is locked by <%08lx>",
+                        lock_object.get_name(), lock_object.get_owner());
+}
+
+/*!
  * Configuration of #LoggedLock::UniqueLock objects for enhanced logging.
  *
  * By default, the name of a #LoggedLock::UniqueLock is set to the name of its
@@ -929,7 +1314,9 @@ static inline void set_context_name(const char *name) {}
 #define LOGGED_LOCK_CONTEXT_HINT_CLEAR      do {} while(0)
 
 using Mutex = std::mutex;
+using TMutex = std::timed_mutex;
 using RecMutex = std::recursive_mutex;
+using RecTMutex = std::recursive_timed_mutex;
 template <typename MutexType> using UniqueLock = std::unique_lock<MutexType>;
 using ConditionVariable = std::condition_variable;
 
@@ -943,6 +1330,18 @@ static inline void configure(T &object,
 template <typename T>
 static inline void configure(T &object,
                              std::string &&name, MessageVerboseLevel log_level)
+{
+    /* nothing */
+}
+
+template <typename T>
+static inline void assert_is_locked(T &lock_object)
+{
+    /* nothing */
+}
+
+template <typename T>
+static inline void assert_is_unlocked(T &lock_object)
 {
     /* nothing */
 }

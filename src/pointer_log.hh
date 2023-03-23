@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -28,7 +28,7 @@
 #include <map>
 
 /*!
- * Store are retrieve information about a pointer.
+ * Store and retrieve information about a pointer.
  *
  * This class is not meant for production code. Its purpose is to help writing
  * traces for pointers to the log in order to track down certain problems.

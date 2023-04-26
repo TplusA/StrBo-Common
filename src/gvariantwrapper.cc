@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -57,6 +57,46 @@ static const GVariantWrapper::Ops default_ops =
 static const GVariantWrapper::Ops *ops = &default_ops;
 
 void GVariantWrapper::set_ops(const GVariantWrapper::Ops &o) { ops = &o; }
+
+/*!
+ * HACK! Copied from glib's gvariant-core.c and modified a bit.
+ */
+struct _GVariantInternal
+{
+    void *type_info;
+    gsize size;
+
+    union
+    {
+        struct
+        {
+            GBytes *bytes;
+            gconstpointer data;
+        }
+        serialised;
+
+        struct
+        {
+            GVariant **children;
+            gsize n_children;
+        }
+        tree;
+    }
+    contents;
+
+    gint state;
+    gatomicrefcount ref_count;
+    gsize depth;
+};
+
+size_t GVariantWrapper::get_ref_count() const
+{
+    if(variant_ == nullptr)
+        return 0;
+
+    const auto *gv = reinterpret_cast<const _GVariantInternal *>(variant_);
+    return gv->ref_count;
+}
 
 static inline void sink(void *variant)
 {

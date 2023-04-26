@@ -72,6 +72,11 @@ struct _GVariantInternal
         {
             GBytes *bytes;
             gconstpointer data;
+
+#if GLIB_CHECK_VERSION(2, 75, 1)
+            gsize ordered_offsets_up_to;
+            gsize checked_offsets_up_to;
+#endif /* 2.75.1 or later */
         }
         serialised;
 

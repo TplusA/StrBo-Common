@@ -1,4 +1,5 @@
 dnl Copyright (C) 2015, 2017, 2019, 2022  T+A elektroakustik GmbH & Co. KG
+dnl Copyright (C) 2023  T+A elektroakustik GmbH & Co. KG
 dnl
 dnl This file is part of the T+A Streaming Board software stack ("StrBoWare").
 dnl
@@ -46,7 +47,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AM_PROG_AR
-AC_PROG_LIBTOOL
+LT_INIT
 PKG_PROG_PKG_CONFIG([0.26])
 AC_CHECK_PROGS([XSLTPROC], [xsltproc])
 AC_CHECK_PROGS([VALGRIND], [valgrind])

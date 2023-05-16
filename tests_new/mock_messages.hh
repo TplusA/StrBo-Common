@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -48,6 +48,7 @@ class Expectation
     const std::string &get_name() const { return name_; }
     void set_sequence_serial(unsigned int ss) { sequence_serial_ = ss; }
     unsigned int get_sequence_serial() const { return sequence_serial_; }
+    virtual std::string get_details() const { return ""; }
 };
 
 class Mock
@@ -186,6 +187,11 @@ class Message: public Expectation
 
     void check_generic(MessageVerboseLevel level, const char *format_string,
                        va_list va, int error_code) const;
+
+    std::string get_details() const final override
+    {
+        return "\"" + msg_ + (is_complete_string_ ? msg_end_ : "") + "\"";
+    }
 };
 
 class MsgVinfo: public Message

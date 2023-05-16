@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018--2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018--2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -41,7 +41,7 @@ class MockExpectationSequence
     const std::string eseq_id_;
     unsigned int next_assigned_serial_;
     unsigned int next_checked_serial_;
-    std::list<std::string> names_;
+    std::list<std::tuple<std::string, std::string>> names_;
 
   public:
     MockExpectationSequence(const MockExpectationSequence &) = delete;
@@ -84,9 +84,9 @@ class MockExpectationSequence
         reset();
     }
 
-    unsigned int make_serial(std::string &&name)
+    unsigned int make_serial(std::string &&name, std::string &&details)
     {
-        names_.emplace_back(std::move(name));
+        names_.emplace_back(std::move(name), std::move(details));
         return next_assigned_serial_++;
     }
 
@@ -126,7 +126,14 @@ class MockExpectationSequence
 
         auto it(std::next(names_.begin(), first));
         for(unsigned int i = first; i < next_checked_serial_; ++i, ++it)
-            MESSAGE("Already checked serial " << i << ": " << *it);
+        {
+            const auto &details(std::get<1>(*it));
+            if(details.empty())
+                MESSAGE("Already checked serial " << i << ": " << std::get<0>(*it));
+            else
+                MESSAGE("Already checked serial " << i << " -- " << std::get<0>(*it)
+                        << ": " << details);
+        }
     }
 
   private:
@@ -136,7 +143,14 @@ class MockExpectationSequence
 
         auto it(std::next(names_.begin(), next_checked_serial_));
         for(unsigned int i = next_checked_serial_; i < up_to_serial; ++i, ++it)
-            MESSAGE("Expected serial " << i << ": " << *it);
+        {
+            const auto &details(std::get<1>(*it));
+            if(details.empty())
+                MESSAGE("Expected serial " << i << ": " << std::get<0>(*it));
+            else
+                MESSAGE("Expected serial " << i << ": " << std::get<0>(*it)
+                        << ": " << details);
+        }
     }
 };
 
@@ -199,7 +213,8 @@ class MockExpectationsTemplate
     {
         if(eseq_ != nullptr)
             expectation->set_sequence_serial(eseq_->make_serial(
-                            mock_id_ + "." + expectation->get_name()));
+                            mock_id_ + "." + expectation->get_name(),
+                            expectation->get_details()));
 
         expectations_.emplace_back(std::move(expectation));
 

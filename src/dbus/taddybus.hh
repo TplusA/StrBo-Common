@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -355,14 +355,16 @@ class ProxyBase
     template <typename T>
     using ProxyNewFinishFunction = T *(*)(GAsyncResult *res, GError **error);
 
+  private:
+    std::string const_name_;
+    std::string const_object_path_;
+
   protected:
-    const std::string name_;
-    const std::string object_path_;
     bool is_busy_ = false;
 
     explicit ProxyBase(std::string &&name, std::string &&object_path):
-        name_(std::move(name)),
-        object_path_(std::move(object_path)),
+        const_name_(std::move(name)),
+        const_object_path_(std::move(object_path)),
         is_busy_(false)
     {}
 
@@ -370,8 +372,11 @@ class ProxyBase
     ProxyBase(const ProxyBase &) = delete;
     ProxyBase(ProxyBase &&) = default;
     ProxyBase &operator=(const ProxyBase &) = delete;
-    ProxyBase &operator=(ProxyBase &&) = delete;
+    ProxyBase &operator=(ProxyBase &&) = default;
     virtual ~ProxyBase() = default;
+
+    const std::string &get_name() const { return const_name_; }
+    const std::string &get_object_path() const { return const_object_path_; }
 };
 
 template <typename T> struct ProxyTraits;
@@ -513,6 +518,11 @@ class Proxy: public ProxyBase
         delete static_cast<SignalHandlerData<Tag, UserDataT...> *>(data);
     }
 
+  public:
+    Proxy(Proxy &&) = default;
+    Proxy &operator=(Proxy &&) = default;
+
+  private:
     explicit Proxy(std::string &&name, std::string &&object_path,
                    T *proxy = nullptr):
         ProxyBase(std::move(name), std::move(object_path)),
@@ -554,7 +564,7 @@ class Proxy: public ProxyBase
     {
         if(is_busy_)
         {
-            log_connect_proxy_bug(object_path_.c_str(), name_.c_str());
+            log_connect_proxy_bug(get_object_path().c_str(), get_name().c_str());
             return;
         }
 
@@ -565,7 +575,7 @@ class Proxy: public ProxyBase
         is_busy_ = true;
 
         (*Traits::proxy_new_fn())(connection, G_DBUS_PROXY_FLAGS_NONE,
-                                  name_.c_str(), object_path_.c_str(),
+                                  get_name().c_str(), get_object_path().c_str(),
                                   nullptr, connect_done, this);
     }
 

@@ -666,7 +666,7 @@ class Proxy: public ProxyBase
 
     template <typename Tag, typename... Args,
               typename MCTraits = MethodCallerTraits<Tag>>
-    bool call_sync(Args &&... args)
+    bool call_sync(Args &&... args) const
     {
         static_assert(std::is_same<typename MCTraits::IfaceType, T>::value,
                       "Call is not meant to be used with this interface");

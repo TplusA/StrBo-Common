@@ -530,9 +530,50 @@ class Proxy: public ProxyBase
     {}
 
   public:
+    /*!
+     * Create D-Bus proxy to object at \p object_path at service \p name.
+     */
     static Proxy make_proxy(std::string &&name, std::string &&object_path)
     {
         return Proxy(std::move(name), std::move(object_path));
+    }
+
+    /*!
+     * Create D-Bus proxy to object at \p object_path at the sender who sent
+     * the \p invocation.
+     */
+    static Proxy make_proxy(GDBusMethodInvocation *invocation,
+                            std::string &&object_path)
+    {
+        return Proxy(g_dbus_message_get_sender(g_dbus_method_invocation_get_message(invocation)),
+                     std::move(object_path));
+    }
+
+    /*!
+     * Convenience function template for creating a unique pointer to a D-Bus
+     * proxy.
+     */
+    template <typename RefT>
+    static std::unique_ptr<Proxy>
+    make_unique_proxy(RefT &&ref, std::string &&object_path)
+    {
+        return std::make_unique<Proxy>(make_proxy(std::forward<RefT>(ref),
+                                                  std::forward<std::string>(object_path)));
+    }
+
+    /*!
+     * Convenience function template for creating a heap-allocated object to a
+     * D-Bus proxy.
+     *
+     * The caller must either call \c delete on the returned pointer to free
+     * it, or turn it into a smart pointer at some point.
+     */
+    template <typename RefT>
+    static Proxy *
+    make_new_proxy(RefT &&ref, std::string &&object_path)
+    {
+        return new Proxy(make_proxy(std::forward<RefT>(ref),
+                                    std::forward<std::string>(object_path)));
     }
 
     static Proxy make_proxy_for_testing(std::string &&name,

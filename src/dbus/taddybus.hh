@@ -621,6 +621,19 @@ class Proxy: public ProxyBase
     }
 
     /*!
+     * Connect to a D-Bus object by creating a proxy object for it.
+     *
+     * This version uses a \c GDBusMethodInvocation to determine the
+     * corresponding \c GDBusConnection object.
+     */
+    void connect_proxy(GDBusMethodInvocation *invocation,
+                       std::function<void(Proxy &proxy, bool)> &&notify = nullptr)
+    {
+        return connect_proxy(g_dbus_method_invocation_get_connection(invocation),
+                             std::move(notify));
+    }
+
+    /*!
      * Connect D-Bus signal reception to its handler.
      *
      * Like #TDBus::Iface::connect_default_method_handler(), but for D-Bus

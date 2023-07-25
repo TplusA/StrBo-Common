@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019, 2020, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018--2020, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -23,13 +23,8 @@
 #include <config.h>
 #endif
 
-#pragma GCC diagnostic push
-#if defined(__GNUC__) && !defined(__clang__) && !defined(__INTEL_COMPILER)
-#pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif /* gcc */
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest.h"
-#pragma GCC diagnostic pop
 
 #include <vector>
 #include <list>
@@ -185,7 +180,7 @@ static void emit_failures(std::ostream &out, unsigned int indentation,
 
     for(const auto &msg : result.failure_messages_)
     {
-        out << indent << tag << " type=\"";
+        out << indent << '<' << tag << " type=\"";
 
         if(is_failure_known)
             out << failure_reason_to_string(result.failure_reason_);
@@ -200,17 +195,19 @@ class XmlReporter: public doctest::IReporter
 {
   private:
     std::ostream &out;
-    std::vector<doctest::SubcaseSignature> subcases_stack;
-
-    // caching pointers to objects of these types - safe to do
+    const doctest::ContextOptions &opt;
     const doctest::TestCaseData *test_case_data_;
+    std::mutex mutex;
+
+    std::vector<doctest::SubcaseSignature> subcases_stack;
 
     std::vector<std::string> failure_messages_;
     std::map<std::string, std::list<Result>> results_;
 
   public:
     XmlReporter(const doctest::ContextOptions &in):
-        out(*in.cerr)
+        out(*in.cout),
+        opt(in)
     {}
 
     void report_query(const doctest::QueryData& in) override {}
@@ -278,6 +275,8 @@ class XmlReporter: public doctest::IReporter
         test_case_data_ = &data;
     }
 
+    void test_case_reenter(const doctest::TestCaseData &data) override {}
+
     void test_case_end(const doctest::CurrentTestCaseStats &stats) override
     {
         if(stats.failure_flags == 0)
@@ -338,22 +337,19 @@ class XmlReporter: public doctest::IReporter
 
     void subcase_start(const doctest::SubcaseSignature &sig) override
     {
+        std::lock_guard<std::mutex> lock(mutex);
         subcases_stack.push_back(sig);
     }
 
     void subcase_end() override
     {
+        std::lock_guard<std::mutex> lock(mutex);
         subcases_stack.pop_back();
     }
 
     void log_assert(const doctest::AssertData &data) override
     {
-        if(!data.m_failed)
-        {
-            failure_messages_.clear();
-            return;
-        }
-
+        std::lock_guard<std::mutex> lock(mutex);
         std::ostringstream os;
 
         if((data.m_at & doctest::assertType::is_throws_as) == 0)
@@ -393,7 +389,7 @@ class XmlReporter: public doctest::IReporter
         std::list<Result> *results = nullptr;
         const char *testsuite = (test_case_data_->m_test_suite != nullptr
                                  ? test_case_data_->m_test_suite
-                                 : test_case_data_->m_file);
+                                 : test_case_data_->m_file.c_str());
 
         try
         {

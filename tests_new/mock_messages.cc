@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -211,7 +211,8 @@ void msg_error(int error_code, int priority, const char *error_format, ...)
     catch(...)
     {
         va_end(va);
-        MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" << error_format << "\"");
+        MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" <<
+                std::string(error_format) << "\"");
 
         va_list va2;
         va_start(va2, error_format);
@@ -248,7 +249,8 @@ void msg_info(const char *format_string, ...)
     catch(...)
     {
         va_end(va);
-        MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" << format_string << "\"");
+        MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" <<
+                std::string(format_string) << "\"");
 
         va_list va2;
         va_start(va2, format_string);
@@ -282,7 +284,8 @@ void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
     catch(...)
     {
         va_end(va);
-        MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" << format_string << "\"");
+        MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" <<
+                std::string(format_string) << "\"");
 
         va_list va2;
         va_start(va2, format_string);
@@ -309,7 +312,8 @@ int msg_out_of_memory(const char *what)
     }
     catch(...)
     {
-        MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" << what << "\"");
+        MESSAGE("Failed in " << __PRETTY_FUNCTION__ << " for string \"" <<
+                std::string(what) << "\"");
         throw;
     }
 

@@ -34,6 +34,7 @@
 #include <typeindex>
 #include <unordered_map>
 #include <limits>
+#include <functional>
 
 class MockExpectationSequence
 {
@@ -41,7 +42,7 @@ class MockExpectationSequence
     const std::string eseq_id_;
     unsigned int next_assigned_serial_;
     unsigned int next_checked_serial_;
-    std::list<std::tuple<std::string, std::string>> names_;
+    std::list<std::tuple<std::string, std::string, std::function<void(unsigned int)>>> names_;
 
   public:
     MockExpectationSequence(const MockExpectationSequence &) = delete;
@@ -84,9 +85,11 @@ class MockExpectationSequence
         reset();
     }
 
-    unsigned int make_serial(std::string &&name, std::string &&details)
+    unsigned int make_serial(std::string &&name, std::string &&details,
+                             std::function<void(unsigned int)> &&set_serial_fn)
     {
-        names_.emplace_back(std::move(name), std::move(details));
+        names_.emplace_back(std::move(name), std::move(details),
+                            std::move(set_serial_fn));
         return next_assigned_serial_++;
     }
 
@@ -136,10 +139,148 @@ class MockExpectationSequence
         }
     }
 
+    void move_range(int src, unsigned int count, int dest, bool verbose = false)
+    {
+        verbose_move_begin(verbose, "MOVE");
+        REQUIRE(count > 0);
+
+        const auto [srcidx, destidx] = compute_move_indices(src, dest);
+
+        if(srcidx == destidx)
+        {
+            verbose_move_end(verbose, "MOVE");
+            return;
+        }
+
+        if(srcidx < destidx)
+            REQUIRE(destidx + count <= next_assigned_serial_);
+        else
+            REQUIRE(srcidx + count <= next_assigned_serial_);
+
+        if(verbose)
+            MESSAGE("Move " << count << " indices from " << srcidx << " to " << destidx);
+
+        // TODO: We can rewrite indices and count so that we always move from
+        //       right to left, which is more efficient.
+        const bool left_to_right = srcidx < destidx;
+
+        decltype(names_)::iterator it_src;
+        decltype(names_)::iterator it_dest;
+
+        if(left_to_right)
+            it_src = std::next(names_.begin(), srcidx);
+        else
+        {
+            it_dest = std::next(names_.begin(), destidx);
+            it_src = std::next(it_dest, srcidx - destidx);
+        }
+
+        decltype(names_) temp;
+        temp.splice(temp.begin(), names_, it_src, std::next(it_src, count));
+
+        if(left_to_right)
+        {
+            MESSAGE("Please rewrite move_range() parameters so that we are "
+                    "moving from right to left (which is more efficient), "
+                    "or improve this implementation to do this automatically");
+            it_src = std::next(names_.begin(), srcidx);
+            it_dest = std::next(it_src, destidx - srcidx);
+        }
+
+        names_.splice(it_dest, std::move(temp));
+
+        /* re-assign serials to whole affected range */
+        const auto left = std::min(srcidx, destidx);
+        const auto right = std::max(srcidx, destidx) + count;
+        auto it(std::next(names_.begin(), left));
+        const auto end(std::next(it, right - left));
+        unsigned int serial = left;
+
+        while(it != end)
+        {
+            std::get<2>(*it)(serial++);
+            ++it;
+        }
+
+        verbose_move_end(verbose, "MOVE");
+    }
+
+    void swap_slots(int a, int b, bool verbose = false)
+    {
+        verbose_move_begin(verbose, "SWAP");
+
+        auto [aidx, bidx] = compute_move_indices(a, b);
+
+        if(aidx == bidx)
+        {
+            verbose_move_end(verbose, "SWAP");
+            return;
+        }
+
+        if(aidx > bidx)
+            std::swap(aidx, bidx);
+
+        if(verbose)
+            MESSAGE("Swap indices " << aidx << " and " << bidx);
+
+        auto it1 = std::next(names_.begin(), aidx);
+        auto it2 = std::next(it1, bidx - aidx);
+
+        std::get<2>(*it1)(bidx);
+        std::get<2>(*it2)(aidx);
+        std::iter_swap(it1, it2);
+
+        verbose_move_end(verbose, "SWAP");
+    }
+
+    void reverse_last_slots(bool verbose = false)
+    {
+        swap_slots(-1, -2, verbose);
+    }
+
   private:
+    void verbose_move_begin(bool verbose, const std::string &which) const
+    {
+        if(!verbose)
+            return;
+
+        MESSAGE(">>>>>  " << which << " BEGIN  <<<<<");
+        dump_last_checked();
+        show_missing_expectations(next_assigned_serial_);
+        MESSAGE(">>>>>  ----------  <<<<<");
+    }
+
+    void verbose_move_end(bool verbose, const std::string &which) const
+    {
+        if(!verbose)
+            return;
+
+        dump_last_checked();
+        show_missing_expectations(next_assigned_serial_);
+        MESSAGE(">>>>>   " << which << " END   <<<<<");
+    }
+
+    std::pair<unsigned int, unsigned int> compute_move_indices(int a, int b) const
+    {
+        const unsigned int apos = a >= 0 ? a : -(a + 1);
+        const unsigned int bpos = b >= 0 ? b : -(b + 1);
+
+        REQUIRE(apos < next_assigned_serial_);
+        REQUIRE(bpos < next_assigned_serial_);
+
+        const auto aidx = a >= 0 ? a : next_assigned_serial_ + a;
+        const auto bidx = b >= 0 ? b : next_assigned_serial_ + b;
+
+        REQUIRE(aidx >= next_checked_serial_);
+        REQUIRE(bidx >= next_checked_serial_);
+
+        return {aidx, bidx};
+    }
+
     void show_missing_expectations(unsigned int up_to_serial) const
     {
         REQUIRE(next_checked_serial_ < up_to_serial);
+        REQUIRE(up_to_serial <= next_assigned_serial_);
 
         auto it(std::next(names_.begin(), next_checked_serial_));
         for(unsigned int i = next_checked_serial_; i < up_to_serial; ++i, ++it)
@@ -214,7 +355,8 @@ class MockExpectationsTemplate
         if(eseq_ != nullptr)
             expectation->set_sequence_serial(eseq_->make_serial(
                             mock_id_ + "." + expectation->get_name(),
-                            expectation->get_details()));
+                            expectation->get_details(),
+                            [e = expectation.get()] (unsigned int ss) { return e->set_sequence_serial(ss); } ));
 
         expectations_.emplace_back(std::move(expectation));
 

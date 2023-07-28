@@ -114,7 +114,7 @@ class MockExpectationSequence
         FAIL(eseq_id_ << ": out of sync");
     }
 
-    void dump_last_checked()
+    void dump_last_checked() const
     {
         if(next_assigned_serial_ == 0 || next_checked_serial_ == 0)
             return;
@@ -137,7 +137,7 @@ class MockExpectationSequence
     }
 
   private:
-    void show_missing_expectations(unsigned int up_to_serial)
+    void show_missing_expectations(unsigned int up_to_serial) const
     {
         REQUIRE(next_checked_serial_ < up_to_serial);
 

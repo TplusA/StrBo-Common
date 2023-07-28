@@ -179,6 +179,7 @@ class Iface: public IfaceBase
 
   private:
     T *iface_;
+    T *iface_fake_;
 
     template <typename Tag, typename... UserDataT>
     static void delete_handler_data(gpointer data, GClosure *closure)
@@ -190,15 +191,25 @@ class Iface: public IfaceBase
     Iface(Iface &&src) = delete;
     Iface &operator=(Iface &&src) = delete;
 
-    explicit Iface(std::string &&object_path):
+    explicit Iface(std::string &&object_path, bool is_fake = false):
         IfaceBase(std::move(object_path)),
-        iface_(Traits::skeleton_new())
-    {}
+        iface_(Traits::skeleton_new()),
+        iface_fake_(nullptr)
+    {
+        if(is_fake)
+        {
+            iface_fake_ = iface_;
+            iface_ = nullptr;
+        }
+    }
 
     ~Iface()
     {
         if(iface_ == nullptr)
+        {
+            iface_fake_ = nullptr;
             return;
+        }
 
         g_object_unref(iface_);
         iface_ = nullptr;
@@ -229,8 +240,9 @@ class Iface: public IfaceBase
     {
         static_assert(std::is_same<typename MHTraits::IfaceType, T>::value,
                       "Handler is not meant to be used with this interface");
-        g_signal_connect(iface_, MHTraits::glib_signal_name(),
-                         G_CALLBACK(MHTraits::method_handler), this);
+        if(iface_ != nullptr)
+            g_signal_connect(iface_, MHTraits::glib_signal_name(),
+                             G_CALLBACK(MHTraits::method_handler), this);
         return *this;
     }
 
@@ -266,12 +278,13 @@ class Iface: public IfaceBase
     {
         static_assert(std::is_same<typename MHTraits::IfaceType, T>::value,
                       "Handler is not meant to be used with this interface");
-        g_signal_connect_data(
-            iface_, MHTraits::glib_signal_name(), G_CALLBACK(fn),
-            new MethodHandlerData<Tag, UserDataT...>(
-                    *this, std::forward<UserDataT>(user_data)...),
-            delete_handler_data<Tag, UserDataT...>,
-            GConnectFlags(0));
+        if(iface_ != nullptr)
+            g_signal_connect_data(
+                iface_, MHTraits::glib_signal_name(), G_CALLBACK(fn),
+                new MethodHandlerData<Tag, UserDataT...>(
+                        *this, std::forward<UserDataT>(user_data)...),
+                delete_handler_data<Tag, UserDataT...>,
+                GConnectFlags(0));
         return *this;
     }
 
@@ -287,8 +300,9 @@ class Iface: public IfaceBase
     {
         static_assert(std::is_same<typename MHTraits::IfaceType, T>::value,
                       "Handler is not meant to be used with this interface");
-        g_signal_connect(iface_, MHTraits::glib_signal_name(),
-                         G_CALLBACK(fn), nullptr);
+        if(iface_ != nullptr)
+            g_signal_connect(iface_, MHTraits::glib_signal_name(),
+                             G_CALLBACK(fn), nullptr);
         return *this;
     }
 
@@ -324,7 +338,8 @@ class Iface: public IfaceBase
     {
         static_assert(std::is_same<typename MHTraits::IfaceType, T>::value,
                       "Handler is not meant to be used with this interface");
-        MHTraits::complete(iface_, invocation, std::forward<Args>(args)...);
+        MHTraits::complete(iface_ != nullptr ? iface_ : iface_fake_, invocation,
+                           std::forward<Args>(args)...);
     }
 
     template <typename FN, typename... Args>
@@ -332,13 +347,14 @@ class Iface: public IfaceBase
     {
         static_assert(!std::is_function<FN>::value,
                       "First argument must be a function");
-        fn(iface_, std::forward<Args>(args)...);
+        fn(iface_ != nullptr ? iface_ : iface_fake_,
+           std::forward<Args>(args)...);
     }
 
   protected:
     GDBusInterfaceSkeleton *get_interface_skeleton() const final override
     {
-        return G_DBUS_INTERFACE_SKELETON(iface_);
+        return iface_ != nullptr ? G_DBUS_INTERFACE_SKELETON(iface_) : nullptr;
     }
 };
 

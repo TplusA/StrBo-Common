@@ -72,8 +72,8 @@ class MockExpectationSequence
             return;
         }
 
-        const char *plural_s = (next_assigned_serial_ == 1 ? "" : "s");
-        const char *was_were = (next_checked_serial_ == 1 ? "was" : "were");
+        const std::string plural_s = (next_assigned_serial_ == 1 ? "" : "s");
+        const std::string was_were = (next_checked_serial_ == 1 ? "was" : "were");
 
         MESSAGE(eseq_id_ << ": Having sequence of " << next_assigned_serial_ <<
                 " expectation" << plural_s << ", but only " <<
@@ -200,8 +200,8 @@ class MockExpectationsTemplate
         const auto total_count = expectations_.size();
         const auto checked_count =
             std::distance(expectations_.begin(), next_checked_expectation_);
-        const char *plural_s = (expectations_.size() == 1 ? "" : "s");
-        const char *was_were = (checked_count == 1 ? "was" : "were");
+        const std::string plural_s = (expectations_.size() == 1 ? "" : "s");
+        const std::string was_were = (checked_count == 1 ? "was" : "were");
 
         MESSAGE(mock_id_ << ": Having " << total_count <<
                 " expectation" << plural_s << ", but only " <<

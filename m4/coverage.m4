@@ -7,9 +7,12 @@ AC_DEFUN([AC_CHECK_ENABLE_COVERAGE],
                 [cutter_enable_coverage=$enableval],
                 [cutter_enable_coverage=no])
   AC_MSG_RESULT($cutter_enable_coverage)
+  AC_ARG_VAR([LCOV_EXTRA_PARAMS], [Extra command line parameters for lcov])
+  LCOV_EXTRA_PARAMS=""
   cutter_enable_coverage_report_lcov=no
   if test "x$cutter_enable_coverage" != "xno"; then
     ltp_version_list="1.6 1.7 1.8 1.9 1.10 1.11 1.12 1.13 1.14 1.15 1.16"
+    ltp_version_list_v2="2.0-1"
     AC_PATH_TOOL(LCOV, lcov)
     AC_PATH_TOOL(GENHTML, genhtml)
 
@@ -17,11 +20,17 @@ AC_DEFUN([AC_CHECK_ENABLE_COVERAGE],
       AC_CACHE_CHECK([for ltp version],
                      cutter_cv_ltp_version,
                      [
-        ltp_version=`$LCOV -v 2>/dev/null | $SED -e 's/^.* //'`
+        ltp_version=`$LCOV --version 2>/dev/null | $SED -e 's/^.* //'`
         cutter_cv_ltp_version="$ltp_version (NG)"
         for ltp_check_version in $ltp_version_list; do
           if test "$ltp_version" = "$ltp_check_version"; then
             cutter_cv_ltp_version="$ltp_check_version (ok)"
+          fi
+        done
+        for ltp_check_version in $ltp_version_list_v2; do
+          if test "$ltp_version" = "$ltp_check_version"; then
+            cutter_cv_ltp_version="$ltp_check_version (ok)"
+            LCOV_EXTRA_PARAMS="$LCOV_EXTRA_PARAMS --ignore-errors mismatch"
           fi
         done
       ])
@@ -84,12 +93,15 @@ AC_DEFUN([AC_CHECK_COVERAGE],
 
 coverage-clean:
 	\$(LCOV) --compat-libtool --zerocounters --directory . \\
+	  \$(LCOV_EXTRA_PARAMS) \\
 	  --output-file \$(COVERAGE_INFO_FILE)
 
 coverage-report:
 	\$(LCOV) --compat-libtool --directory . \\
+	  \$(LCOV_EXTRA_PARAMS) \\
 	  --capture --output-file \$(COVERAGE_INFO_FILE)
 	\$(LCOV) --compat-libtool --directory . \\
+	  \$(LCOV_EXTRA_PARAMS) \\
 	  --extract \$(COVERAGE_INFO_FILE) "\`(cd '\$(top_srcdir)'; pwd)\`/*" \\
 	  --output-file \$(COVERAGE_INFO_FILE)
 	\$(GENHTML) --highlight --legend \\

@@ -501,6 +501,7 @@ class Proxy: public ProxyBase
         }
 
         bool has_cookie(uint32_t cookie) const { return cookie == cookie_; }
+        uint32_t get_cookie() const { return cookie_; }
 
         template <typename Tag, typename... Args,
                   typename MCTraits = MethodCallerTraits<Tag>>
@@ -716,15 +717,22 @@ class Proxy: public ProxyBase
                              nullptr, nullptr, nullptr);
     }
 
+    /*!
+     * Asynchronous call of D-Bus method.
+     *
+     * The return value is a handle for canceling the method call. If its value
+     * is \c UINT64_MAX, then the call has failed; otherwise, you may pass it
+     * to #TDBus::Proxy::cancel_async_call_by_cookie(), or ignore it.
+     */
     template <typename Tag, typename... Args,
               typename MCTraits = MethodCallerTraits<Tag>>
-    void call(std::function<void(Proxy &, AsyncCall &)> &&done, Args &&... args)
+    uint64_t call(std::function<void(Proxy &, AsyncCall &)> &&done, Args &&... args)
     {
         static_assert(std::is_same<typename MCTraits::IfaceType, T>::value,
                       "Call is not meant to be used with this interface");
 
         if(proxy_ == nullptr)
-            return;
+            return UINT64_MAX;
 
         auto c(std::make_unique<AsyncCall>(std::move(done)));
         MCTraits::invoke(proxy_, std::forward<Args>(args)...,
@@ -732,6 +740,7 @@ class Proxy: public ProxyBase
                          c->mk_user_data_for_invoke(this));
         auto *const cptr = c.get();
         pending_calls_.emplace(cptr, std::move(c));
+        return cptr->get_cookie();
     }
 
     template <typename Tag, typename... Args,
@@ -748,6 +757,18 @@ class Proxy: public ProxyBase
         MCTraits::invoke_sync(proxy_, std::forward<Args>(args)...,
                               nullptr, error.await());
         return !error.log_failure("Sync D-Bus call");
+    }
+
+    void cancel_async_call_by_cookie(uint64_t cookie_key)
+    {
+        if(cookie_key > UINT32_MAX)
+            return;
+
+        const auto cookie = uint32_t(cookie_key);
+        const auto it = pending_calls_.find_if([cookie] (const auto &first, const auto &second)
+                                               { return first->has_cookie(cookie); });
+        if(it != pending_calls_.end())
+            g_cancellable_cancel(it->get_cancellable());
     }
 
     /*!

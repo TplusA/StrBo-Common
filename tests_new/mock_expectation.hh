@@ -443,14 +443,14 @@ class MockExpectationsTemplate
             if(eseq_ != nullptr)
                 eseq_->dump_last_checked();
 
-            FAIL("Missing expectations for " << mock_id_ << ": " << typeid(T).name());
+            FAIL("Missing expectations for " << mock_id_ << ": " << std::string(typeid(T).name()));
         }
 
         auto *ptr = dynamic_cast<T *>(next_checked_expectation_->get());
 
         if(ptr == nullptr)
         {
-            const auto &name(typeid(T).name());
+            const std::string &name(typeid(T).name());
             REQUIRE_MESSAGE(ptr != nullptr,
                             mock_id_ << ": Expectation type mismatch, expected " << name);
         }

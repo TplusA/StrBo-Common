@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2019, 2020, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -146,7 +146,7 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
         return;
 
 #if MSG_WITH_THREAD_ID
-    _Thread_local static char complete_buffer[2048];
+    _Thread_local static char complete_buffer[8192];
     _Thread_local static char *buffer;
     _Thread_local static size_t buffer_size;
 
@@ -159,7 +159,7 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
 #else /* !MSG_WITH_THREAD_ID */
 #define complete_buffer buffer
 #define buffer_size sizeof(buffer)
-    _Thread_local static char buffer[2048];
+    _Thread_local static char buffer[8192];
 #endif /* MSG_WITH_THREAD_ID */
 
     size_t len = vsnprintf(buffer, buffer_size, format_string, va);

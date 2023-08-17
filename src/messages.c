@@ -145,6 +145,8 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
     if(level > current_verbosity)
         return;
 
+#define ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND     0
+
 #if MSG_WITH_THREAD_ID
     _Thread_local static char complete_buffer[8192];
     _Thread_local static char *buffer;
@@ -165,16 +167,23 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
     size_t len = vsnprintf(buffer, buffer_size, format_string, va);
 
     if(error_code > 0 && len < buffer_size)
-        len += snprintf(buffer + len, buffer_size - len,
-                        " (%s)", strerror(error_code));
+#if ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND
+        len +=
+#endif /* ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND */
+        snprintf(buffer + len, buffer_size - len, " (%s)", strerror(error_code));
 
+#if ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND
     if(len > buffer_size)
         len = buffer_size;
+#endif /* ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND */
 
     if(use_syslog)
     {
+#if ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND
         if(len <= 256)
+#endif /* ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND */
             syslog(priority, "%s", complete_buffer);
+#if ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND
         else
         {
             int part = 1;
@@ -191,6 +200,7 @@ static void show_message(enum MessageVerboseLevel level, int error_code,
 
             syslog(priority, "[end of long message]");
         }
+#endif /* ENABLE_SYSLOG_LENGTH_LIMIT_WORKAROUND */
     }
     else if(!use_colors)
     {

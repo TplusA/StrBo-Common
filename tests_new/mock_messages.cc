@@ -300,6 +300,9 @@ void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
     va_end(va);
 }
 
+void msg_yak(const char *format_string, ...) {}
+void msg_vyak(enum MessageVerboseLevel level, const char *format_string, ...) {}
+
 int msg_out_of_memory(const char *what)
 {
     REQUIRE(MockMessages::singleton != nullptr);

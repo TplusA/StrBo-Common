@@ -321,7 +321,28 @@ void msg_info(const char *format_string, ...)
     va_end(va);
 }
 
+void msg_yak(const char *format_string, ...)
+{
+    va_list va;
+
+    va_start(va, format_string);
+    show_message(MESSAGE_LEVEL_NORMAL, 0, LOG_INFO, format_string, va);
+    va_end(va);
+}
+
 void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
+{
+    if(level < MESSAGE_LEVEL_INFO_MIN || level > MESSAGE_LEVEL_INFO_MAX)
+        return;
+
+    va_list va;
+
+    va_start(va, format_string);
+    show_message(level, 0, LOG_INFO, format_string, va);
+    va_end(va);
+}
+
+void msg_vyak(enum MessageVerboseLevel level, const char *format_string, ...)
 {
     if(level < MESSAGE_LEVEL_INFO_MIN || level > MESSAGE_LEVEL_INFO_MAX)
         return;

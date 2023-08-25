@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2019, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2019, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -410,6 +410,9 @@ void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
     check_message_expectation(level, 0, LOG_INFO, format_string, va);
     va_end(va);
 }
+
+void msg_yak(const char *format_string, ...) {}
+void msg_vyak(enum MessageVerboseLevel level, const char *format_string, ...) {}
 
 int msg_out_of_memory(const char *what)
 {

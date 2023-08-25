@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016, 2019--2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2016, 2019--2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -94,7 +94,8 @@ extern "C" {
 #endif
 
 /*!
- * Verbosity levels as passed to #msg_vinfo() and #msg_set_verbose_level().
+ * Verbosity levels as passed to #msg_vinfo(), #msg_vyak(), #msg_is_verbose(),
+ * and #msg_set_verbose_level().
  */
 enum MessageVerboseLevel
 {
@@ -224,6 +225,37 @@ void msg_vinfo(enum MessageVerboseLevel level, const char *format_string, ...)
     __attribute__ ((format (printf, 2, 3)));
 
 /*!
+ * Same as #msg_info(), but for rather unimportant messages.
+ *
+ * The main difference between #msg_info() and this function is that this
+ * function is always ignored in unit tests. There is no need to declare
+ * expectations for these.
+ *
+ * In general, log messages emitted via this function are usually characterized
+ * by being helpful to developers to see what's going on in case of a problem,
+ * but not being very helpful to others. They are basically noise which is
+ * emitted as side-effect of program execution, but they are not directly
+ * related to events significant to the user.
+ *
+ * In other words, the messages emitted by #msg_yak() is the system just
+ * yakking at you, while the messages emitted by #msg_info() and #msg_error()
+ * is the system informing about significant steps and error conditions.
+ */
+void msg_yak(const char *format_string, ...)
+    __attribute__ ((format (printf, 1, 2)));
+
+/*!
+ * Same as #msg_vinfo(), but for rather unimportant messages.
+ *
+ * It can be useful to restrict yakking to the various message levels, so here
+ * is the function to achieve this.
+ *
+ * \see #msg_yak()
+ */
+void msg_vyak(enum MessageVerboseLevel level, const char *format_string, ...)
+    __attribute__ ((format (printf, 2, 3)));
+
+/*!
  * Emit standard log message about out of memory condition.
  *
  * This message is emitted at verbosity level #MESSAGE_LEVEL_QUIET, thus always
@@ -317,7 +349,7 @@ int msg_out_of_memory(const char *what);
 #endif /* !MSG_TRACE_SUFFIX */
 
 #if !defined(MSG_TRACE_FUNCTION)
-#define MSG_TRACE_FUNCTION msg_info
+#define MSG_TRACE_FUNCTION msg_yak
 #endif /* !MSG_TRACE_FUNCTION */
 
 #define MSG_TRACE() \

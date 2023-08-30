@@ -151,6 +151,11 @@ bool msg_is_verbose(enum MessageVerboseLevel level)
     return MockMessages::singleton->check_next<MockMessages::MsgIsVerbose>(level);
 }
 
+bool msg_is_verbose_yak(enum MessageVerboseLevel level)
+{
+    return false;
+}
+
 /* order of strings must match the values listed in the #MessageVerboseLevel
  * enumeration */
 static constexpr std::array<const char *, MESSAGE_LEVEL_MAX - MESSAGE_LEVEL_MIN + 1>

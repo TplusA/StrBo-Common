@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2016, 2019, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -61,7 +61,7 @@ void hexdump_to_log(enum MessageVerboseLevel level,
                     const uint8_t *const buffer, size_t buffer_length,
                     const char *what)
 {
-    if(!msg_is_verbose(level))
+    if(!msg_is_verbose_yak(level))
         return;
 
     msg_vinfo(level, "%s (%zu bytes):", what, buffer_length);

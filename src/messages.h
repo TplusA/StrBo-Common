@@ -95,7 +95,7 @@ extern "C" {
 
 /*!
  * Verbosity levels as passed to #msg_vinfo(), #msg_vyak(), #msg_is_verbose(),
- * and #msg_set_verbose_level().
+ * #msg_is_verbose_yak(), and #msg_set_verbose_level().
  */
 enum MessageVerboseLevel
 {
@@ -150,6 +150,13 @@ enum MessageVerboseLevel msg_get_verbose_level(void);
  *     is filtered (debug code should \e not be executed).
  */
 bool msg_is_verbose(enum MessageVerboseLevel level);
+
+/*!
+ * Check whether or not the given level is currently verbose.
+ *
+ * Same as #msg_is_verbose(), but hidden from unit tests.
+ */
+bool msg_is_verbose_yak(enum MessageVerboseLevel level);
 
 /*!
  * Map verbosity level name to enumeration value.

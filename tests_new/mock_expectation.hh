@@ -157,9 +157,9 @@ class MockExpectationSequence
         {
             const auto &details(it->first->get_details());
             if(details.empty())
-                MESSAGE("Already checked serial " << i << ": " << std::get<0>(*it));
+                MESSAGE("Already checked serial " << i << ": " << it->second);
             else
-                MESSAGE("Already checked serial " << i << " -- " << std::get<0>(*it)
+                MESSAGE("Already checked serial " << i << " -- " << it->second
                         << ": " << details);
         }
     }

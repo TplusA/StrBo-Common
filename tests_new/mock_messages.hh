@@ -28,30 +28,15 @@
 namespace MockMessages
 {
 
-/*! Base class for expectations. */
-class Expectation
+/*! Base class for MockMessages expectations. */
+class Expectation: public MockExpectationBase
 {
-  private:
-    std::string name_;
-    unsigned int sequence_serial_;
-
   public:
-    Expectation(const Expectation &) = delete;
-    Expectation(Expectation &&) = default;
-    Expectation &operator=(const Expectation &) = delete;
-    Expectation &operator=(Expectation &&) = default;
-    Expectation(std::string &&name):
-        name_(std::move(name)),
-        sequence_serial_(std::numeric_limits<unsigned int>::max())
-    {}
+    Expectation(std::string &&name): MockExpectationBase(std::move(name)) {}
     virtual ~Expectation() {}
-    const std::string &get_name() const { return name_; }
-    void set_sequence_serial(unsigned int ss) { sequence_serial_ = ss; }
-    unsigned int get_sequence_serial() const { return sequence_serial_; }
-    virtual std::string get_details() const { return ""; }
 };
 
-class Mock
+class Mock: public MockBase
 {
   public:
     bool ignore_all_;
@@ -59,70 +44,47 @@ class Mock
   private:
     enum MessageVerboseLevel ignore_message_level_;
     enum MessageVerboseLevel mock_level_;
-    MockExpectationsTemplate<Expectation> expectations_;
 
   public:
     Mock(const Mock &) = delete;
     Mock &operator=(const Mock &) = delete;
 
-    explicit Mock():
+    explicit Mock(std::shared_ptr<MockExpectationSequence> eseq = nullptr):
+        MockBase("MockMessages", eseq),
         ignore_all_(false),
         ignore_message_level_(MESSAGE_LEVEL_IMPOSSIBLE),
-        mock_level_(MESSAGE_LEVEL_NORMAL),
-        expectations_("MockMessages")
+        mock_level_(MESSAGE_LEVEL_NORMAL)
     {}
 
     ~Mock() {}
 
     void expect(std::unique_ptr<Expectation> expectation)
     {
-        expectations_.add(std::move(expectation));
+        add(std::move(expectation));
     }
 
     void expect(Expectation *expectation)
     {
-        expectations_.add(std::unique_ptr<Expectation>(expectation));
+        add(std::unique_ptr<Expectation>(expectation));
     }
 
     template <typename T, typename ... Args>
-    T &expect(Args ... args)
+    auto &expect(Args ... args)
     {
-        return *static_cast<T *>(expectations_.add(std::make_unique<T>(args...)));
+        static_assert(std::is_base_of_v<Expectation, T> == true);
+        return *static_cast<T *>(add(std::make_unique<T>(std::forward<Args>(args)...)));
     }
 
     template <typename T>
-    void ignore(std::unique_ptr<T> default_result)
+    void ignore(std::unique_ptr<Expectation> default_result)
     {
-        expectations_.ignore<T>(std::move(default_result));
+        ignore<T>(std::move(default_result));
     }
 
     template <typename T>
-    void ignore(T *default_result)
+    void ignore(Expectation *default_result)
     {
-        expectations_.ignore<T>(std::unique_ptr<Expectation>(default_result));
-    }
-
-    template <typename T>
-    void allow() { expectations_.allow<T>(); }
-
-    void done() const { expectations_.done(); }
-
-    template <typename T, typename ... Args>
-    auto check_next(Args ... args) -> decltype(std::declval<T>().check(args...))
-    {
-        return expectations_.check_and_advance<T, decltype(std::declval<T>().check(args...))>(args...);
-    }
-
-    template <typename T>
-    const T &next(const char *caller)
-    {
-        return expectations_.next<T>(caller);
-    }
-
-    template <typename T>
-    const T &next(const char *format_string, va_list va)
-    {
-        return expectations_.next<T>(format_string, va);
+        ignore<T>(std::unique_ptr<Expectation>(default_result));
     }
 
     void ignore_messages_above(enum MessageVerboseLevel level);
@@ -152,6 +114,11 @@ class MsgIsVerbose: public Expectation
     {
         CHECK(level_ == level);
         return retval_;
+    }
+
+    static auto make_from_check_parameters(MessageVerboseLevel level)
+    {
+        return std::make_unique<MsgIsVerbose>(false, level);
     }
 };
 
@@ -188,6 +155,7 @@ class Message: public Expectation
     void check_generic(MessageVerboseLevel level, const char *format_string,
                        va_list va, int error_code) const;
 
+  public:
     std::string get_details() const final override
     {
         return "\"" + msg_ + (is_complete_string_ ? msg_end_ : "") + "\"";
@@ -213,6 +181,12 @@ class MsgVinfo: public Message
     {
         check_generic(level, format_string, va, 0);
     }
+
+    static auto make_from_check_parameters(MessageVerboseLevel level,
+                                           const char *format_string, va_list va)
+    {
+        return std::make_unique<MsgVinfo>(level, format_string, false);
+    }
 };
 
 class MsgInfo: public MsgVinfo
@@ -230,6 +204,11 @@ class MsgInfo: public MsgVinfo
     void check(const char *format_string, va_list va) const
     {
         check_generic(MESSAGE_LEVEL_NORMAL, format_string, va, 0);
+    }
+
+    static auto make_from_check_parameters(const char *format_string, va_list va)
+    {
+        return std::make_unique<MsgInfo>(format_string, false);
     }
 };
 
@@ -292,6 +271,12 @@ class MsgError: public Message
         check_generic(map_syslog_prio_to_verbose_level(priority),
                       format_string, va, error_code);
     }
+
+    static auto make_from_check_parameters(int error_code, int priority,
+                                           const char *format_string, va_list va)
+    {
+        return std::make_unique<MsgError>(error_code, priority, format_string, true);
+    }
 };
 
 class MsgOOM: public MsgError
@@ -304,6 +289,11 @@ class MsgOOM: public MsgError
     void check(const char *msg) const
     {
         CHECK(msg == msg_);
+    }
+
+    static auto make_from_check_parameters(const char *msg)
+    {
+        return std::make_unique<MsgOOM>(msg);
     }
 };
 

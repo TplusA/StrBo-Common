@@ -29,80 +29,52 @@ namespace MockBacktrace
 {
 
 /*! Base class for expectations. */
-class Expectation
+class Expectation: public MockExpectationBase
 {
-  private:
-    std::string name_;
-    unsigned int sequence_serial_;
-
   public:
-    Expectation(const Expectation &) = delete;
-    Expectation(Expectation &&) = default;
-    Expectation &operator=(const Expectation &) = delete;
-    Expectation &operator=(Expectation &&) = default;
-    Expectation(std::string &&name):
-        name_(std::move(name)),
-        sequence_serial_(std::numeric_limits<unsigned int>::max())
-    {}
+    Expectation(std::string &&name): MockExpectationBase(std::move(name)) {}
     virtual ~Expectation() {}
-    const std::string &get_name() const { return name_; }
-    void set_sequence_serial(unsigned int ss) { sequence_serial_ = ss; }
-    unsigned int get_sequence_serial() const { return sequence_serial_; }
-    virtual std::string get_details() const { return ""; }
 };
 
-class Mock
+class Mock: public MockBase
 {
-  private:
-    MockExpectationsTemplate<Expectation> expectations_;
-
   public:
     Mock(const Mock &) = delete;
     Mock &operator=(const Mock &) = delete;
 
-    explicit Mock():
-        expectations_("MockBacktrace")
+    explicit Mock(std::shared_ptr<MockExpectationSequence> eseq = nullptr):
+        MockBase("MockBacktrace", eseq)
     {}
 
     ~Mock() {}
 
     void expect(std::unique_ptr<Expectation> expectation)
     {
-        expectations_.add(std::move(expectation));
+        add(std::move(expectation));
     }
 
     void expect(Expectation *expectation)
     {
-        expectations_.add(std::unique_ptr<Expectation>(expectation));
+        add(std::unique_ptr<Expectation>(expectation));
     }
-
-    template <typename T>
-    void ignore(std::unique_ptr<T> default_result)
-    {
-        expectations_.ignore<T>(std::move(default_result));
-    }
-
-    template <typename T>
-    void ignore(T *default_result)
-    {
-        expectations_.ignore<T>(std::unique_ptr<Expectation>(default_result));
-    }
-
-    template <typename T>
-    void allow() { expectations_.allow<T>(); }
-
-    void done() const { expectations_.done(); }
 
     template <typename T, typename ... Args>
-    auto check_next(Args ... args) -> decltype(std::declval<T>().check(args...))
+    auto &expect(Args ... args)
     {
-        return expectations_.check_and_advance<T, decltype(std::declval<T>().check(args...))>(args...);
+        static_assert(std::is_base_of_v<Expectation, T> == true);
+        return *static_cast<T *>(add(std::make_unique<T>(std::forward<Args>(args)...)));
     }
 
     template <typename T>
-    const T &next(const char *caller)
+    void ignore(std::unique_ptr<Expectation> default_result)
     {
-        return expectations_.next<T>(caller);
+        ignore<T>(std::move(default_result));
+    }
+
+    template <typename T>
+    void ignore(Expectation *default_result)
+    {
+        ignore<T>(std::unique_ptr<Expectation>(default_result));
     }
 };
 
@@ -138,6 +110,11 @@ class Log: public LogOrDump
     explicit Log(size_t depth = 0, const char *message = "bug context"):
         LogOrDump("Log", depth, message)
     {}
+
+    static auto make_from_check_parameters(size_t depth, const char *message)
+    {
+        return std::make_unique<Log>(depth, message);
+    }
 };
 
 class Dump: public LogOrDump
@@ -146,6 +123,11 @@ class Dump: public LogOrDump
     explicit Dump(size_t depth = 0, const char *message = "bug context"):
         LogOrDump("Dump", depth, message)
     {}
+
+    static auto make_from_check_parameters(size_t depth, const char *message)
+    {
+        return std::make_unique<Dump>(depth, message);
+    }
 };
 
 extern Mock *singleton;

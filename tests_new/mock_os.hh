@@ -32,43 +32,26 @@
 namespace MockOS
 {
 
-/*! Base class for expectations. */
-class Expectation
+/*! Base class for MockOS expectations. */
+class Expectation: public MockExpectationBase
 {
-  private:
-    std::string name_;
-    unsigned int sequence_serial_;
-
   public:
-    Expectation(const Expectation &) = delete;
-    Expectation(Expectation &&) = default;
-    Expectation &operator=(const Expectation &) = delete;
-    Expectation &operator=(Expectation &&) = default;
-    Expectation(std::string &&name):
-        name_(std::move(name)),
-        sequence_serial_(std::numeric_limits<unsigned int>::max())
-    {}
+    Expectation(std::string &&name): MockExpectationBase(std::move(name)) {}
     virtual ~Expectation() {}
-    const std::string &get_name() const { return name_; }
-    void set_sequence_serial(unsigned int ss) { sequence_serial_ = ss; }
-    unsigned int get_sequence_serial() const { return sequence_serial_; }
-    virtual std::string get_details() const { return ""; }
 };
 
-class Mock
+class Mock: public MockBase
 {
   private:
     bool suppress_errors_;
-
-    MockExpectationsTemplate<Expectation> expectations_;
 
   public:
     Mock(const Mock &) = delete;
     Mock &operator=(const Mock &) = delete;
 
-    explicit Mock():
-        suppress_errors_(false),
-        expectations_("MockOS")
+    explicit Mock(std::shared_ptr<MockExpectationSequence> eseq = nullptr):
+        MockBase("MockOS", eseq),
+        suppress_errors_(false)
     {}
 
     ~Mock() {}
@@ -82,41 +65,31 @@ class Mock
 
     void expect(std::unique_ptr<Expectation> expectation)
     {
-        expectations_.add(std::move(expectation));
+        add(std::move(expectation));
     }
 
     void expect(Expectation *expectation)
     {
-        expectations_.add(std::unique_ptr<Expectation>(expectation));
+        add(std::unique_ptr<Expectation>(expectation));
     }
-
-    template <typename T>
-    void ignore(std::unique_ptr<T> default_result)
-    {
-        expectations_.ignore<T>(std::move(default_result));
-    }
-
-    template <typename T>
-    void ignore(T *default_result)
-    {
-        expectations_.ignore<T>(std::unique_ptr<Expectation>(default_result));
-    }
-
-    template <typename T>
-    void allow() { expectations_.allow<T>(); }
-
-    void done() const { expectations_.done(); }
 
     template <typename T, typename ... Args>
-    auto check_next(Args ... args) -> decltype(std::declval<T>().check(args...))
+    auto &expect(Args ... args)
     {
-        return expectations_.check_and_advance<T, decltype(std::declval<T>().check(args...))>(args...);
+        static_assert(std::is_base_of_v<Expectation, T> == true);
+        return *static_cast<T *>(add(std::make_unique<T>(std::forward<Args>(args)...)));
     }
 
     template <typename T>
-    const T &next(const char *caller)
+    void ignore(std::unique_ptr<Expectation> default_result)
     {
-        return expectations_.next<T>(caller);
+        ignore<T>(std::move(default_result));
+    }
+
+    template <typename T>
+    void ignore(Expectation *default_result)
+    {
+        ignore<T>(std::unique_ptr<Expectation>(default_result));
     }
 };
 
@@ -129,6 +102,11 @@ class Abort: public Expectation
     explicit Abort(int ret_errno): Expectation("Abort"), ret_errno_(ret_errno) {}
     virtual ~Abort() {}
     void check() const { errno = ret_errno_; }
+
+    static auto make_from_check_parameters()
+    {
+        return std::make_unique<Abort>(0);
+    }
 };
 
 class ResolveSymlink: public Expectation
@@ -152,6 +130,11 @@ class ResolveSymlink: public Expectation
         CHECK(link == link_);
         errno = ret_errno_;
         return retval_.empty() ? nullptr : strdup(retval_.c_str());
+    }
+
+    static auto make_from_check_parameters(const char *link)
+    {
+        return std::make_unique<ResolveSymlink>("/path/to/link_target", 0, link);
     }
 };
 
@@ -207,6 +190,11 @@ class MapFileToMemory: public Expectation
         errno = ret_errno_;
 
         return retval_;
+    }
+
+    static auto make_from_check_parameters(struct os_mapped_file_data *mapped, const char *filename)
+    {
+        return std::make_unique<MapFileToMemory>(0, 0, mapped, filename);
     }
 };
 
@@ -283,6 +271,11 @@ class WriteFromBuffer: public Expectation
 
         return retval_;
     }
+
+    static auto make_from_check_parameters(const void *src, size_t count, int fd)
+    {
+        return std::make_unique<WriteFromBuffer>(0, 0, src, count, fd);
+    }
 };
 
 class PathGetType: public Expectation
@@ -306,6 +299,11 @@ class PathGetType: public Expectation
         CHECK(pathname == pathname_);
         errno = ret_errno_;
         return retval_;
+    }
+
+    static auto make_from_check_parameters(const char *pathname)
+    {
+        return std::make_unique<PathGetType>(OS_PATH_TYPE_OTHER, 0, pathname);
     }
 };
 
@@ -331,6 +329,11 @@ class FileNew: public Expectation
         errno = ret_errno_;
         return retval_;
     }
+
+    static auto make_from_check_parameters(const char *filename)
+    {
+        return std::make_unique<FileNew>(0, 0, filename);
+    }
 };
 
 class FileClose: public Expectation
@@ -350,6 +353,11 @@ class FileClose: public Expectation
     {
         CHECK(fd == fd_);
         errno = ret_errno_;
+    }
+
+    static auto make_from_check_parameters(int fd)
+    {
+        return std::make_unique<FileClose>(0, fd);
     }
 };
 
@@ -375,6 +383,11 @@ class FileDelete: public Expectation
         errno = ret_errno_;
         return retval_;
     }
+
+    static auto make_from_check_parameters(const char *filename)
+    {
+        return std::make_unique<FileDelete>(0, 0, filename);
+    }
 };
 
 class UnmapFile: public Expectation
@@ -395,6 +408,11 @@ class UnmapFile: public Expectation
         CHECK(mapped != nullptr);
         CHECK(mapped == mapped_);
         errno = ret_errno_;
+    }
+
+    static auto make_from_check_parameters(struct os_mapped_file_data *mapped)
+    {
+        return std::make_unique<UnmapFile>(0, mapped);
     }
 };
 

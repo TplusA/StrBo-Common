@@ -36,13 +36,39 @@
 #include <limits>
 #include <functional>
 
+class MockExpectationBase
+{
+  private:
+    std::string name_;
+    unsigned int sequence_serial_;
+
+  protected:
+    MockExpectationBase(std::string &&name):
+        name_(std::move(name)),
+        sequence_serial_(std::numeric_limits<unsigned int>::max())
+    {{}}
+
+  public:
+    MockExpectationBase(const MockExpectationBase &) = delete;
+    MockExpectationBase(MockExpectationBase &&) = default;
+    MockExpectationBase &operator=(const MockExpectationBase &) = delete;
+    MockExpectationBase &operator=(MockExpectationBase &&) = default;
+    virtual ~MockExpectationBase() = default;
+
+    const std::string &get_name() const { return name_; }
+    void set_sequence_serial(unsigned int ss) { sequence_serial_ = ss; }
+    unsigned int get_sequence_serial() const { return sequence_serial_; }
+
+    virtual std::string get_details() const { return ""; }
+};
+
 class MockExpectationSequence
 {
   private:
     const std::string eseq_id_;
     unsigned int next_assigned_serial_;
     unsigned int next_checked_serial_;
-    std::list<std::tuple<std::string, std::string, std::function<void(unsigned int)>>> names_;
+    std::list<std::pair<MockExpectationBase *, std::string>> e_;
 
   public:
     MockExpectationSequence(const MockExpectationSequence &) = delete;
@@ -60,14 +86,14 @@ class MockExpectationSequence
     {
         next_assigned_serial_ = 0;
         next_checked_serial_ = 0;
-        names_.clear();
+        e_.clear();
     }
 
     void done()
     {
-        CHECK(next_assigned_serial_ == names_.size());
+        CHECK(next_assigned_serial_ == e_.size());
 
-        if(next_checked_serial_ == names_.size())
+        if(next_checked_serial_ == e_.size())
         {
             reset();
             return;
@@ -85,23 +111,21 @@ class MockExpectationSequence
         reset();
     }
 
-    unsigned int make_serial(std::string &&name, std::string &&details,
-                             std::function<void(unsigned int)> &&set_serial_fn)
+    void register_expectation(MockExpectationBase *expectation, std::string &&name)
     {
-        names_.emplace_back(std::move(name), std::move(details),
-                            std::move(set_serial_fn));
-        return next_assigned_serial_++;
+        expectation->set_sequence_serial(next_assigned_serial_++);
+        e_.emplace_back(expectation, std::move(name));
     }
 
-    void check(unsigned int serial, const std::string &name)
+    bool check(unsigned int serial, const std::string &name)
     {
         if(serial == next_checked_serial_)
         {
             ++next_checked_serial_;
-            return;
+            return true;
         }
 
-        if(next_checked_serial_ < names_.size())
+        if(next_checked_serial_ < e_.size())
         {
             FAIL_CHECK(eseq_id_ << ": observed unexpected " << name <<
                        " with serial " << serial << ", but expected serial " <<
@@ -113,8 +137,9 @@ class MockExpectationSequence
                 eseq_id_ << ": expected no more expectations, but observed " <<
                 name << " with serial " << serial);
 
-        CHECK(serial < names_.size());
-        FAIL(eseq_id_ << ": out of sync");
+        CHECK(serial < e_.size());
+        FAIL_CHECK(eseq_id_ << ": out of sync");
+        return false;
     }
 
     void dump_last_checked() const
@@ -127,10 +152,10 @@ class MockExpectationSequence
         const unsigned int first =
             next_checked_serial_ > DEPTH ? next_checked_serial_ - DEPTH : 0;
 
-        auto it(std::next(names_.begin(), first));
+        auto it(std::next(e_.begin(), first));
         for(unsigned int i = first; i < next_checked_serial_; ++i, ++it)
         {
-            const auto &details(std::get<1>(*it));
+            const auto &details(it->first->get_details());
             if(details.empty())
                 MESSAGE("Already checked serial " << i << ": " << std::get<0>(*it));
             else
@@ -164,41 +189,41 @@ class MockExpectationSequence
         //       right to left, which is more efficient.
         const bool left_to_right = srcidx < destidx;
 
-        decltype(names_)::iterator it_src;
-        decltype(names_)::iterator it_dest;
+        decltype(e_)::iterator it_src;
+        decltype(e_)::iterator it_dest;
 
         if(left_to_right)
-            it_src = std::next(names_.begin(), srcidx);
+            it_src = std::next(e_.begin(), srcidx);
         else
         {
-            it_dest = std::next(names_.begin(), destidx);
+            it_dest = std::next(e_.begin(), destidx);
             it_src = std::next(it_dest, srcidx - destidx);
         }
 
-        decltype(names_) temp;
-        temp.splice(temp.begin(), names_, it_src, std::next(it_src, count));
+        decltype(e_) temp;
+        temp.splice(temp.begin(), e_, it_src, std::next(it_src, count));
 
         if(left_to_right)
         {
             MESSAGE("Please rewrite move_range() parameters so that we are "
                     "moving from right to left (which is more efficient), "
                     "or improve this implementation to do this automatically");
-            it_src = std::next(names_.begin(), srcidx);
+            it_src = std::next(e_.begin(), srcidx);
             it_dest = std::next(it_src, destidx - srcidx);
         }
 
-        names_.splice(it_dest, std::move(temp));
+        e_.splice(it_dest, std::move(temp));
 
         /* re-assign serials to whole affected range */
         const auto left = std::min(srcidx, destidx);
         const auto right = std::max(srcidx, destidx) + count;
-        auto it(std::next(names_.begin(), left));
+        auto it(std::next(e_.begin(), left));
         const auto end(std::next(it, right - left));
         unsigned int serial = left;
 
         while(it != end)
         {
-            std::get<2>(*it)(serial++);
+            it->first->set_sequence_serial(serial++);
             ++it;
         }
 
@@ -223,11 +248,11 @@ class MockExpectationSequence
         if(verbose)
             MESSAGE("Swap indices " << aidx << " and " << bidx);
 
-        auto it1 = std::next(names_.begin(), aidx);
+        auto it1 = std::next(e_.begin(), aidx);
         auto it2 = std::next(it1, bidx - aidx);
 
-        std::get<2>(*it1)(bidx);
-        std::get<2>(*it2)(aidx);
+        it1->first->set_sequence_serial(bidx);
+        it2->first->set_sequence_serial(aidx);
         std::iter_swap(it1, it2);
 
         verbose_move_end(verbose, "SWAP");
@@ -282,14 +307,14 @@ class MockExpectationSequence
         REQUIRE(next_checked_serial_ < up_to_serial);
         REQUIRE(up_to_serial <= next_assigned_serial_);
 
-        auto it(std::next(names_.begin(), next_checked_serial_));
+        auto it(std::next(e_.begin(), next_checked_serial_));
         for(unsigned int i = next_checked_serial_; i < up_to_serial; ++i, ++it)
         {
-            const auto &details(std::get<1>(*it));
+            const auto &details(it->first->get_details());
             if(details.empty())
-                MESSAGE("Expected serial " << i << ": " << std::get<0>(*it));
+                MESSAGE("Expected serial " << i << ": " << it->second);
             else
-                MESSAGE("Expected serial " << i << ": " << std::get<0>(*it)
+                MESSAGE("Expected serial " << i << ": " << it->second
                         << ": " << details);
         }
     }
@@ -299,30 +324,25 @@ class MockExpectationSequence
 extern std::shared_ptr<MockExpectationSequence> mock_expectation_sequence_singleton;
 #endif /* MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON */
 
-template <typename E>
-class MockExpectationsTemplate
+class MockBase
 {
   private:
     const std::string mock_id_;
 
-    std::list<std::unique_ptr<E>> expectations_;
-    typename decltype(expectations_)::const_iterator next_checked_expectation_;
+    std::list<std::unique_ptr<MockExpectationBase>> expectations_;
+    std::list<std::unique_ptr<MockExpectationBase>>::const_iterator next_checked_expectation_;
+
     bool next_checked_expectation_needs_initialization_;
     bool next_checked_is_front_;
 
-    std::unordered_map<std::type_index, std::unique_ptr<E>> ignored_;
+    std::unordered_map<std::type_index, std::unique_ptr<MockExpectationBase>> ignored_;
 
     std::shared_ptr<MockExpectationSequence> eseq_;
 
-  public:
-    MockExpectationsTemplate(const MockExpectationsTemplate &) = delete;
-    MockExpectationsTemplate(MockExpectationsTemplate &&) = default;
-    MockExpectationsTemplate &operator=(const MockExpectationsTemplate &) = delete;
-    MockExpectationsTemplate &operator=(MockExpectationsTemplate &&) = default;
-
-    explicit MockExpectationsTemplate(std::string &&mock_id,
-                                      std::shared_ptr<MockExpectationSequence> eseq = nullptr):
-        mock_id_(mock_id),
+  protected:
+    explicit MockBase(std::string &&mock_id,
+                      std::shared_ptr<MockExpectationSequence> eseq = nullptr):
+        mock_id_(std::move(mock_id)),
         next_checked_expectation_(expectations_.begin()),
         next_checked_expectation_needs_initialization_(true),
         next_checked_is_front_(true),
@@ -333,6 +353,19 @@ class MockExpectationsTemplate
 #endif /* MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON */
     {}
 
+  public:
+    MockBase(const MockBase &) = delete;
+    MockBase &operator=(const MockBase &) = delete;
+    virtual ~MockBase() = default;
+
+    void sort_expectations_by_sequence_id()
+    {
+        const auto pos = std::distance(expectations_.cbegin(), next_checked_expectation_);
+        expectations_.sort([] (const auto &a, const auto &b)
+                           { return a->get_sequence_serial() < b->get_sequence_serial(); });
+        next_checked_expectation_ = std::next(expectations_.cbegin(), pos);
+    }
+
     void done() const
     {
         if(next_checked_expectation_ == expectations_.end())
@@ -340,7 +373,7 @@ class MockExpectationsTemplate
 
         const auto total_count = expectations_.size();
         const auto checked_count =
-            std::distance(expectations_.begin(), next_checked_expectation_);
+            std::distance(expectations_.cbegin(), next_checked_expectation_);
         const std::string plural_s = (expectations_.size() == 1 ? "" : "s");
         const std::string was_were = (checked_count == 1 ? "was" : "were");
 
@@ -350,13 +383,12 @@ class MockExpectationsTemplate
         FAIL_CHECK("Too many expectations for " << mock_id_);
     }
 
-    E *add(std::unique_ptr<E> expectation)
+  protected:
+    MockExpectationBase *add(std::unique_ptr<MockExpectationBase> expectation)
     {
         if(eseq_ != nullptr)
-            expectation->set_sequence_serial(eseq_->make_serial(
-                            mock_id_ + "." + expectation->get_name(),
-                            expectation->get_details(),
-                            [e = expectation.get()] (unsigned int ss) { return e->set_sequence_serial(ss); } ));
+            eseq_->register_expectation(expectation.get(),
+                                        mock_id_ + "." + expectation->get_name());
 
         expectations_.emplace_back(std::move(expectation));
 
@@ -377,14 +409,17 @@ class MockExpectationsTemplate
     }
 
     template <typename T>
-    void ignore(std::unique_ptr<E> default_result)
+    void ignore(std::unique_ptr<MockExpectationBase> default_result)
     {
+        static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
         ignored_[std::type_index(typeid(T))] = std::move(default_result);
     }
 
+  public:
     template <typename T>
     void allow()
     {
+        static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
         ignored_.erase(std::type_index(typeid(T)));
     }
 
@@ -399,6 +434,7 @@ class MockExpectationsTemplate
               typename expectation_ignores_by_fn<decltype(&T::ignored)>::type = 0>
     R ignore_expectation(const T *default_result, expectation_ignore_behavior)
     {
+        static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
         return default_result->ignored();
     }
 
@@ -407,19 +443,24 @@ class MockExpectationsTemplate
               typename expectation_ignores_by_value<decltype(T::retval_)>::type = 0>
     R ignore_expectation(const T *default_result, expectation_ignore_behavior)
     {
+        static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
         return default_result->retval_;
     }
 
     template <typename T, typename R>
     R ignore_expectation(const T *, expectation_default_ignore)
     {
+        static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
         return R();
     }
 
   public:
-    template <typename T, typename R, typename ... Args>
-    R check_and_advance(Args ... args)
+    template <typename T, typename ... Args>
+    auto check_next(Args ... args) -> decltype(std::declval<T>().check(args...))
     {
+        static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
+        using R = decltype(std::declval<T>().check(args...));
+
         const auto &ignored(ignored_.find(std::type_index(typeid(T))));
 
         if(ignored != ignored_.end())
@@ -443,6 +484,7 @@ class MockExpectationsTemplate
             if(eseq_ != nullptr)
                 eseq_->dump_last_checked();
 
+            MESSAGE("Missing: " << T::make_from_check_parameters(args...)->get_details());
             FAIL("Missing expectations for " << mock_id_ << ": " << std::string(typeid(T).name()));
         }
 
@@ -460,9 +502,9 @@ class MockExpectationsTemplate
         if(next_checked_expectation_ == expectations_.end())
             next_checked_expectation_needs_initialization_ = true;
 
-        if(eseq_ != nullptr)
-            eseq_->check(ptr->get_sequence_serial(),
-                         mock_id_ + "." + ptr->get_name());
+        if(eseq_ != nullptr && !eseq_->check(ptr->get_sequence_serial(),
+                                             mock_id_ + "." + ptr->get_name()))
+            FAIL("Not expected now: ", ptr->get_details());
 
         return ptr->check(args...);
     }
@@ -470,6 +512,7 @@ class MockExpectationsTemplate
     template <typename T>
     const T &next(const char *string)
     {
+        static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
         REQUIRE_MESSAGE(next_checked_expectation_ != expectations_.end(),
                         "Missing expectation for \"" << string << "\"");
         REQUIRE_MESSAGE(dynamic_cast<const T *>(next_checked_expectation_->get()) != nullptr,
@@ -480,6 +523,7 @@ class MockExpectationsTemplate
     template <typename T>
     const T &next(const char *format_string, va_list va)
     {
+        static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
         va_list copy;
         va_copy(copy, va);
 
@@ -495,7 +539,6 @@ class MockExpectationsTemplate
     }
 };
 
-#if __cplusplus >= 201402L
 /*!
  * Function template for adding expectations to mocks.
  *
@@ -507,8 +550,25 @@ class MockExpectationsTemplate
 template <typename T, typename MT, typename ... Args>
 static inline void expect(MT &mock, Args ... args)
 {
+    static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
+    static_assert(std::is_base_of_v<MockBase, MT> == true);
     mock->expect(std::make_unique<T>(std::forward<Args>(args)...));
 }
-#endif /* C++14 */
+
+template <typename T, typename MT, typename ... Args>
+static inline void expect(std::unique_ptr<MT> &mock, Args ... args)
+{
+    static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
+    static_assert(std::is_base_of_v<MockBase, MT> == true);
+    mock->expect(std::make_unique<T>(std::forward<Args>(args)...));
+}
+
+template <typename T, typename MT, typename ... Args>
+static inline void expect(std::shared_ptr<MT> &mock, Args ... args)
+{
+    static_assert(std::is_base_of_v<MockExpectationBase, T> == true);
+    static_assert(std::is_base_of_v<MockBase, MT> == true);
+    mock->expect(std::make_unique<T>(std::forward<Args>(args)...));
+}
 
 #endif /* !MOCK_EXPECTATION_HH */

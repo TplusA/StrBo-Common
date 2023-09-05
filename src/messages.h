@@ -23,6 +23,20 @@
 #define MESSAGES_H
 
 /*!
+ * Set to 1 to enable detection of #MSG_TRACE() and #MSG_TODO()
+ * invocations by unit tests.
+ *
+ * You may also define #MSG_TRACE_FUNCTION and #MSG_TODO_FUNCTION
+ * directly to control which of the usually invisible message types
+ * should be visible to unit tests.
+ *
+ * See also #MSG_TRACE_ENABLED.
+ */
+#ifndef MSG_VISIBLE_TRACE_AND_TODO
+#define MSG_VISIBLE_TRACE_AND_TODO 0
+#endif /* MSG_VISIBLE_TRACE_AND_TODO */
+
+/*!
  * Set to 0 to disable trace message.
  */
 #ifndef MSG_TRACE_ENABLED
@@ -278,6 +292,11 @@ int msg_out_of_memory(const char *what);
 }
 #endif
 
+#if MSG_VISIBLE_TRACE_AND_TODO == 1
+#define MSG_TODO_FUNCTION msg_info
+#define MSG_TRACE_FUNCTION msg_info
+#endif /* MSG_VISIBLE_TRACE_AND_TODO */
+
 #if MSG_ACTION_ON_BUG == 1
 #define MSG_BUG_ACTION_() backtrace_log(0, "bug context")
 #elif MSG_ACTION_ON_BUG == 2
@@ -308,8 +327,12 @@ int msg_out_of_memory(const char *what);
     } \
     while(0)
 
+#if !defined(MSG_TODO_FUNCTION)
+#define MSG_TODO_FUNCTION msg_yak
+#endif /* !MSG_TODO_FUNCTION */
+
 #define MSG_TODO(TICKET, FMT, ...) \
-    msg_error(0, LOG_CRIT, "TODO [#%u]: " FMT, TICKET, ##__VA_ARGS__)
+    MSG_TODO_FUNCTION("TODO [#%u]: " FMT, TICKET, ##__VA_ARGS__)
 
 #if MSG_ACTION_ON_UNREACHABLE == 1
 #define MSG_UNREACHABLE_ACTION_() backtrace_log(0, "unreachable context")

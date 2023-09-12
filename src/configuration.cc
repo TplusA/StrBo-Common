@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019, 2020  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2020, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -211,12 +211,7 @@ bool Configuration::default_deserialize(bool &value, const char *src)
 {
     std::string dest;
 
-    if(!default_deserialize(dest, src))
-    {
-        value = false;
-        return false;
-    }
-
+    default_deserialize(dest, src);
     value = dest == "true";
     return true;
 }

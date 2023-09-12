@@ -1,1 +1,3 @@
-*:/usr/*
+*:src/md5.cc
+missingInclude:src/debug_levels.cc
+missingInclude:src/messages_dbus.h

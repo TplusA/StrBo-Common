@@ -439,6 +439,7 @@ class Proxy: public ProxyBase
 
       public:
         AsyncCall &operator=(AsyncCall &&src) = delete;
+        AsyncCall(const AsyncCall &other) = delete;
 
         explicit AsyncCall(std::function<void(Proxy &, AsyncCall &)> &&done):
             done_(std::move(done)),

@@ -63,34 +63,49 @@ void GVariantWrapper::set_ops(const GVariantWrapper::Ops &o) { ops = &o; }
  */
 struct _GVariantInternal
 {
+    // cppcheck-suppress unusedStructMember
     void *type_info;
+    // cppcheck-suppress unusedStructMember
     gsize size;
 
     union
     {
         struct
         {
+            // cppcheck-suppress unusedStructMember
             GBytes *bytes;
+            // cppcheck-suppress unusedStructMember
             gconstpointer data;
 
 #if GLIB_CHECK_VERSION(2, 75, 1)
+            // cppcheck-suppress unusedStructMember
             gsize ordered_offsets_up_to;
+            // cppcheck-suppress unusedStructMember
             gsize checked_offsets_up_to;
 #endif /* 2.75.1 or later */
         }
+        // cppcheck-suppress unusedStructMember
         serialised;
 
         struct
         {
+            // cppcheck-suppress unusedStructMember
             GVariant **children;
+            // cppcheck-suppress unusedStructMember
             gsize n_children;
         }
+        // cppcheck-suppress unusedStructMember
         tree;
     }
+    // cppcheck-suppress unusedStructMember
     contents;
 
+    // cppcheck-suppress unusedStructMember
     gint state;
+
     gatomicrefcount ref_count;
+
+    // cppcheck-suppress unusedStructMember
     gsize depth;
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -27,6 +27,7 @@
 #include "messages.h"
 
 #include <cstdio>
+#include <array>
 
 static void fill_extra_info(std::array<char, 1024> &buffer, const char *annotation,
                             const char *ctx, const char *file, const char *fn, int line)
@@ -49,7 +50,8 @@ static void fill_extra_info(std::array<char, 1024> &buffer, const char *annotati
                       "%s @%s:%s(%d)", annotation, file, fn, line);
     else
         std::snprintf(buffer.data(), buffer.size(),
-                      "\"%s\"%s @%s:%s(%d)", ctx, annotation, file, fn, line);
+                      "\"%s\"%s @%s:%s(%d)", ctx, annotation,
+                      file != nullptr ? file : "(null)", fn, line);
 }
 
 static void do_show(const void *vp, const PointerLog::MapType &pointers,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2019, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -169,7 +169,7 @@ struct ini_section *inifile_new_section(struct ini_file *inifile,
  *     True on success, false in case the section does not exist.
  */
 bool inifile_remove_section(struct ini_file *inifile,
-                            struct ini_section *section);
+                            const struct ini_section *section);
 
 /*!
  * Remove section from file, freeing all resources occupied by it.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2018, 2019, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015, 2018, 2019, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -347,7 +347,7 @@ static int parse_nonempty_value(struct parser_data *const data,
     if(parse_key_or_value(data, start_of_value, "value", &length_of_value) < 0)
         return 1;
 
-    struct ini_key_value_pair *kv =
+    const struct ini_key_value_pair *kv =
         inifile_section_store_value(data->current_section,
                                     data->content + start_of_key,
                                     length_of_key,
@@ -363,7 +363,7 @@ static int parse_nonempty_value(struct parser_data *const data,
 static int insert_empty_value_for_key(struct parser_data *const data,
                                 const size_t start_of_key, const size_t length_of_key)
 {
-    struct ini_key_value_pair *kv =
+    const struct ini_key_value_pair *kv =
         inifile_section_store_empty_value(data->current_section,
                                           data->content + start_of_key,
                                           length_of_key);
@@ -699,7 +699,7 @@ static void remove_section(struct ini_file *inifile,
 }
 
 bool inifile_remove_section(struct ini_file *inifile,
-                            struct ini_section *section)
+                            const struct ini_section *section)
 {
     msg_log_assert(inifile != NULL);
 

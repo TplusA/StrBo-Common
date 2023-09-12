@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019, 2020, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2020, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -221,7 +221,7 @@ class ConfigManager: public ConfigChanged<ValuesT>
         if(inifile_parse_from_file(&ini, file) != 0)
             return false;
 
-        auto *section =
+        const auto *section =
             inifile_find_section(&ini, ValuesT::CONFIGURATION_SECTION_NAME,
                                  sizeof(ValuesT::CONFIGURATION_SECTION_NAME) - 1);
 

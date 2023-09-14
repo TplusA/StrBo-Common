@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -67,9 +67,10 @@ class Settings
 
     explicit Settings():
         is_valid_(false),
-        has_pending_changes_(false),
-        changed_{0}
-    {}
+        has_pending_changes_(false)
+    {
+        changed_.fill(false);
+    }
 
     const ValuesT &values() const { return v_.values_; }
 
@@ -77,7 +78,9 @@ class Settings
         v_(v),
         is_valid_(true),
         has_pending_changes_(false)
-    {}
+    {
+        changed_.fill(false);
+    }
 
     void put(const ValuesT &v)
     {

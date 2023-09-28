@@ -293,8 +293,8 @@ int msg_out_of_memory(const char *what);
 #endif
 
 #if MSG_VISIBLE_TRACE_AND_TODO == 1
-#define MSG_TODO_FUNCTION msg_info
-#define MSG_TRACE_FUNCTION msg_info
+#define MSG_TODO_FUNCTION msg_vinfo
+#define MSG_TRACE_FUNCTION msg_vinfo
 #endif /* MSG_VISIBLE_TRACE_AND_TODO */
 
 #if MSG_ACTION_ON_BUG == 1
@@ -328,11 +328,11 @@ int msg_out_of_memory(const char *what);
     while(0)
 
 #if !defined(MSG_TODO_FUNCTION)
-#define MSG_TODO_FUNCTION msg_yak
+#define MSG_TODO_FUNCTION msg_vyak
 #endif /* !MSG_TODO_FUNCTION */
 
 #define MSG_TODO(TICKET, FMT, ...) \
-    MSG_TODO_FUNCTION("TODO [#%u]: " FMT, TICKET, ##__VA_ARGS__)
+    MSG_TODO_FUNCTION(MESSAGE_LEVEL_IMPORTANT, "TODO [#%u]: " FMT, TICKET, ##__VA_ARGS__)
 
 #if MSG_ACTION_ON_UNREACHABLE == 1
 #define MSG_UNREACHABLE_ACTION_() backtrace_log(0, "unreachable context")

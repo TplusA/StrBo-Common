@@ -342,6 +342,18 @@ class Iface: public IfaceBase
                            std::forward<Args>(args)...);
     }
 
+    template <typename Tag, typename MHTraits = MethodHandlerTraits<Tag>,
+              typename... Args>
+    void method_done_and_flush(GDBusMethodInvocation *invocation, Args &&... args)
+    {
+        method_done<Tag>(invocation, std::forward<Args>(args)...);
+
+        GErrorWrapper error;
+        g_dbus_connection_flush_sync(g_dbus_method_invocation_get_connection(invocation),
+                                     nullptr, error.await());
+        error.log_failure("Flush D-Bus connection");
+    }
+
     template <typename FN, typename... Args>
     void emit(FN fn, Args &&... args)
     {

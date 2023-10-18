@@ -336,6 +336,7 @@ class MockBase
     bool next_checked_is_front_;
 
     std::unordered_map<std::type_index, std::unique_ptr<MockExpectationBase>> ignored_;
+    bool ignore_all_;
 
     std::shared_ptr<MockExpectationSequence> eseq_;
 
@@ -346,6 +347,7 @@ class MockBase
         next_checked_expectation_(expectations_.begin()),
         next_checked_expectation_needs_initialization_(true),
         next_checked_is_front_(true),
+        ignore_all_(false),
 #ifdef MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON
         eseq_(eseq != nullptr ? std::move(eseq) : mock_expectation_sequence_singleton)
 #else /* !MOCK_EXPECTATION_WITH_EXPECTATION_SEQUENCE_SINGLETON */
@@ -416,6 +418,11 @@ class MockBase
     }
 
   public:
+    void ignore_all(bool ignore_mode = true)
+    {
+        ignore_all_ = ignore_mode;
+    }
+
     template <typename T>
     void allow()
     {
@@ -462,6 +469,10 @@ class MockBase
         using R = decltype(std::declval<T>().check(args...));
 
         const auto &ignored(ignored_.find(std::type_index(typeid(T))));
+
+        if(ignore_all_)
+            return ignore_expectation<T, R>(static_cast<const T *>(nullptr),
+                                            expectation_default_ignore());
 
         if(ignored != ignored_.end())
             return ignore_expectation<T, R>(dynamic_cast<const T *>(ignored->second.get()),

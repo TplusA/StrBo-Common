@@ -13,7 +13,7 @@
 #   specific version of Cppcheck, otherwise it defaults to plain "cppcheck").
 #
 # From a build directory, run the script as follows:
-# $ XML_OUTPUT=no BUILD_PATH=$(pwd) /PATH/TO/SOURCE/wishlist/cppcheck.sh
+# $ XML_OUTPUT=no BUILD_PATH=$(pwd) /PATH/TO/SOURCE/cppcheck.sh
 #
 
 set -eu
@@ -62,7 +62,7 @@ cd "${SOURCE_PATH}"
 ${CPPCHECK} \
   --quiet ${XML_OPTIONS} \
   --std=c++17 --platform=unix64 --library=std,gnu,gtk \
-  --enable=all --inconclusive --force \
+  --enable=all --inconclusive \
   --suppress=missingIncludeSystem \
   -j "$(nproc)" \
   -I. \

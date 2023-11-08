@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019, 2020, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2019, 2020, 2022, 2023  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -25,8 +25,16 @@
 #include <array>
 #include <sstream>
 
-template <typename T, typename StrT, size_t N>
-static const StrT
+template <typename StrT> struct EnumToStringTraits;
+
+template <> struct EnumToStringTraits<char *>            { using ReturnType = const char *; };
+template <> struct EnumToStringTraits<const char *>      { using ReturnType = const char *; };
+template <> struct EnumToStringTraits<std::string>       { using ReturnType = const std::string &; };
+template <> struct EnumToStringTraits<const std::string> { using ReturnType = const std::string &; };
+
+template <typename T, typename StrT, size_t N,
+          typename Traits = EnumToStringTraits<StrT>>
+static typename Traits::ReturnType
 enum_to_string(const std::array<const StrT, N> &names, const T val)
 {
     static const StrT INVALID("***INVALID***");

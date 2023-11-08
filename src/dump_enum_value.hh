@@ -27,24 +27,61 @@
 
 template <typename StrT> struct EnumToStringTraits;
 
-template <> struct EnumToStringTraits<char *>            { using ReturnType = const char *; };
-template <> struct EnumToStringTraits<const char *>      { using ReturnType = const char *; };
-template <> struct EnumToStringTraits<std::string>       { using ReturnType = const std::string &; };
-template <> struct EnumToStringTraits<const std::string> { using ReturnType = const std::string &; };
+template <>
+struct EnumToStringTraits<char *>
+{
+    using ConstType = const char *;
+    using ReturnType = const char *;
+};
+
+template <>
+struct EnumToStringTraits<const char *>
+{
+    using ConstType = const char *;
+    using ReturnType = const char *;
+};
+
+template <>
+struct EnumToStringTraits<char * const>
+{
+    using ConstType = const char *;
+    using ReturnType = const char *;
+};
+
+template <>
+struct EnumToStringTraits<const char * const>
+{
+    using ConstType = const char *;
+    using ReturnType = const char *;
+};
+
+template <>
+struct EnumToStringTraits<std::string>
+{
+    using ConstType = const std::string;
+    using ReturnType = const std::string &;
+};
+
+template <>
+struct EnumToStringTraits<const std::string>
+{
+    using ConstType = const std::string;
+    using ReturnType = const std::string &;
+};
 
 template <typename T, typename StrT, size_t N,
           typename Traits = EnumToStringTraits<StrT>>
 static typename Traits::ReturnType
-enum_to_string(const std::array<const StrT, N> &names, const T val)
+enum_to_string(const std::array<StrT, N> &names, const T val)
 {
-    static const StrT INVALID("***INVALID***");
+    static typename Traits::ConstType INVALID("***INVALID***");
     static_assert(N == size_t(T::LAST_VALUE) + 1, "Wrong array size");
     return size_t(val) < names.size() ? names[size_t(val)] : INVALID;
 }
 
 template <typename T, typename StrT, size_t N>
 static std::ostream &dump_enum_value(std::ostream &os,
-                                     const std::array<const StrT, N> &names,
+                                     const std::array<StrT, N> &names,
                                      const char *const prefix, const T val)
 {
     os << prefix << "::" << enum_to_string<T, StrT, N>(names, val);

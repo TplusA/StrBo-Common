@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022, 2023  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2022, 2023, 2024  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -346,11 +346,11 @@ class Iface: public IfaceBase
               typename... Args>
     void method_done_and_flush(GDBusMethodInvocation *invocation, Args &&... args)
     {
+        auto *conn = g_dbus_method_invocation_get_connection(invocation);
         method_done<Tag>(invocation, std::forward<Args>(args)...);
 
         GErrorWrapper error;
-        g_dbus_connection_flush_sync(g_dbus_method_invocation_get_connection(invocation),
-                                     nullptr, error.await());
+        g_dbus_connection_flush_sync(conn, nullptr, error.await());
         error.log_failure("Flush D-Bus connection");
     }
 

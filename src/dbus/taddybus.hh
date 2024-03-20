@@ -516,8 +516,16 @@ class Proxy: public ProxyBase
         bool has_cookie(uint32_t cookie) const { return cookie == cookie_; }
         uint32_t get_cookie() const { return cookie_; }
 
+        /*!
+         * Finish and pick up result of a D-Bus call.
+         *
+         * In case of any failure, the return values passed back via pointer
+         * parameters will not have been initialized, and therefore they must
+         * \e not be accessed.
+         */
         template <typename Tag, typename... Args,
                   typename MCTraits = MethodCallerTraits<Tag>>
+        [[nodiscard]]
         bool finish(Proxy &proxy, Args &&... args)
         {
             GErrorWrapper error;
@@ -736,9 +744,15 @@ class Proxy: public ProxyBase
      * The return value is a handle for canceling the method call. If its value
      * is \c UINT64_MAX, then the call has failed; otherwise, you may pass it
      * to #TDBus::Proxy::cancel_async_call_by_cookie(), or ignore it.
+     *
+     * The only way this function can fail is by calling it while having no
+     * D-Bus proxy associated. Applications should handle this failure
+     * regardless because the \p done function will not be called in this case,
+     * thus probably leaving the application handing in some way.
      */
     template <typename Tag, typename... Args,
               typename MCTraits = MethodCallerTraits<Tag>>
+    [[nodiscard]]
     uint64_t call(std::function<void(Proxy &, AsyncCall &)> &&done, Args &&... args)
     {
         static_assert(std::is_same<typename MCTraits::IfaceType, T>::value,
@@ -756,8 +770,17 @@ class Proxy: public ProxyBase
         return cptr->get_cookie();
     }
 
+    /*!
+     * Synchronous call of D-Bus method.
+     *
+     * This function may fail (return \c false) because no D-Bus proxy is
+     * associated, or on D-Bus errors such as a timeout. In case of any
+     * failure, the return values passed back via pointer parameters will not
+     * have been initialized, and therefore they must \e not be accessed.
+     */
     template <typename Tag, typename... Args,
               typename MCTraits = MethodCallerTraits<Tag>>
+    [[nodiscard]]
     bool call_sync(Args &&... args) const
     {
         static_assert(std::is_same<typename MCTraits::IfaceType, T>::value,

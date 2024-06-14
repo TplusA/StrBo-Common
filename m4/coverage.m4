@@ -12,7 +12,7 @@ AC_DEFUN([AC_CHECK_ENABLE_COVERAGE],
   cutter_enable_coverage_report_lcov=no
   if test "x$cutter_enable_coverage" != "xno"; then
     ltp_version_list="1.6 1.7 1.8 1.9 1.10 1.11 1.12 1.13 1.14 1.15 1.16"
-    ltp_version_list_v2="2.0-1"
+    ltp_version_list_v2="2.0-1 2.1-1"
     AC_PATH_TOOL(LCOV, lcov)
     AC_PATH_TOOL(GENHTML, genhtml)
 
@@ -30,7 +30,7 @@ AC_DEFUN([AC_CHECK_ENABLE_COVERAGE],
         for ltp_check_version in $ltp_version_list_v2; do
           if test "$ltp_version" = "$ltp_check_version"; then
             cutter_cv_ltp_version="$ltp_check_version (ok)"
-            LCOV_EXTRA_PARAMS="$LCOV_EXTRA_PARAMS --ignore-errors mismatch"
+            LCOV_EXTRA_PARAMS="$LCOV_EXTRA_PARAMS --ignore-errors mismatch,inconsistent"
           fi
         done
       ])

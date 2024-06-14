@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2017, 2019, 2024  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -336,7 +336,10 @@ void test_move_assign_to_self()
     cppcut_assert_equal(gv, GVariantWrapper::get(a));
     cppcut_assert_equal(1U, gv->refs);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-move"
     a = std::move(a);
+#pragma GCC diagnostic pop
 
     cppcut_assert_equal(gv, GVariantWrapper::get(a));
     cppcut_assert_equal(1U, gv->refs);

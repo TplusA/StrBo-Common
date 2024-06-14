@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018, 2019  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2018, 2019, 2024  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -353,7 +353,10 @@ TEST_CASE_FIXTURE(GVariantWrapperTestsFixture, "Move assign to self")
     CHECK(GVariantWrapper::get(a) == gv);
     CHECK(gv->refs == 1);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-move"
     a = std::move(a);
+#pragma GCC diagnostic pop
 
     CHECK(GVariantWrapper::get(a) == gv);
     CHECK(gv->refs == 1);

@@ -45,6 +45,7 @@ void log_method_done_exception_bug(const char *what);
 void log_async_user_data_ptr(bool should_be_null, const char *fn);
 void log_bad_async_user_data_ptr();
 void log_async_result_leak();
+void log_proxy_not_connected(const char *method_name);
 
 /*!
  * Base class for server-side D-Bus interfaces implementations.
@@ -736,6 +737,8 @@ class Proxy: public ProxyBase
         if(proxy_ != nullptr)
             MCTraits::invoke(proxy_, std::forward<Args>(args)...,
                              nullptr, nullptr, nullptr);
+        else
+            log_proxy_not_connected(MethodHandlerTraits<Tag>::dbus_method_name());
     }
 
     /*!
@@ -759,7 +762,10 @@ class Proxy: public ProxyBase
                       "Call is not meant to be used with this interface");
 
         if(proxy_ == nullptr)
+        {
+            log_proxy_not_connected(MethodHandlerTraits<Tag>::dbus_method_name());
             return UINT64_MAX;
+        }
 
         auto c(std::make_unique<AsyncCall>(std::move(done)));
         MCTraits::invoke(proxy_, std::forward<Args>(args)...,
@@ -787,7 +793,10 @@ class Proxy: public ProxyBase
                       "Call is not meant to be used with this interface");
 
         if(proxy_ == nullptr)
+        {
+            log_proxy_not_connected(MethodHandlerTraits<Tag>::dbus_method_name());
             return false;
+        }
 
         GErrorWrapper error;
         MCTraits::invoke_sync(proxy_, std::forward<Args>(args)...,

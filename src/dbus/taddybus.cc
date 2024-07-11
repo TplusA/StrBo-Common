@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2022, 2024  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -53,6 +53,12 @@ void TDBus::log_bad_async_user_data_ptr()
 void TDBus::log_async_result_leak()
 {
     MSG_BUG("Leaking async D-Bus result");
+}
+
+void TDBus::log_proxy_not_connected(const char *method_name)
+{
+    msg_error(0, LOG_NOTICE,
+              "Failed calling D-Bus method %s: not connected", method_name);
 }
 
 TDBus::Bus::Bus(const char *object_name, Type t):

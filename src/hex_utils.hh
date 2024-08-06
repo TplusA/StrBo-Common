@@ -23,6 +23,7 @@
 #define HEX_UTILS_HH
 
 #include <string>
+#include <vector>
 #include <cstdint>
 #include <cstddef>
 
@@ -32,6 +33,7 @@ namespace StrBoUtils
 std::string binary_to_hexdump(const uint8_t *bin, size_t len);
 std::string binary_to_hexdump(const std::string &bin);
 size_t hexdump_to_binary(uint8_t *dest, size_t dest_size, const std::string &src);
+std::vector<uint8_t> hexdump_to_binary(const std::string &src);
 
 }
 

@@ -87,3 +87,15 @@ size_t StrBoUtils::hexdump_to_binary(uint8_t *dest, size_t dest_size,
 
     return j;
 }
+
+std::vector<uint8_t> StrBoUtils::hexdump_to_binary(const std::string &src)
+{
+    const auto src_size = src.size() & ~decltype(src.size())(1);
+    std::vector<uint8_t> dest;
+    dest.reserve(src_size / 2);
+
+    for(size_t i = 0; i < src_size; i += 2)
+        dest.push_back((char_to_nibble(src[i]) << 4) | char_to_nibble(src[i + 1]));
+
+    return dest;
+}

@@ -79,17 +79,11 @@ static uint8_t char_to_nibble(char ch)
 size_t StrBoUtils::hexdump_to_binary(uint8_t *dest, size_t dest_size,
                                      const std::string &src)
 {
+    const auto src_size = src.size() & ~decltype(src.size())(1);
     size_t j = 0;
 
-    for(size_t i = 0; i < src.size() && j < dest_size; i += 2)
-    {
-        dest[j] = char_to_nibble(src[i]) << 4;
-
-        if(i + 1 >= src.size())
-            break;
-
-        dest[j++] |= char_to_nibble(src[i + 1]);
-    }
+    for(size_t i = 0; i < src_size && j < dest_size; i += 2, ++j)
+        dest[j] = (char_to_nibble(src[i]) << 4) | char_to_nibble(src[i + 1]);
 
     return j;
 }

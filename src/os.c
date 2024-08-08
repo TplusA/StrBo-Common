@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015--2020, 2022  T+A elektroakustik GmbH & Co. KG
+ * Copyright (C) 2015--2020, 2022, 2024  T+A elektroakustik GmbH & Co. KG
  *
  * This file is part of the T+A Streaming Board software stack ("StrBoWare").
  *
@@ -412,7 +412,7 @@ char *os_resolve_symlink(const char *link)
     return result;
 }
 
-bool os_mkdir_hierarchy(const char *path, bool must_not_exist)
+bool os_mkdir_hierarchy(const char *path, bool must_not_exist, bool is_world_readable)
 {
     static const char failed_err[] = "Failed creating directory hierarchy %s";
 
@@ -435,7 +435,8 @@ bool os_mkdir_hierarchy(const char *path, bool must_not_exist)
     }
 
     /* oh well... */
-    if(os_system_formatted(false, "mkdir -m 0750 -p %s", path) == EXIT_SUCCESS)
+    if(os_system_formatted(false, "mkdir -m 075%c -p %s",
+                           is_world_readable ? '5' : '0', path) == EXIT_SUCCESS)
         return true;
 
     struct stat buf;
